@@ -39,7 +39,12 @@ def agent_id() -> str:
             "name": "frankenstein-factory-brain",
             "conversation_config": {
                 "agent": {"first_message": "", "prompt": {"prompt": "You are precise.", "llm": config.BUILD_MODEL,
-                                                          "temperature": 0}},
+                                                          "temperature": 0,
+                                                          # never silently swap in another vendor's model
+                                                          "backup_llm_config": {"preference": "disabled"},
+                                                          # ElevenLabs aborts if the first token takes >15 s;
+                                                          # low reasoning effort keeps Opus well under that
+                                                          "cascade_timeout_seconds": 15, "reasoning_effort": "low"}},
                 "conversation": {"text_only": True, "max_duration_seconds": 900},
             },
             "platform_settings": {"overrides": {"conversation_config_override": {

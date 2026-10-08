@@ -64,13 +64,14 @@ def _transcript(history: list[dict]) -> str:
     return "\n\n".join(out)
 
 
-def build_capability(gap: GapSpec, budget: gateway.Budget) -> dict | None:
+def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str, str] | None = None) -> dict | None:
     """Returns {'name','version','test_report'} for a tested candidate, or None if it couldn't be built."""
     if gap.kind == "llm":
         return build_llm_capability(gap, budget)
     emit("stage", stage="learn", capability=gap.name,
          msg=f"building {gap.name} (network: {', '.join(gap.net_hosts) or 'none'}): {gap.why_missing}")
-    emit("say", text=f"I'm missing a capability: {gap.name.replace('_', ' ')}. Let me build it.")
+    emit("say", text=f"Rebuilding {gap.name.replace('_', ' ')}." if "FAILED in production" in gap.why_missing
+         else f"I'm missing a capability: {gap.name.replace('_', ' ')}. Let me build it.")
     net = list(gap.net_hosts)
     spec = (f"Capability to build: {gap.name}\nDescription: {gap.description}\nWhy it is missing: {gap.why_missing}\n"
             f"Input schema: {gap.input_schema_json}\nOutput schema: {gap.output_schema_json}\n"
@@ -103,7 +104,7 @@ def build_capability(gap: GapSpec, budget: gateway.Budget) -> dict | None:
         elif act.action == "submit" and act.impl_py and act.test_py:
             submits += 1
             emit("stage", stage="test", capability=gap.name, msg=f"testing {gap.name} (attempt {submits})")
-            files = {"impl.py": act.impl_py, "test_impl.py": act.test_py}
+            files = {"impl.py": act.impl_py, "test_impl.py": act.test_py, **(extra_tests or {})}
             emit("code", capability=gap.name, attempt=submits, impl=act.impl_py[:12000], tests=act.test_py[:8000],
                  msg=f"{gap.name}: wrote impl.py ({len(act.impl_py.splitlines())} lines) + tests (attempt {submits})")
             rep = run_tests(files, net, gap.name)

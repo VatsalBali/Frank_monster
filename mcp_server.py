@@ -73,7 +73,13 @@ def run(name: str, input_json: str) -> str:
     sandbox.ensure_infra()
     inp = json.loads(input_json)
     if a["kind"] == "workflow":
-        out = run_workflow(a, inp)
+        from factory import config
+        from factory.orchestrator import run_with_heal
+        m = a["manifest"]
+        out = run_with_heal(a, inp,
+                            gateway.Budget(scope=f"run:{name}", max_usd=0.5,
+                                           max_tokens=m.get("budget", {}).get("max_tokens_per_run") or None),
+                            gateway.Budget(scope=f"task:heal {name}", max_usd=config.MAX_USD_PER_TASK))
     else:
         out, _ = run_capability(a, inp, gateway.Budget(scope=f"run:{name}", max_usd=0.2))
     return json.dumps(out, ensure_ascii=False, default=str)

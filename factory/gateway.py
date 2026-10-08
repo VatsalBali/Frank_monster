@@ -79,10 +79,10 @@ class Budget:
         emit("cost", scope=self.scope, purpose=purpose, tokens=inp + out, usd=round(usd, 5),
              total_usd=round(self.spent_usd, 4), total_tokens=self.tokens, seconds=round(seconds, 1))
         if conv_id:
-            threading.Thread(target=_reconcile, args=(row_id, conv_id), daemon=True).start()
+            threading.Thread(target=_reconcile, args=(row_id, conv_id, model), daemon=True).start()
 
 
-def _reconcile(row_id: int, conv_id: str) -> None:
+def _reconcile(row_id: int, conv_id: str, requested: str = "") -> None:
     for wait in (8, 15, 30):
         time.sleep(wait)
         try:
@@ -90,10 +90,12 @@ def _reconcile(row_id: int, conv_id: str) -> None:
         except Exception:
             u = None
         if u and (u["input_tokens"] or u["output_tokens"]):
+            if requested and u["models"] and requested not in u["models"]:
+                emit("error", msg=f"model substitution: requested {requested}, provider served {u['models']} ({conv_id})")
             with _db_lock:
                 con = _db()
-                con.execute("UPDATE ledger SET input_tokens=?, output_tokens=?, usd=?, credits=?, exact=1 WHERE id=?",
-                            (u["input_tokens"], u["output_tokens"], u["usd"], u["credits"], row_id))
+                con.execute("UPDATE ledger SET input_tokens=?, output_tokens=?, usd=?, credits=?, exact=1, model=? WHERE id=?",
+                            (u["input_tokens"], u["output_tokens"], u["usd"], u["credits"], ",".join(u["models"]) or requested, row_id))
                 con.commit()
                 con.close()
             return

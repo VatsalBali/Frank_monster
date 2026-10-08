@@ -29,6 +29,10 @@ Task ──► PLAN ─► DISCOVER ─► GAP? ──► LEARN (probe real APIs
 * **Capabilities grow, authority doesn't.** Each artifact declares its network hosts. The sandbox's egress proxy
   enforces them. A builder that needs a new host must ask, with a reason (it once found that the planner had
   granted an unofficial look-alike site and asked for the official `ares.gov.cz` instead).
+* **Self-repair.** When a running workflow breaks (e.g. an outside agent sends input the code never handled), the
+  factory rebuilds only the failing capability, from the input it failed on, and the harness adds a regression test
+  generated from that capability's own successful history. The operator approves v2; if the re-run still fails, the
+  factory rolls back automatically.
 * **Fresh-session composition.** The registry persists (SQLite + a git repo of artifacts). A new process — or an
   external agent over MCP — gets a different task and composes existing capabilities (incl. `foreach` over lists)
   without rebuilding or manual wiring.
@@ -45,6 +49,7 @@ Task ──► PLAN ─► DISCOVER ─► GAP? ──► LEARN (probe real APIs
 |---|---|---|
 | ARES company lookup (session 1, empty registry) | $0.18, 10 LLM calls | 0 tokens, ~3 s |
 | Check 3 suppliers + flag inactive (session 2, reuses session 1 via `foreach`) | $0.12, 4 LLM calls | 0 tokens, ~4 s |
+| Self-repair: external agent sends `CZ27074358`, `6947` → step breaks → only that capability rebuilt (15 tests incl. regression from its own history) → v2 installed → re-run | one rebuild | 0 tokens after repair |
 | Categorise 5 invoice lines (needs judgment → LLM step) | $0.06 | v1 LLM: ~4,270 tok → v2 distilled: 1,702 tok on unseen lines (2/5 fell back) → v3 re-distilled from fallbacks: 835 tok |
 
 ## Architecture
@@ -98,6 +103,12 @@ MCP (Claude Desktop): see the config snippet at the top of `mcp_server.py`.
 * The LLM is Claude (Opus 5.5 to build, Haiku 4.5 for runtime LLM steps) **served through ElevenLabs Agents in
   text-only mode** — ElevenLabs has no plain completions endpoint, so each call is a short text conversation. We
   read the raw stream because ElevenLabs' final message is normalised for speech (it strips `*`).
+* **Model substitution (found and fixed during the hackathon).** ElevenLabs agents silently cascade to a backup
+  model when the primary is slow to produce its first token (default cascade timeout 4 s). Our audit of the ledger
+  showed that of the first 70 build-time calls, 33 were served by Claude Opus 5.5, **33 by GPT-4o and 4 by Gemini
+  2.5 Flash**. We disabled the backup cascade, set Opus to low reasoning effort (≈5 s per call, under the 15 s limit),
+  and the gateway now reconciles every call against the provider's billing and raises a `model substitution` error
+  if any other model answered. The demo is re-recorded from an empty registry after this fix.
 * Development runs used an auto-approve gate mode; it is labelled `auto-mode` in every log line. The demo uses
   real operator approvals.
 * The acceptance check is an LLM judge — it can be wrong.
@@ -106,4 +117,5 @@ MCP (Claude Desktop): see the config snippet at the top of `mcp_server.py`.
 * Workflows are linear step lists (+ `foreach`), not arbitrary DAGs or branches.
 * Distillation is equivalence-tested only on recorded history; unseen inputs fall back to the LLM by design.
 * The candidate race ("compete") and adversarial test agent from our design are not implemented.
+* Self-repair heals code capabilities only (not LLM steps), one repair attempt per failed run.
 * Single-user, single-machine; no auth on the lab UI (binds to 127.0.0.1).

@@ -1,6 +1,7 @@
 """Act as an external agent: connect to the factory over MCP (stdio), search, describe and run a workflow."""
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -12,7 +13,7 @@ PY = str(ROOT / ".venv" / "Scripts" / "python.exe")
 
 
 async def main(query: str, run_name: str | None, run_input: str | None):
-    params = StdioServerParameters(command=PY, args=[str(ROOT / "mcp_server.py")])
+    params = StdioServerParameters(command=PY, args=[str(ROOT / "mcp_server.py")], env=dict(os.environ))
     async with stdio_client(params) as (r, w):
         async with ClientSession(r, w) as s:
             await s.initialize()

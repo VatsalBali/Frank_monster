@@ -14,9 +14,10 @@ sys.stdout.write("\\n__RESULT__" + json.dumps(out, default=str))
 
 
 class StepFailed(RuntimeError):
-    def __init__(self, step: str, capability: str, detail: str):
+    def __init__(self, step: str, capability: str, detail: str, inputs: list | None = None):
         super().__init__(f"step {step} ({capability}) failed: {detail}")
         self.step, self.capability, self.detail = step, capability, detail
+        self.inputs = inputs or []  # the input(s) the step failed on, for self-repair
 
 
 FALLBACK = {"__fallback__": True}
@@ -122,6 +123,7 @@ def run_workflow(wf: dict, wf_input: dict, *, budget: gateway.Budget | None = No
             items = resolve(step["foreach"], wf_input, outputs) if step.get("foreach") else None
             emit("log", msg=f"  {step['id']}: {step['uses']} v{cap['version']}" + (f" × {len(items)}" if items is not None else ""))
             ts = time.time()
+            batch, inp = None, None
             try:
                 if items is not None:
                     before = budget.tokens
@@ -132,7 +134,7 @@ def run_workflow(wf: dict, wf_input: dict, *, budget: gateway.Budget | None = No
                     out, tok = run_capability(cap, inp, budget)
             except Exception as e:
                 registry.record_run(cap["name"], cap["version"], False, 0, int((time.time() - ts) * 1000))
-                raise StepFailed(step["id"], step["uses"], str(e)) from e
+                raise StepFailed(step["id"], step["uses"], str(e), batch or ([inp] if inp is not None else [])) from e
             registry.record_run(cap["name"], cap["version"], True, tok, int((time.time() - ts) * 1000))
             outputs[step["id"]] = out
         result = outputs[m["output_step"]]

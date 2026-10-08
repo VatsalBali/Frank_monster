@@ -10,7 +10,7 @@ from . import config, gate, gateway, registry
 from .builder import build_capability
 from .events import emit
 from .executor import StepFailed, resolve, run_capability, run_capability_batch, run_workflow
-from .models import Plan
+from .models import GapSpec, Plan
 
 PLANNER = """You are the planner of a workflow factory. A workflow is a pipeline of reusable capabilities that runs
 cheaply and deterministically after it is built. Given a task and the registry, decide:
@@ -206,14 +206,86 @@ def install_workflow(wf: dict, task_input: dict, output, budget: gateway.Budget)
     return {"workflow": wf["name"], "version": wf["version"], "result": output, "build_usd": budget.spent_usd}
 
 
+def regression_test(rows: list[dict]) -> str:
+    """Harness-generated contract test from a capability's own successful history: a healed version must still
+    accept every input that used to work and return the same output fields with the same types."""
+    rows = rows[-6:]
+    return f'''import json
+import pytest
+from impl import run
+ROWS = json.loads({json.dumps(json.dumps(rows, ensure_ascii=False, default=str))})
+
+@pytest.mark.parametrize("row", ROWS)
+def test_still_handles_recorded_input(row):
+    out = run(row["input"])
+    for k, v in row["output"].items():
+        assert k in out, f"missing field {{k}}"
+        if v is not None and out[k] is not None:
+            assert type(out[k]) is type(v), f"field {{k}} changed type"
+'''
+
+
+def heal(e: StepFailed, budget: gateway.Budget, wf: dict) -> bool:
+    """Self-repair: rebuild ONLY the capability that broke, against the input it failed on, and require it to
+    keep working on its recorded history. Operator approves; the old version stays available for rollback."""
+    from .compiler import samples
+    cap = registry.get(e.capability)
+    if not cap or cap["manifest"].get("impl") != "code":
+        return False
+    m = cap["manifest"]
+    err = next((l.strip() for l in reversed(e.detail.splitlines()) if "Error" in l), e.detail.strip()[-160:])
+    emit("stage", stage="heal", capability=cap["name"], msg=f"healing {cap['name']} v{cap['version']}: {err[:200]}")
+    emit("say", text=f"Step {e.step} broke: {cap['name'].replace('_', ' ')}. I'll repair just that part.")
+    emit("monster", steps=[{"id": s["id"], "uses": s["uses"],
+                            "state": "failed" if s["uses"] == cap["name"] else "ready"} for s in wf["manifest"]["steps"]])
+    history = [r for r in samples(cap) if r.get("via") != "fallback"]
+    old_impl = Path(cap["path"], "impl.py").read_text(encoding="utf-8")
+    gap = GapSpec(
+        name=cap["name"], description=m.get("description", cap["description"]), kind="code",
+        why_missing=(f"v{cap['version']} FAILED in production on input {json.dumps(e.inputs[:3], ensure_ascii=False)[:600]} "
+                     f"with: {e.detail[-900:]}\nMake it robust to this kind of input while keeping its behaviour and "
+                     f"output fields. Previous impl.py:\n{old_impl[:4000]}"),
+        input_schema_json=m["signature"].get("in_schema") or "{}", output_schema_json=m["signature"].get("out_schema") or "{}",
+        net_hosts=m["permissions"].get("net", []),
+        example_input_json=json.dumps(e.inputs[0] if e.inputs else {}, ensure_ascii=False))
+    extra = {"test_regression.py": regression_test(history)} if history else None
+    built = build_capability(gap, budget, extra_tests=extra)
+    if not built:
+        emit("say", text="I couldn't repair it. The old version stays in place.")
+        return False
+    if not gate.ask("install", f"heal {cap['name']} v{cap['version']} → v{built['version']}",
+                    {"broke on": json.dumps(e.inputs[:2], ensure_ascii=False)[:300], "error": e.detail[-300:],
+                     "tests": built["test_report"]["summary"],
+                     "regression": f"{len(history[-6:])} recorded inputs must still work" if history else "no history yet"}):
+        registry.set_status(cap["name"], built["version"], "archived")
+        return False
+    registry.install(cap["name"], built["version"], built["test_report"])
+    emit("monster_part", uses=cap["name"], state="ready")
+    return True
+
+
+def run_with_heal(wf: dict, task_input: dict, run_budget: gateway.Budget, heal_budget: gateway.Budget):
+    """Run a workflow; if a step breaks, heal that step once and retry. If the healed version still fails,
+    roll it back so the registry never ends up worse than before."""
+    try:
+        return run_workflow(wf, task_input, budget=run_budget)
+    except StepFailed as e:
+        if not heal(e, heal_budget, wf):
+            raise
+        healed = e.capability
+    emit("say", text="Repaired. Running it again.")
+    try:
+        return run_workflow(registry.get(wf["name"]), task_input, budget=run_budget)
+    except StepFailed:
+        v = registry.rollback(healed)
+        emit("say", text=f"Still broken. I rolled {healed.replace('_', ' ')} back to version {v}.")
+        raise
+
+
 def _finish(wf: dict, task_input: dict, budget: gateway.Budget) -> dict:
     run_budget = gateway.Budget(scope=f"run:{wf['name']}", max_usd=0.50,
                                 max_tokens=wf["manifest"].get("budget", {}).get("max_tokens_per_run") or None)
-    try:
-        result = run_workflow(wf, task_input, budget=run_budget)
-    except StepFailed as e:
-        emit("say", text=f"Step {e.step} broke: {e.capability.replace('_', ' ')}.")
-        raise
+    result = run_with_heal(wf, task_input, run_budget, budget)
     _record_replay(wf, task_input, result)
     emit("result", workflow=wf["name"], result=result, build_usd=round(budget.spent_usd, 4),
          run_tokens=run_budget.tokens, msg=f"done · planning ${budget.spent_usd:.3f} · run {run_budget.tokens} tok")

@@ -311,9 +311,9 @@ function handle(ev){
   const live=ev.ts>LOADED-1;const k=ev.kind;
   if(k==="task"){monster=[];setAlive(false);drawMonster();$("result").style.display="none";log("▶ "+ev.text,"stage")}
   else if(k==="stage"){$("stage").textContent=ev.stage;log("— "+ev.msg,"stage");
-    if(["learn","test","distill"].includes(ev.stage))setScene(true);
+    if(["learn","test","distill","heal"].includes(ev.stage))setScene(true);
     if(["accept","assemble","run","plan"].includes(ev.stage))setScene(false);
-    if(ev.capability&&ev.stage==="learn")setPart(ev.capability,"building");
+    if(ev.capability&&ev.stage==="learn")setPart(ev.capability,"building");if(ev.capability&&ev.stage==="heal")setAlive(false);
     if(ev.stage==="run")$("wfname").textContent=ev.workflow}
   else if(k==="log")log(ev.msg,"dim");
   else if(k==="code"){lastCode=ev;codeView="impl";renderCode();log("✎ "+ev.msg,"dim")}
