@@ -156,7 +156,7 @@ def api_run(name: str, req: RunReq):
         out = run_with_heal(a, inp, gateway.Budget(scope=f"run:{name}", max_usd=0.5,
                                                    max_tokens=m.get("budget", {}).get("max_tokens_per_run") or None),
                             gateway.Budget(scope=f"task:heal {name}", max_usd=config.MAX_USD_PER_TASK))
-        emit("result", workflow=name, result=out, msg=f"ran {name} from the lab")
+        emit("result", workflow=name, result=out, input=inp, via="operator (lab)", msg=f"ran {name} from the lab")
     return _background(f"run {name}", go)
 
 

@@ -199,7 +199,7 @@ def install_workflow(wf: dict, task_input: dict, output, budget: gateway.Budget)
     registry.install(wf["name"], wf["version"], rep)
     wf = registry.get(wf["name"])
     _record_replay(wf, task_input, output)
-    emit("result", workflow=wf["name"], result=output, build_usd=round(budget.spent_usd, 4),
+    emit("result", workflow=wf["name"], result=output, input=task_input, build_usd=round(budget.spent_usd, 4),
          msg=f"done · build ${budget.spent_usd:.3f} · {budget.calls} LLM calls")
     emit("say", text="It's alive. It still uses a language model for judgment, so each run costs tokens."
          if m["permissions"].get("llm") else "It's alive. From now on, this job costs zero tokens.")
@@ -287,7 +287,7 @@ def _finish(wf: dict, task_input: dict, budget: gateway.Budget) -> dict:
                                 max_tokens=wf["manifest"].get("budget", {}).get("max_tokens_per_run") or None)
     result = run_with_heal(wf, task_input, run_budget, budget)
     _record_replay(wf, task_input, result)
-    emit("result", workflow=wf["name"], result=result, build_usd=round(budget.spent_usd, 4),
+    emit("result", workflow=wf["name"], result=result, input=task_input, build_usd=round(budget.spent_usd, 4),
          run_tokens=run_budget.tokens, msg=f"done · planning ${budget.spent_usd:.3f} · run {run_budget.tokens} tok")
     emit("say", text="Done. Zero tokens for the run itself." if not run_budget.tokens else "Done.")
     return {"workflow": wf["name"], "version": wf["version"], "result": result,

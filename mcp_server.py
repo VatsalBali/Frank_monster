@@ -82,6 +82,7 @@ def run(name: str, input_json: str) -> str:
                             gateway.Budget(scope=f"task:heal {name}", max_usd=config.MAX_USD_PER_TASK))
     else:
         out, _ = run_capability(a, inp, gateway.Budget(scope=f"run:{name}", max_usd=0.2))
+    emit("result", workflow=name, result=out, input=inp, via="external agent (MCP)", msg=f"MCP ran {name}")
     return json.dumps(out, ensure_ascii=False, default=str)
 
 

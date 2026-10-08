@@ -175,8 +175,33 @@ svg text{font-family:'JetBrains Mono',monospace}
 .vrow{display:flex;gap:8px;align-items:center;font-size:12px;margin:5px 0;flex-wrap:wrap}
 .pill{font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--mute)}
 .pill.active{border-color:var(--green);color:var(--green)}
-#result{display:none;animation:fadein .3s}
-#result pre{font:12px/1.55 'JetBrains Mono',monospace;white-space:pre-wrap;margin:0;max-height:220px;overflow:auto;color:var(--ink2)}
+#result{border-color:var(--line2)}
+#result.fresh{animation:outpulse 1.6s ease-out}
+@keyframes outpulse{0%{box-shadow:0 0 0 0 rgba(141,176,119,.55)}100%{box-shadow:0 0 0 14px rgba(141,176,119,0)}}
+#result .q{font:500 15px/1.45 Fraunces,Georgia,serif;color:var(--ink);margin:0 0 4px}
+#result .meta{font-size:12px;color:var(--mute);margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#result .meta .tag{border:1px solid var(--line2);border-radius:999px;padding:1px 8px;color:var(--ink2)}
+#result .meta .tag.zero{border-color:var(--green);color:var(--green)}
+#outBody{max-height:420px;overflow:auto}
+#outBody .empty{color:var(--mute);font-size:13px;padding:18px 4px;text-align:center}
+#outBody pre{font:12px 'JetBrains Mono',monospace;white-space:pre-wrap;color:var(--ink2)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.chip{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.chip small{display:block;font-size:11px;color:var(--mute)}
+.chip b{font-weight:600;font-size:15px}
+table.out{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+table.out th{position:sticky;top:0;background:var(--panel);text-align:left;font-weight:500;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;border-bottom:1px solid var(--line2)}
+table.out td{padding:7px 8px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:top}
+table.out tr:hover td{background:var(--soft)}
+table.out tr.flag td{background:rgba(217,147,131,.08)}
+table.out tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--fail)}
+.kv{display:grid;grid-template-columns:minmax(110px,auto) 1fr;gap:6px 14px;font-size:13px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 8px}
+.kv dt{color:var(--mute)}.kv dd{margin:0;color:var(--ink);word-break:break-word}
+.yes{color:var(--green);font-weight:500}.no{color:var(--fail);font-weight:500}
+.num{font-variant-numeric:tabular-nums}
+.sub-h{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.6px;margin:10px 0 6px}
+#outRaw{display:none;font:12px/1.55 'JetBrains Mono',monospace;white-space:pre-wrap;margin:0;max-height:420px;overflow:auto;color:var(--ink2)}
+.outbtns{display:flex;gap:6px}.outbtns button{padding:3px 9px;font-size:12px;border-radius:8px}
 table.audit{width:100%;border-collapse:collapse;font-size:12px}
 table.audit td{padding:5px 4px;border-top:1px solid var(--line);color:var(--ink2)}
 table.audit td:first-child{font-family:'JetBrains Mono',monospace}
@@ -300,13 +325,19 @@ table.audit td.n{text-align:right;color:var(--mute)}
   </div>
 </div>
 <div class="col">
+  <div class="pn" id="result">
+    <p class="lb"><b>Output</b><span class="outbtns"><button id="bCopy">Copy JSON</button><button id="bCsv">Download CSV</button><button id="bRaw">Raw JSON</button></span></p>
+    <div class="q" id="outQ">No output yet</div>
+    <div class="meta" id="outMeta"></div>
+    <div id="outBody"><div class="empty">Give the scientist a task. The answer appears here, ready to read.</div></div>
+    <pre id="outRaw"></pre>
+  </div>
   <div class="pn">
     <div class="gauge">
       <div><p class="lb">Last build · paid once</p><div class="big" id="buildUsd">$0.00</div><div class="sub" id="buildSub">no build yet</div></div>
       <div><p class="lb">Last run · paid every time</p><div class="big" id="runTok">–</div><div class="sub" id="runSub">tokens per run</div><div id="spark" title="tokens per workflow run, most recent on the right"></div></div>
     </div>
   </div>
-  <div class="pn" id="result"><p class="lb"><b>Result</b><span id="resultWf"></span></p><pre id="resultBody"></pre></div>
   <div class="pn">
     <p class="lb"><b>Registry wall</b><span id="regCount"></span></p>
     <div class="tiles" id="tiles"></div>
@@ -408,7 +439,7 @@ function setBusy(b){$("status").classList.toggle("busy",b);$("statusTxt").textCo
 
 function handle(ev){
   const live=ev.ts>LOADED-1;const k=ev.kind;
-  if(k==="task"){monster=[];setAlive(false);drawMonster();$("result").style.display="none";log("▶ "+ev.text,"stage");if(live)setBusy(true)}
+  if(k==="task"){lastTask=ev.text;monster=[];setAlive(false);drawMonster();log("▶ "+ev.text,"stage");if(live)setBusy(true)}
   else if(k==="stage"){$("stage").textContent=ev.stage;log("— "+ev.msg,"stage");
     if(["learn","test","distill","heal"].includes(ev.stage))setScene(true);
     if(["accept","assemble","run","plan"].includes(ev.stage))setScene(false);
@@ -426,16 +457,74 @@ function handle(ev){
   else if(k==="gate_result"){log((ev.approved?"✓ ":"✗ ")+ev.msg,"gate");if(ev.id===gateId){$("gate").style.display="none";gateId=null}}
   else if(k==="tile"){log("◆ "+ev.msg,"pass");if(live){freshTiles.add(ev.name);loadRegistry();if(ev.status==="active")toast("Installed "+ev.name+" v"+ev.version)}}
   else if(k==="run"){log((ev.ok?"✓ ":"✗ ")+ev.msg,ev.ok?"pass":"fail");setScene(false);
-    if(ev.ok){runs.push({workflow:ev.workflow,tokens:ev.tokens});drawSpark();const rt=$("runTok");rt.textContent=ev.tokens.toLocaleString();rt.classList.remove("flashy");void rt.offsetWidth;rt.classList.add("flashy");
+    if(ev.ok){lastRun={workflow:ev.workflow,tokens:ev.tokens,ms:ev.ms};runs.push({workflow:ev.workflow,tokens:ev.tokens});drawSpark();const rt=$("runTok");rt.textContent=ev.tokens.toLocaleString();rt.classList.remove("flashy");void rt.offsetWidth;rt.classList.add("flashy");
       $("runSub").textContent=`tokens · ${(ev.ms/1000).toFixed(1)} s · ${ev.workflow}`;
       if(monster.length){monster.forEach(p=>p.state="ready");drawMonster();setAlive(true,live)}else showWorkflow(ev.workflow)}}
-  else if(k==="result"){$("result").style.display="block";$("resultWf").textContent=ev.workflow||"";$("resultBody").textContent=JSON.stringify(ev.result,null,2);log("■ "+ev.msg,"pass");setAlive(true,live)}
+  else if(k==="result"){showOutput(ev,live);log("■ "+ev.msg,"pass");setAlive(true,live)}
   else if(k==="knock"){log("⌂ "+ev.msg,"gate");if(live){knock();say(ev.say||"Someone's at the door.",true);toast("External agent: "+ev.msg)}}
   else if(k==="flask"){log("⚗ "+ev.msg,"pass");if(live){freshTiles.add(ev.name);loadRegistry();toast("Distilled "+ev.name+" into code")}}
   else if(k==="error"){log("✗ "+ev.msg,"fail");setScene(false);monster.forEach(p=>{if(p.state==="building")p.state="failed"});drawMonster();if(live)toast(ev.msg.slice(0,140),"bad")}
   else if(k==="idle"){if(live){setBusy(false);setScene(false);loadLedger()}}
-  else if(k==="reset"){monster=[];setAlive(false);drawMonster();$("log").innerHTML="";$("result").style.display="none";runs=[];drawSpark();lastCode=null;$("code").innerHTML='<span class="cm"># the code the agent writes appears here, attempt by attempt</span>';$("buildUsd").textContent="$0.00";$("runTok").textContent="–";freshTiles.clear();loadRegistry();if(live)toast("Lab reset · registry is empty")}
+  else if(k==="reset"){monster=[];setAlive(false);drawMonster();$("log").innerHTML="";lastOut=null;lastTask="";$("outQ").textContent="No output yet";$("outMeta").innerHTML="";$("outBody").innerHTML=EMPTY_OUT;$("outRaw").textContent="";runs=[];drawSpark();lastCode=null;$("code").innerHTML='<span class="cm"># the code the agent writes appears here, attempt by attempt</span>';$("buildUsd").textContent="$0.00";$("runTok").textContent="–";freshTiles.clear();loadRegistry();if(live)toast("Lab reset · registry is empty")}
 }
+// ---------- output renderer: plain code, so presenting an answer costs 0 tokens ----------
+let lastTask="", lastRun=null, lastOut=null;
+const EMPTY_OUT='<div class="empty">Give the scientist a task. The answer appears here, ready to read.</div>';
+const isObj=v=>v!==null&&typeof v==="object"&&!Array.isArray(v);
+const isRows=v=>Array.isArray(v)&&v.length>0&&v.every(isObj);
+const nice=k=>String(k).replace(/_/g," ").replace(/\b(ico|dic|vat|iban|id|url|csv|api)\b/gi,m=>m.toUpperCase()).replace(/^./,c=>c.toUpperCase());
+const FLAG_BAD=/^(flag|flagged|inactive|is_inactive|error|failed|vulnerable|sanction|hit|insolv)/i, GOOD=/^(is_)?(active|valid|ok|exists|found|all_active)$/i;
+function cell(v,k=""){
+  if(v===null||v===undefined||v==="")return '<span style="color:var(--dim)">—</span>';
+  if(typeof v==="boolean"){const bad=FLAG_BAD.test(k)?v:(GOOD.test(k)?!v:false);return v?`<span class="${bad?"no":"yes"}">✓ yes</span>`:`<span class="${bad?"yes":"no"}">✗ no</span>`}
+  if(typeof v==="number")return `<span class="num">${v.toLocaleString(undefined,{maximumFractionDigits:4})}</span>`;
+  if(typeof v==="string"&&/^https?:\/\//.test(v))return `<a href="${esc(v)}" target="_blank" rel="noopener" style="color:var(--green)">${esc(v.length>48?v.slice(0,46)+"…":v)}</a>`;
+  if(Array.isArray(v))return v.every(x=>typeof x!=="object")?esc(v.join(", ")):`<span style="color:var(--mute)">${v.length} items</span>`;
+  if(isObj(v))return esc(Object.entries(v).filter(([,x])=>typeof x!=="object").map(([a,b])=>`${nice(a)}: ${b}`).join(" · "))||'<span style="color:var(--mute)">…</span>';
+  return esc(v);
+}
+function rowFlagged(r){return Object.entries(r).some(([k,v])=>typeof v==="boolean"&&((FLAG_BAD.test(k)&&v)||(GOOD.test(k)&&!v)))}
+function table(rows){
+  const keys=[];rows.forEach(r=>Object.keys(r).forEach(k=>{if(!keys.includes(k))keys.push(k)}));
+  const cols=keys.slice(0,9);
+  return `<table class="out"><thead><tr>${cols.map(k=>`<th>${esc(nice(k))}</th>`).join("")}</tr></thead><tbody>${
+    rows.map(r=>`<tr class="${rowFlagged(r)?"flag":""}">${cols.map(k=>`<td>${cell(r[k],k)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+function kv(o){return `<dl class="kv">${Object.entries(o).map(([k,v])=>`<dt>${esc(nice(k))}</dt><dd>${cell(v,k)}</dd>`).join("")}</dl>`}
+function renderValue(v,depth=0){
+  if(isRows(v))return table(v);
+  if(Array.isArray(v))return v.length?kv(Object.fromEntries(v.map((x,i)=>[i+1,x]))):'<div class="empty">empty list</div>';
+  if(!isObj(v))return `<div class="chip"><b>${cell(v)}</b></div>`;
+  const deep=x=>isObj(x)||isRows(x)||(Array.isArray(x)&&x.some(isObj));
+  const scal=Object.entries(v).filter(([,x])=>!deep(x)), nested=Object.entries(v).filter(([,x])=>deep(x));
+  let out="";
+  if(nested.length&&scal.length&&scal.length<=6)out+=`<div class="chips">${scal.map(([k,x])=>`<div class="chip"><small>${esc(nice(k))}</small><b>${cell(x,k)}</b></div>`).join("")}</div>`;
+  else if(scal.length)out+=kv(Object.fromEntries(scal));
+  nested.forEach(([k,x])=>{if(nested.length>1||scal.length)out+=`<div class="sub-h">${esc(nice(k))}${isRows(x)?` · ${x.length}`:""}</div>`;
+    out+=depth<3?renderValue(x,depth+1):`<pre>${esc(JSON.stringify(x,null,1))}</pre>`});
+  return out||'<div class="empty">empty result</div>';
+}
+function firstRows(v){if(isRows(v))return v;if(isObj(v))for(const x of Object.values(v)){const r=firstRows(x);if(r)return r}return null}
+function showOutput(ev,live){
+  lastOut=ev.result;
+  $("outQ").textContent=ev.via?`${ev.via} ran ${ev.workflow}`:(lastTask||ev.workflow||"Output");
+  const tags=[`<span class="tag">${esc(ev.workflow||"")}</span>`];
+  if(lastRun&&lastRun.workflow===ev.workflow)tags.push(`<span class="tag ${lastRun.tokens?"":"zero"}">${lastRun.tokens.toLocaleString()} tokens</span><span class="tag">${(lastRun.ms/1000).toFixed(1)} s</span>`);
+  if(ev.input&&ev.via)tags.push(`<span style="font-family:'JetBrains Mono',monospace">input ${esc(JSON.stringify(ev.input).slice(0,90))}</span>`);
+  tags.push(`<span>${new Date(ev.ts*1000).toLocaleTimeString()}</span>`);
+  $("outMeta").innerHTML=tags.join("");
+  $("outBody").innerHTML=renderValue(ev.result);
+  $("outRaw").textContent=JSON.stringify(ev.result,null,2);
+  $("bCsv").disabled=!firstRows(ev.result);
+  if(live){const R=$("result");R.classList.remove("fresh");void R.offsetWidth;R.classList.add("fresh")}
+}
+$("bRaw").onclick=()=>{const raw=$("outRaw").style.display==="block";$("outRaw").style.display=raw?"none":"block";$("outBody").style.display=raw?"block":"none";$("bRaw").textContent=raw?"Raw JSON":"Readable"};
+$("bCopy").onclick=async()=>{if(lastOut===null)return;try{await navigator.clipboard.writeText(JSON.stringify(lastOut,null,2));toast("Copied output JSON")}catch(e){toast("Copy failed","bad")}};
+$("bCsv").onclick=()=>{const rows=firstRows(lastOut);if(!rows)return;const keys=[...new Set(rows.flatMap(Object.keys))];
+  const q=v=>{const s=typeof v==="object"&&v!==null?JSON.stringify(v):String(v??"");return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+  const csv=[keys.join(","),...rows.map(r=>keys.map(k=>q(r[k])).join(","))].join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="output.csv";a.click()};
+
 async function loadRegistry(){
   const rows=await (await fetch("/api/registry")).json();
   const latest={};rows.forEach(r=>{if(r.status==="candidate")return;if(!latest[r.name]||r.status==="active"||(latest[r.name].status!=="active"&&r.version>latest[r.name].version))latest[r.name]=r});
