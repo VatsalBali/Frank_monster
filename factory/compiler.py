@@ -133,6 +133,9 @@ def distill(cap: dict, budget: gateway.Budget) -> bool:
         d: Distilled = gateway.complete_json(budget, f"distill:{name}", system=SYSTEM, schema=Distilled,
                                              prompt=base + feedback)
         files = {"impl.py": d.impl_py, "test_replay.py": replay_test(rows, keys)}
+        emit("code", capability=name, attempt=attempt, impl=d.impl_py[:12000],
+             tests="# harness-generated: replays every recorded LLM run\n" + files["test_replay.py"][:3000],
+             msg=f"{name}: distilled impl.py ({len(d.impl_py.splitlines())} lines), attempt {attempt}")
         emit("stage", stage="test", capability=name, msg=f"equivalence test vs {len(rows)} recorded runs (attempt {attempt})")
         r = sandbox.run(files, ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=short"], net=[],
                         timeout=60, label=name)

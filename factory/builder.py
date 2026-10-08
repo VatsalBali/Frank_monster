@@ -104,6 +104,8 @@ def build_capability(gap: GapSpec, budget: gateway.Budget) -> dict | None:
             submits += 1
             emit("stage", stage="test", capability=gap.name, msg=f"testing {gap.name} (attempt {submits})")
             files = {"impl.py": act.impl_py, "test_impl.py": act.test_py}
+            emit("code", capability=gap.name, attempt=submits, impl=act.impl_py[:12000], tests=act.test_py[:8000],
+                 msg=f"{gap.name}: wrote impl.py ({len(act.impl_py.splitlines())} lines) + tests (attempt {submits})")
             rep = run_tests(files, net, gap.name)
             n = re.search(r"(\d+) passed", rep["summary"])
             if rep["passed"] and (not n or int(n.group(1)) < config.MIN_TESTS):

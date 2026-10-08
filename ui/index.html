@@ -8,43 +8,46 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#F2F0EB; --panel:#FAF9F6; --soft:#ECE9E3; --soft2:#E2DED6; --line:#D9D5CC; --line2:#C4BFB5;
-  --ink:#2C2B29; --ink2:#55534E; --mute:#8A877F; --dim:#AEAAA2;
-  --fail:#9A5B4F; --fail-bg:#F3E7E3;
+  --bg:#222224; --panel:#2B2B2E; --soft:#333337; --soft2:#3C3C41; --line:#3A3A3F; --line2:#4E4E55;
+  --ink:#ECEAE5; --ink2:#C6C3BD; --mute:#8E8B85; --dim:#605E5A;
+  --green:#86A872; --green-d:#5E7F4E; --fail:#D99383;
 }
 *{box-sizing:border-box}
+html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-header{display:flex;gap:12px;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
+header{display:flex;gap:12px;align-items:center;padding:12px 22px;border-bottom:1px solid var(--line);background:#1C1C1E}
 header h1{font:600 20px/1 Fraunces,Georgia,serif;margin:0;letter-spacing:.2px;white-space:nowrap}
-header h1 span{color:var(--mute);font-weight:500}
-#task{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 14px;font:inherit;outline:none}
-#task:focus{border-color:var(--line2);background:#fff}
-button{font:inherit;font-size:13px;padding:9px 15px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;transition:background .15s,border-color .15s}
-button:hover{border-color:var(--line2);background:#fff}
+header h1 span{color:var(--green)}
+#task{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:9px 14px;font:inherit;outline:none}
+#task:focus{border-color:var(--line2)}
+#task::placeholder{color:var(--mute)}
+button{font:inherit;font-size:13px;padding:8px 14px;border-radius:10px;border:1px solid var(--line2);background:var(--soft);color:var(--ink);cursor:pointer;transition:background .15s,border-color .15s}
+button:hover{background:var(--soft2)}
 button:disabled{opacity:.4;cursor:default}
-button.primary{background:var(--ink);border-color:var(--ink);color:var(--panel)}
-button.primary:hover{background:#45433F}
+button.primary{background:var(--ink);border-color:var(--ink);color:#1C1C1E;font-weight:500}
+button.primary:hover{background:#fff}
 button.no{color:var(--fail)}
-main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;padding:18px 24px;max-width:1600px;margin:0 auto}
-.col{display:flex;flex-direction:column;gap:18px;min-width:0}
-.pn{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;padding:16px 22px;max-width:1700px;margin:0 auto}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.pn{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
 .lb{font-size:12px;color:var(--mute);margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;letter-spacing:.2px}
 .lb b{font-weight:500;color:var(--ink2)}
 /* scene */
 #scene{position:relative;padding:0;overflow:hidden}
-#scene .top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}
-#stage{font:500 12px 'JetBrains Mono',monospace;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+#scene .top{display:flex;justify-content:space-between;align-items:center;padding:10px 14px 0}
+#stage{font:500 12px 'JetBrains Mono',monospace;color:var(--ink);background:var(--soft2);border-radius:999px;padding:2px 10px}
 #wfname{font:12px 'JetBrains Mono',monospace;color:var(--mute)}
-#bubble{position:absolute;left:150px;top:46px;max-width:min(380px,calc(100% - 170px));background:#fff;border:1px solid var(--line2);border-radius:14px;padding:9px 13px;font-size:13px;color:var(--ink);box-shadow:0 1px 0 var(--line);opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s;z-index:2}
-#bubble::after{content:"";position:absolute;left:-7px;bottom:12px;width:12px;height:12px;background:#fff;border-left:1px solid var(--line2);border-bottom:1px solid var(--line2);transform:rotate(45deg)}
+#lab{display:block;width:100%;max-height:250px;margin:0 auto}
+#bubble{position:absolute;left:19%;top:34px;max-width:min(300px,31%);background:var(--ink);color:#1C1C1E;border-radius:12px;padding:8px 12px;font-size:13px;font-weight:500;opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s;z-index:2}
+#bubble::after{content:"";position:absolute;left:-6px;bottom:10px;width:12px;height:12px;background:var(--ink);transform:rotate(45deg)}
 #bubble.on{opacity:1;transform:none}
 svg text{font-family:'JetBrains Mono',monospace}
 .spark{opacity:0}
 .building .spark{animation:flick 0.9s infinite}
 .building .spark.b{animation-delay:.3s}.building .spark.c{animation-delay:.6s}
 @keyframes flick{0%,100%{opacity:0}10%{opacity:1}30%{opacity:.2}45%{opacity:.9}60%{opacity:0}}
-.building #lever{transform:rotate(38deg)}
 #lever{transform-origin:216px 252px;transition:transform .4s}
+.building #lever{transform:rotate(38deg)}
 .part-building{animation:pulse 1.2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 #doorPanel{transform-origin:686px 236px;transition:transform .5s}
@@ -52,53 +55,60 @@ svg text{font-family:'JetBrains Mono',monospace}
 #visitor{opacity:0;transition:opacity .4s .2s}
 .knock #visitor{opacity:1}
 .eyes-open{display:none}.alive .eyes-open{display:inline}.alive .eyes-closed{display:none}
-.alive #glow{opacity:1}
-#glow{opacity:0;transition:opacity .6s}
-#parts{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px}
-.part{display:inline-flex;align-items:center;gap:7px;font:12px 'JetBrains Mono',monospace;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink2)}
+#glow{opacity:0;transition:opacity .6s}.alive #glow{opacity:.55}
+#parts{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 12px}
+.part{display:inline-flex;align-items:center;gap:7px;font:12px 'JetBrains Mono',monospace;padding:3px 10px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2)}
 .part i{font-style:normal;width:16px;height:16px;border-radius:50%;display:inline-grid;place-items:center;font-size:10px;background:var(--soft2);color:var(--ink)}
 .part.missing{border-style:dashed;color:var(--mute)}
 .part.building{background:var(--soft)}
-.part.ready i{background:var(--ink);color:var(--panel)}
+.part.ready i{background:var(--green);color:#1C1C1E}
 .part.failed{color:var(--fail);border-color:var(--fail)}
 /* gate */
-#gate{display:none;margin:0 16px 16px;border:1px solid var(--line2);background:#fff;border-radius:12px;padding:14px}
+#gate{display:none;margin:0 14px 14px;border:1px solid var(--line2);background:var(--soft);border-radius:12px;padding:12px 14px}
 #gate .t{font-weight:600;margin-bottom:6px}
 #gate .k{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
-#gate pre{font:12px/1.55 'JetBrains Mono',monospace;color:var(--ink2);white-space:pre-wrap;margin:0 0 12px;max-height:150px;overflow:auto}
-/* log */
-#log{font:12px/1.7 'JetBrains Mono',monospace;color:var(--ink2);height:250px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+#gate pre{font:12px/1.55 'JetBrains Mono',monospace;color:var(--ink2);white-space:pre-wrap;margin:0 0 10px;max-height:130px;overflow:auto}
+/* workshop */
+#workshop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px}
+#log,#code{font:12px/1.65 'JetBrains Mono',monospace;color:var(--ink2);height:min(46vh,430px);overflow:auto;white-space:pre-wrap;word-break:break-word;background:#1F1F21;border:1px solid var(--line);border-radius:10px;padding:10px}
 #log .stage{color:var(--ink);font-weight:500}
-#log .pass{color:var(--ink)} #log .pass::first-letter{font-weight:600}
+#log .pass{color:var(--green)}
 #log .fail{color:var(--fail)}
-#log .gate{color:var(--ink);background:var(--soft);border-radius:4px;padding:0 4px}
+#log .gate{color:var(--ink);background:var(--soft2);border-radius:4px;padding:0 4px}
 #log .dim{color:var(--mute)}
+#code{white-space:pre;color:var(--ink2)}
+#code .fn{color:var(--green);font-weight:500}
+#code .cm{color:var(--mute)}
+#codeTabs button{padding:3px 10px;font-size:12px;border-radius:8px}
+#codeTabs button.on{background:var(--ink);color:#1C1C1E;border-color:var(--ink)}
 /* gauges */
 .gauge{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.gauge>div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-.gauge .big{font:600 32px/1.1 Fraunces,Georgia,serif;letter-spacing:-.5px}
+.gauge>div{background:#1F1F21;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.gauge .big{font:600 30px/1.1 Fraunces,Georgia,serif;letter-spacing:-.5px}
 .gauge .sub{font-size:12px;color:var(--mute)}
 /* registry */
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-.tl{border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff;cursor:pointer;min-height:92px;transition:border-color .15s,transform .15s}
+.tl{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--soft);cursor:pointer;min-height:86px;transition:border-color .15s,transform .15s}
 .tl:hover{border-color:var(--line2);transform:translateY(-1px)}
 .tl b{display:block;font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:2px 0}
 .tl .k{font-size:11px;color:var(--mute)}
 .tl .m{font-size:12px;color:var(--ink2)}
-.tl.wf{background:var(--soft)}
-.tl.new{border-color:var(--ink);box-shadow:0 0 0 3px var(--soft2)}
+.tl.wf{background:var(--soft2)}
+.tl.new{border-color:var(--green);box-shadow:0 0 0 3px rgba(134,168,114,.18)}
 .tl.revoked{opacity:.45}
 .tl.empty{border-style:dashed;background:transparent;cursor:default}
 .tl.empty:hover{transform:none}
 #drawer{display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
-#drawer pre{font:12px 'JetBrains Mono',monospace;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;max-height:260px;overflow:auto;white-space:pre-wrap}
+#drawer pre{font:12px 'JetBrains Mono',monospace;background:#1F1F21;border:1px solid var(--line);border-radius:10px;padding:10px;max-height:260px;overflow:auto;white-space:pre-wrap;color:var(--ink2)}
 #drawer code{font:12px 'JetBrains Mono',monospace;color:var(--ink2)}
 .vrow{display:flex;gap:8px;align-items:center;font-size:12px;margin:5px 0;flex-wrap:wrap}
-.pill{font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--mute);background:var(--panel)}
-.pill.active{border-color:var(--ink);color:var(--ink)}
+.pill{font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--mute)}
+.pill.active{border-color:var(--green);color:var(--green)}
 #result{display:none}
-#result pre{font:12px/1.55 'JetBrains Mono',monospace;white-space:pre-wrap;margin:0;max-height:220px;overflow:auto;color:var(--ink)}
-@media(max-width:980px){main{grid-template-columns:1fr;padding:16px}header{flex-wrap:wrap;padding:12px 16px}#task{flex-basis:100%;order:3}}
+#result pre{font:12px/1.55 'JetBrains Mono',monospace;white-space:pre-wrap;margin:0;max-height:200px;overflow:auto;color:var(--ink2)}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}::-webkit-scrollbar-track{background:transparent}
+@media(max-width:1100px){#workshop{grid-template-columns:1fr}}
+@media(max-width:980px){main{grid-template-columns:1fr;padding:14px}header{flex-wrap:wrap;padding:12px 14px}#task{flex-basis:100%;order:3}}
 </style>
 </head>
 <body>
@@ -113,74 +123,74 @@ svg text{font-family:'JetBrains Mono',monospace}
   <div class="pn" id="scene">
     <div class="top"><span class="lb" style="margin:0">Workbench <span id="stage">idle</span></span><span id="wfname"></span></div>
     <div id="bubble"></div>
-    <svg id="lab" width="100%" viewBox="0 0 760 340" role="img" aria-label="The scientist builds a monster from workflow steps">
+    <svg id="lab" viewBox="0 30 760 300" role="img" aria-label="The scientist builds a monster from workflow steps">
       <defs>
-        <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#9A5B4F" stroke-width="2"/></pattern>
-        <radialGradient id="glowG"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+        <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#D99383" stroke-width="2"/></pattern>
+        <radialGradient id="glowG"><stop offset="0" stop-color="#A9CF8F" stop-opacity=".7"/><stop offset="1" stop-color="#A9CF8F" stop-opacity="0"/></radialGradient>
       </defs>
       <!-- room -->
-      <rect x="0" y="318" width="760" height="22" fill="#E6E2DA"/>
-      <line x1="0" y1="318" x2="760" y2="318" stroke="#C4BFB5"/>
+      <rect x="0" y="318" width="760" height="22" fill="#1F1F21"/>
+      <line x1="0" y1="318" x2="760" y2="318" stroke="#4E4E55"/>
       <!-- wall shelf with distilled flasks -->
-      <line x1="24" y1="78" x2="270" y2="78" stroke="#8A877F" stroke-width="3" stroke-linecap="round"/>
-      <line x1="44" y1="78" x2="52" y2="90" stroke="#AEAAA2" stroke-width="2"/><line x1="250" y1="78" x2="242" y2="90" stroke="#AEAAA2" stroke-width="2"/>
+      <line x1="24" y1="78" x2="270" y2="78" stroke="#6E6C67" stroke-width="3" stroke-linecap="round"/>
+      <line x1="44" y1="78" x2="52" y2="90" stroke="#55555B" stroke-width="2"/><line x1="250" y1="78" x2="242" y2="90" stroke="#55555B" stroke-width="2"/>
       <g id="flasks"></g>
       <!-- control box + lever -->
-      <rect x="194" y="252" width="44" height="66" rx="5" fill="#E2DED6" stroke="#8A877F"/>
-      <circle cx="206" cy="270" r="3.5" fill="#55534E"/><circle cx="218" cy="270" r="3.5" fill="#AEAAA2"/><circle cx="230" cy="270" r="3.5" fill="#AEAAA2"/>
-      <rect x="203" y="284" width="26" height="22" rx="2" fill="#FAF9F6" stroke="#AEAAA2"/>
-      <g id="lever"><line x1="216" y1="252" x2="216" y2="212" stroke="#55534E" stroke-width="4" stroke-linecap="round"/><circle cx="216" cy="208" r="7" fill="#2C2B29"/></g>
-      <!-- scientist -->
+      <rect x="194" y="252" width="44" height="66" rx="5" fill="#3C3C41" stroke="#6E6C67"/>
+      <circle cx="206" cy="270" r="3.5" fill="#86A872"/><circle cx="218" cy="270" r="3.5" fill="#6E6C67"/><circle cx="230" cy="270" r="3.5" fill="#6E6C67"/>
+      <rect x="203" y="284" width="26" height="22" rx="2" fill="#1F1F21" stroke="#55555B"/>
+      <g id="lever"><line x1="216" y1="252" x2="216" y2="212" stroke="#8E8B85" stroke-width="4" stroke-linecap="round"/><circle cx="216" cy="208" r="7" fill="#ECEAE5"/></g>
+      <!-- scientist: light grey, scarred -->
       <g id="scientist">
-        <rect x="100" y="308" width="18" height="8" rx="3" fill="#2C2B29"/><rect x="124" y="308" width="18" height="8" rx="3" fill="#2C2B29"/>
-        <rect x="106" y="256" width="11" height="54" fill="#55534E"/><rect x="125" y="256" width="11" height="54" fill="#55534E"/>
-        <path d="M94 172 Q121 162 148 172 L160 270 Q121 278 82 270 Z" fill="#FFFFFF" stroke="#8A877F" stroke-width="1.5"/>
-        <path d="M121 176 L121 272" stroke="#C4BFB5" stroke-width="1.5"/>
-        <path d="M108 172 L121 196 L134 172" fill="#E2DED6" stroke="#8A877F" stroke-width="1.2"/>
-        <rect x="132" y="214" width="16" height="12" rx="2" fill="none" stroke="#AEAAA2"/>
-        <line x1="136" y1="210" x2="136" y2="218" stroke="#55534E" stroke-width="1.5"/>
-        <path d="M94 180 Q80 218 90 252" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
-        <path d="M94 180 Q80 218 90 252" fill="none" stroke="#8A877F" stroke-width="1.5" stroke-dasharray="0" opacity=".0"/>
-        <circle cx="90" cy="256" r="6" fill="#E9E4DC" stroke="#8A877F"/>
-        <path id="armR" d="M146 180 Q182 190 208 210" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
-        <path d="M146 180 Q182 190 208 210" fill="none" stroke="#8A877F" stroke-width="1.2" opacity=".5"/>
-        <circle cx="210" cy="210" r="6" fill="#E9E4DC" stroke="#8A877F"/>
-        <rect x="114" y="154" width="14" height="14" fill="#E9E4DC"/>
-        <circle cx="121" cy="136" r="23" fill="#EFEBE4" stroke="#8A877F" stroke-width="1.5"/>
-        <path d="M96 132 L88 118 L100 120 L94 104 L108 110 L108 94 L120 106 L128 92 L132 108 L146 98 L142 114 L156 112 L146 126 L152 136 L142 132" fill="#FFFFFF" stroke="#8A877F" stroke-width="1.5" stroke-linejoin="round"/>
-        <line x1="99" y1="134" x2="143" y2="134" stroke="#55534E" stroke-width="2"/>
-        <circle cx="112" cy="134" r="7.5" fill="#E2DED6" stroke="#2C2B29" stroke-width="2.2"/><circle cx="130" cy="134" r="7.5" fill="#E2DED6" stroke="#2C2B29" stroke-width="2.2"/>
-        <circle cx="114" cy="132" r="2" fill="#FFFFFF"/><circle cx="132" cy="132" r="2" fill="#FFFFFF"/>
-        <path d="M114 148 Q121 152 128 148" fill="none" stroke="#55534E" stroke-width="1.6" stroke-linecap="round"/>
-        <path d="M110 145 Q121 141 132 145" fill="none" stroke="#AEAAA2" stroke-width="2.5" stroke-linecap="round"/>
+        <rect x="100" y="308" width="18" height="8" rx="3" fill="#121213"/><rect x="124" y="308" width="18" height="8" rx="3" fill="#121213"/>
+        <rect x="106" y="256" width="11" height="54" fill="#4A4A50"/><rect x="125" y="256" width="11" height="54" fill="#4A4A50"/>
+        <path d="M94 172 Q121 162 148 172 L160 270 Q121 278 82 270 Z" fill="#D3D0CA" stroke="#8E8B85" stroke-width="1.5"/>
+        <path d="M121 176 L121 272" stroke="#A9A69F" stroke-width="1.5"/>
+        <path d="M108 172 L121 196 L134 172" fill="#B9B6AF" stroke="#8E8B85" stroke-width="1.2"/>
+        <rect x="132" y="214" width="16" height="12" rx="2" fill="none" stroke="#9C9993"/>
+        <line x1="136" y1="210" x2="136" y2="218" stroke="#4A4A50" stroke-width="1.5"/>
+        <path d="M94 180 Q80 218 90 252" fill="none" stroke="#D3D0CA" stroke-width="13" stroke-linecap="round"/>
+        <circle cx="90" cy="256" r="6" fill="#BEBBB4" stroke="#7A7771"/>
+        <path d="M146 180 Q182 190 208 210" fill="none" stroke="#D3D0CA" stroke-width="13" stroke-linecap="round"/>
+        <circle cx="210" cy="210" r="6" fill="#BEBBB4" stroke="#7A7771"/>
+        <rect x="114" y="154" width="14" height="14" fill="#BEBBB4"/>
+        <circle cx="121" cy="136" r="23" fill="#C9C6C0" stroke="#7A7771" stroke-width="1.5"/>
+        <path d="M96 132 L88 118 L100 120 L94 104 L108 110 L108 94 L120 106 L128 92 L132 108 L146 98 L142 114 L156 112 L146 126 L152 136 L142 132" fill="#F2F0EB" stroke="#9C9993" stroke-width="1.5" stroke-linejoin="round"/>
+        <line x1="99" y1="134" x2="143" y2="134" stroke="#2B2B2E" stroke-width="2"/>
+        <circle cx="112" cy="134" r="7.5" fill="#6E6C67" stroke="#1C1C1E" stroke-width="2.2"/><circle cx="130" cy="134" r="7.5" fill="#6E6C67" stroke="#1C1C1E" stroke-width="2.2"/>
+        <circle cx="114" cy="132" r="2" fill="#ECEAE5"/><circle cx="132" cy="132" r="2" fill="#ECEAE5"/>
+        <path d="M114 150 Q121 154 128 150" fill="none" stroke="#4A4A50" stroke-width="1.6" stroke-linecap="round"/>
+        <!-- scars -->
+        <path d="M131 143 L141 151" stroke="#6E6C67" stroke-width="1.4"/><path d="M133 141 l-2 4 M137 144 l-2 4 M140 147 l-2 4" stroke="#6E6C67" stroke-width="1"/>
+        <path d="M104 120 L112 124" stroke="#6E6C67" stroke-width="1.2"/><path d="M106 119 l-1 4 M110 121 l-1 4" stroke="#6E6C67" stroke-width="1"/>
       </g>
       <!-- tesla coil -->
       <g id="coil">
-        <rect x="592" y="294" width="40" height="24" rx="3" fill="#E2DED6" stroke="#8A877F"/>
-        <rect x="605" y="178" width="14" height="116" fill="#FAF9F6" stroke="#8A877F"/>
-        <g stroke="#AEAAA2">
+        <rect x="592" y="294" width="40" height="24" rx="3" fill="#3C3C41" stroke="#6E6C67"/>
+        <rect x="605" y="178" width="14" height="116" fill="#4A4A50" stroke="#6E6C67"/>
+        <g stroke="#6E6C67">
           <line x1="605" y1="190" x2="619" y2="190"/><line x1="605" y1="200" x2="619" y2="200"/><line x1="605" y1="210" x2="619" y2="210"/><line x1="605" y1="220" x2="619" y2="220"/><line x1="605" y1="230" x2="619" y2="230"/><line x1="605" y1="240" x2="619" y2="240"/><line x1="605" y1="250" x2="619" y2="250"/><line x1="605" y1="260" x2="619" y2="260"/><line x1="605" y1="270" x2="619" y2="270"/><line x1="605" y1="280" x2="619" y2="280"/>
         </g>
-        <circle cx="612" cy="164" r="17" fill="#ECE9E3" stroke="#55534E" stroke-width="1.5"/>
-        <polyline class="spark" points="596,158 572,148 580,140 548,124 556,118 516,104" fill="none" stroke="#2C2B29" stroke-width="2" stroke-linejoin="round"/>
-        <polyline class="spark b" points="600,172 576,180 584,188 556,196 562,204 528,214" fill="none" stroke="#55534E" stroke-width="1.6" stroke-linejoin="round"/>
-        <polyline class="spark c" points="612,146 606,124 616,120 604,98" fill="none" stroke="#8A877F" stroke-width="1.6" stroke-linejoin="round"/>
+        <circle cx="612" cy="164" r="17" fill="#8E8B85" stroke="#C6C3BD" stroke-width="1.5"/>
+        <polyline class="spark" points="596,158 572,148 580,140 548,124 556,118 516,104" fill="none" stroke="#ECEAE5" stroke-width="2" stroke-linejoin="round"/>
+        <polyline class="spark b" points="600,172 576,180 584,188 556,196 562,204 528,214" fill="none" stroke="#A9CF8F" stroke-width="1.6" stroke-linejoin="round"/>
+        <polyline class="spark c" points="612,146 606,124 616,120 604,98" fill="none" stroke="#C6C3BD" stroke-width="1.6" stroke-linejoin="round"/>
       </g>
       <!-- door for external agents -->
       <g id="door">
-        <rect x="680" y="150" width="68" height="168" fill="#55534E"/>
-        <g id="visitor"><circle cx="728" cy="196" r="11" fill="#8A877F"/><path d="M714 260 Q728 208 742 260 L742 318 L714 318 Z" fill="#8A877F"/>
-          <text x="728" y="246" text-anchor="middle" font-size="8" fill="#FAF9F6">MCP</text></g>
-        <rect x="676" y="146" width="76" height="172" fill="none" stroke="#8A877F" stroke-width="4"/>
-        <g id="doorPanel"><rect x="686" y="152" width="58" height="166" fill="#ECE9E3" stroke="#8A877F"/>
-          <rect x="694" y="162" width="42" height="56" rx="3" fill="none" stroke="#C4BFB5"/><rect x="694" y="232" width="42" height="74" rx="3" fill="none" stroke="#C4BFB5"/>
-          <circle cx="736" cy="242" r="3.5" fill="#55534E"/></g>
-        <text id="doorTxt" x="714" y="138" text-anchor="middle" font-size="10" fill="#8A877F">door</text>
+        <rect x="680" y="150" width="68" height="168" fill="#121213"/>
+        <g id="visitor"><circle cx="728" cy="196" r="11" fill="#8E8B85"/><path d="M714 260 Q728 208 742 260 L742 318 L714 318 Z" fill="#8E8B85"/>
+          <text x="728" y="246" text-anchor="middle" font-size="8" fill="#1C1C1E">MCP</text></g>
+        <rect x="676" y="146" width="76" height="172" fill="none" stroke="#6E6C67" stroke-width="4"/>
+        <g id="doorPanel"><rect x="686" y="152" width="58" height="166" fill="#3C3C41" stroke="#6E6C67"/>
+          <rect x="694" y="162" width="42" height="56" rx="3" fill="none" stroke="#55555B"/><rect x="694" y="232" width="42" height="74" rx="3" fill="none" stroke="#55555B"/>
+          <circle cx="736" cy="242" r="3.5" fill="#C6C3BD"/></g>
+        <text id="doorTxt" x="714" y="138" text-anchor="middle" font-size="10" fill="#8E8B85">door</text>
       </g>
       <!-- operating table -->
-      <rect x="300" y="258" width="240" height="10" rx="3" fill="#C4BFB5" stroke="#8A877F"/>
-      <line x1="322" y1="268" x2="322" y2="308" stroke="#8A877F" stroke-width="4"/><line x1="518" y1="268" x2="518" y2="308" stroke="#8A877F" stroke-width="4"/>
-      <circle cx="322" cy="312" r="5" fill="#55534E"/><circle cx="518" cy="312" r="5" fill="#55534E"/>
+      <rect x="300" y="258" width="240" height="10" rx="3" fill="#55555B" stroke="#6E6C67"/>
+      <line x1="322" y1="268" x2="322" y2="308" stroke="#6E6C67" stroke-width="4"/><line x1="518" y1="268" x2="518" y2="308" stroke="#6E6C67" stroke-width="4"/>
+      <circle cx="322" cy="312" r="5" fill="#8E8B85"/><circle cx="518" cy="312" r="5" fill="#8E8B85"/>
       <!-- monster -->
       <ellipse id="glow" cx="420" cy="150" rx="120" ry="120" fill="url(#glowG)"/>
       <g id="monster"></g>
@@ -189,7 +199,12 @@ svg text{font-family:'JetBrains Mono',monospace}
     <div id="gate"><div class="k" id="gateKind">approval needed</div><div class="t" id="gateTitle"></div><pre id="gateDetail"></pre>
       <button class="primary" id="approve">It's alive · install</button> <button class="no" id="reject">Reject</button></div>
   </div>
-  <div class="pn"><p class="lb"><b>Lab notebook</b><span>build &amp; test log</span></p><div id="log"></div></div>
+  <div class="pn">
+    <div id="workshop">
+      <div><p class="lb"><b>Lab notebook</b><span>build &amp; test log</span></p><div id="log"></div></div>
+      <div><p class="lb"><b id="codeTitle">Code on the bench</b><span id="codeTabs"><button id="tImpl" class="on">impl.py</button> <button id="tTests">tests</button></span></p><div id="code"><span class="cm"># the code the agent writes appears here, attempt by attempt</span></div></div>
+    </div>
+  </div>
 </div>
 <div class="col">
   <div class="pn">
@@ -198,60 +213,66 @@ svg text{font-family:'JetBrains Mono',monospace}
       <div><p class="lb">Last run · every time</p><div class="big" id="runTok">–</div><div class="sub" id="runSub">tokens per run</div></div>
     </div>
   </div>
-  <div class="pn" id="result"><p class="lb"><b>Result</b><span id="resultWf"></span></p><pre id="resultBody"></pre></div>
   <div class="pn">
     <p class="lb"><b>Registry wall</b><span id="regCount"></span></p>
     <div class="tiles" id="tiles"></div>
     <div id="drawer"></div>
   </div>
+  <div class="pn" id="result"><p class="lb"><b>Result</b><span id="resultWf"></span></p><pre id="resultBody"></pre></div>
 </div>
 </main>
 <script>
 const $=id=>document.getElementById(id);
 const LOADED=Date.now()/1000;
-let voiceOn=false, monster=[], gateId=null, freshTiles=new Set(), alive=false, curScope="";
-const C={ink:"#2C2B29",ink2:"#55534E",mute:"#8A877F",dim:"#AEAAA2",line:"#C4BFB5",soft:"#E2DED6",skin:"#CFCAC0",skinD:"#BDB8AD",panel:"#FAF9F6"};
+let voiceOn=false, monster=[], gateId=null, freshTiles=new Set(), alive=false, codeView="impl", lastCode=null;
+const M={skin:"#86A872",shade:"#6C8F5A",dark:"#3F5A33",stitch:"#24331D",hair:"#151516",pants:"#3C3C41",boot:"#121213",light:"#A9C795"};
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function log(text,cls=""){const d=document.createElement("div");if(cls)d.className=cls;d.textContent=text;const L=$("log");L.appendChild(d);while(L.children.length>400)L.firstChild.remove();L.scrollTop=L.scrollHeight}
 function say(text,live){$("bubble").textContent=text;$("bubble").classList.add("on");clearTimeout(say.t);say.t=setTimeout(()=>$("bubble").classList.remove("on"),6500);
   if(live&&voiceOn){const a=new Audio("/api/voice?text="+encodeURIComponent(text));a.play().catch(()=>{})}}
 function setScene(building){$("lab").classList.toggle("building",!!building)}
 function setAlive(a){alive=a;$("lab").classList.toggle("alive",a)}
+function stitches(x1,y1,x2,y2,n){let h=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${M.stitch}" stroke-width="1.4"/>`;
+  for(let i=1;i<=n;i++){const t=i/(n+1),x=x1+(x2-x1)*t,y=y1+(y2-y1)*t,dx=y2-y1,dy=-(x2-x1),L=Math.hypot(dx,dy)||1;
+    h+=`<line x1="${x-dx/L*3.5}" y1="${y-dy/L*3.5}" x2="${x+dx/L*3.5}" y2="${y+dy/L*3.5}" stroke="${M.stitch}" stroke-width="1.2"/>`}return h}
 
 function drawMonster(){
   const g=$("monster");const parts=monster.length?monster:[{uses:"",state:"dormant"}];
-  const n=parts.length, tx=376, tw=88, ty=120, th=94, bh=th/n;
-  let h="";
-  const dorm=!monster.length;
-  const op=dorm?' opacity=".35"':"";
-  // legs + boots
-  h+=`<g${op}><rect x="386" y="${ty+th}" width="26" height="40" fill="${C.ink2}"/><rect x="428" y="${ty+th}" width="26" height="40" fill="${C.ink2}"/>`;
-  h+=`<rect x="380" y="250" width="34" height="9" rx="3" fill="${C.ink}"/><rect x="426" y="250" width="34" height="9" rx="3" fill="${C.ink}"/>`;
-  // arms
-  h+=`<rect x="356" y="${ty+4}" width="18" height="82" rx="6" fill="${C.skinD}" stroke="${C.mute}"/><rect x="466" y="${ty+4}" width="18" height="82" rx="6" fill="${C.skinD}" stroke="${C.mute}"/>`;
-  h+=`<path d="M356 ${ty+40} h18 M466 ${ty+52} h18" stroke="${C.ink2}" stroke-width="1.2"/>`;
-  h+=`<rect x="354" y="${ty+84}" width="22" height="16" rx="5" fill="${C.skin}" stroke="${C.mute}"/><rect x="464" y="${ty+84}" width="22" height="16" rx="5" fill="${C.skin}" stroke="${C.mute}"/>`;
-  // neck, head, bolts
-  h+=`<rect x="404" y="110" width="32" height="12" fill="${C.skinD}"/>`;
-  h+=`<rect x="370" y="102" width="12" height="9" rx="2" fill="${C.ink2}"/><rect x="458" y="102" width="12" height="9" rx="2" fill="${C.ink2}"/>`;
-  h+=`<rect x="382" y="50" width="76" height="62" rx="8" fill="${C.skin}" stroke="${C.mute}" stroke-width="1.5"/>`;
-  h+=`<path d="M380 62 L380 46 L460 46 L460 62 L452 56 L444 63 L436 56 L428 63 L420 56 L412 63 L404 56 L396 63 L388 56 Z" fill="${C.ink}"/>`;
-  h+=`<path d="M392 70 L414 70" stroke="${C.ink2}" stroke-width="1.2"/><path d="M396 67 v6 M402 67 v6 M408 67 v6" stroke="${C.ink2}" stroke-width="1"/>`;
-  h+=`<g class="eyes-closed"><path d="M398 84 q7 4 14 0 M428 84 q7 4 14 0" fill="none" stroke="${C.ink}" stroke-width="2" stroke-linecap="round"/></g>`;
-  h+=`<g class="eyes-open"><circle cx="405" cy="84" r="6.5" fill="#fff" stroke="${C.ink}" stroke-width="1.5"/><circle cx="435" cy="84" r="6.5" fill="#fff" stroke="${C.ink}" stroke-width="1.5"/><circle cx="406" cy="85" r="2.6" fill="${C.ink}"/><circle cx="436" cy="85" r="2.6" fill="${C.ink}"/></g>`;
-  h+=`<path d="M404 100 L436 100" stroke="${C.ink}" stroke-width="1.8"/><path d="M410 97 v6 M418 97 v6 M426 97 v6 M432 97 v6" stroke="${C.ink}" stroke-width="1.1"/></g>`;
+  const n=parts.length, tx=376, tw=88, ty=120, th=94, bh=th/n, dorm=!monster.length;
+  let h=`<g${dorm?' opacity=".45"':""}>`;
+  // legs, trousers, boots
+  h+=`<rect x="386" y="${ty+th}" width="26" height="40" fill="${M.pants}"/><rect x="428" y="${ty+th}" width="26" height="40" fill="${M.pants}"/>`;
+  h+=stitches(388,ty+th+20,410,ty+th+20,3)+stitches(430,ty+th+14,452,ty+th+26,3);
+  h+=`<rect x="380" y="250" width="34" height="9" rx="3" fill="${M.boot}"/><rect x="426" y="250" width="34" height="9" rx="3" fill="${M.boot}"/>`;
+  // arms + hands
+  h+=`<rect x="356" y="${ty+4}" width="18" height="82" rx="6" fill="${M.shade}" stroke="${M.dark}"/><rect x="466" y="${ty+4}" width="18" height="82" rx="6" fill="${M.shade}" stroke="${M.dark}"/>`;
+  h+=stitches(356,ty+36,374,ty+40,2)+stitches(466,ty+52,484,ty+48,2)+stitches(358,ty+80,372,ty+80,2)+stitches(468,ty+80,482,ty+80,2);
+  h+=`<rect x="354" y="${ty+84}" width="22" height="16" rx="5" fill="${M.skin}" stroke="${M.dark}"/><rect x="464" y="${ty+84}" width="22" height="16" rx="5" fill="${M.skin}" stroke="${M.dark}"/>`;
+  // neck + bolts
+  h+=`<rect x="404" y="110" width="32" height="12" fill="${M.shade}"/>`+stitches(406,116,434,116,4);
+  h+=`<rect x="368" y="100" width="14" height="10" rx="2" fill="#8E8B85" stroke="#55555B"/><rect x="458" y="100" width="14" height="10" rx="2" fill="#8E8B85" stroke="#55555B"/>`;
+  // head
+  h+=`<rect x="382" y="50" width="76" height="62" rx="8" fill="${M.skin}" stroke="${M.dark}" stroke-width="1.5"/>`;
+  h+=`<path d="M380 62 L380 46 L460 46 L460 62 L452 56 L444 63 L436 56 L428 63 L420 56 L412 63 L404 56 L396 63 L388 56 Z" fill="${M.hair}"/>`;
+  h+=stitches(390,70,418,68,4)+stitches(444,88,452,104,2)+stitches(388,92,394,106,2);
+  h+=`<path d="M396 79 q9 -4 18 0 M426 79 q9 -4 18 0" fill="none" stroke="${M.hair}" stroke-width="2.4" stroke-linecap="round"/>`;
+  h+=`<g class="eyes-closed"><path d="M399 86 q6 4 12 0 M429 86 q6 4 12 0" fill="none" stroke="${M.stitch}" stroke-width="2" stroke-linecap="round"/></g>`;
+  h+=`<g class="eyes-open"><circle cx="405" cy="86" r="6" fill="#F2F0EB" stroke="${M.stitch}" stroke-width="1.4"/><circle cx="435" cy="86" r="6" fill="#F2F0EB" stroke="${M.stitch}" stroke-width="1.4"/><circle cx="406" cy="87" r="2.6" fill="${M.stitch}"/><circle cx="436" cy="87" r="2.6" fill="${M.stitch}"/></g>`;
+  h+=`<path d="M404 102 L436 102" stroke="${M.stitch}" stroke-width="1.8"/><path d="M410 99 v6 M418 99 v6 M426 99 v6 M432 99 v6" stroke="${M.stitch}" stroke-width="1.1"/>`;
   // torso bands = workflow steps
   parts.forEach((p,i)=>{const y=ty+i*bh;
-    let fill=C.soft,stroke=C.mute,dash="",cls="";
-    if(p.state==="ready"){fill=C.skinD;stroke=C.ink2}
-    else if(p.state==="building"){fill="#E9E5DE";stroke=C.ink2;cls="part-building"}
-    else if(p.state==="failed"){fill="url(#hatch)";stroke="#9A5B4F"}
-    else if(p.state==="missing"||p.state==="dormant"){fill="#F6F4F0";stroke=C.dim;dash=' stroke-dasharray="5 4"'}
-    h+=`<rect class="${cls}" x="${tx}" y="${y}" width="${tw}" height="${bh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"${dash}${dorm?' opacity=".5"':""}/>`;
-    if(!dorm)h+=`<text x="${tx+tw/2}" y="${y+bh/2+4}" text-anchor="middle" font-size="12" font-weight="500" fill="${p.state==="ready"?C.ink:C.mute}">${i+1}</text>`;
-    if(i>0){for(let sx=tx+6;sx<tx+tw-4;sx+=9)h+=`<line x1="${sx}" y1="${y-3}" x2="${sx+4}" y2="${y+3}" stroke="${C.ink2}" stroke-width="1"/>`}
+    let fill=M.skin,stroke=M.dark,dash="",cls="";
+    if(p.state==="ready"){fill=M.skin}
+    else if(p.state==="building"){fill=M.light;cls="part-building"}
+    else if(p.state==="failed"){fill="url(#hatch)";stroke="#D99383"}
+    else {fill="#2B2B2E";stroke="#6C8F5A";dash=' stroke-dasharray="5 4"'}
+    h+=`<rect class="${cls}" x="${tx}" y="${y}" width="${tw}" height="${bh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"${dash}/>`;
+    if(!dorm)h+=`<text x="${tx+tw/2}" y="${y+bh/2+4}" text-anchor="middle" font-size="12" font-weight="500" fill="${p.state==="ready"||p.state==="building"?M.stitch:"#86A872"}">${i+1}</text>`;
+    if(i>0)h+=stitches(tx+2,y,tx+tw-2,y,9);
   });
-  if(dorm)h+=`<text x="420" y="${ty+th/2+4}" text-anchor="middle" font-size="11" fill="${C.mute}">dormant</text>`;
+  if(n===1&&!dorm)h+=stitches(tx+14,ty+20,tx+30,ty+60,3);
+  if(dorm)h+=`<text x="420" y="${ty+th/2+4}" text-anchor="middle" font-size="11" fill="#86A872">dormant</text>`;
+  h+=`</g>`;
   g.innerHTML=h;
   $("parts").innerHTML=monster.map((p,i)=>`<span class="part ${p.state}"><i>${i+1}</i>${esc(p.uses)}<span style="color:var(--mute)">· ${p.state}</span></span>`).join("");
 }
@@ -264,14 +285,18 @@ function drawFlasks(items){
   const g=$("flasks");let h="";
   items.slice(0,4).forEach((r,i)=>{const x=40+i*56;const fresh=freshTiles.has(r.name);
     h+=`<g><title>${esc(r.name)} · distilled to code · 0 tok/run</title>`;
-    h+=`<path d="M${x+14} 40 L${x+14} 52 L${x+4} 74 Q${x+2} 78 ${x+7} 78 L${x+33} 78 Q${x+38} 78 ${x+36} 74 L${x+26} 52 L${x+26} 40 Z" fill="#FFFFFF" stroke="${fresh?C.ink:C.mute}" stroke-width="1.5"/>`;
-    h+=`<path d="M${x+8} 66 L${x+32} 66 L${x+35} 73 Q${x+36} 76 ${x+32} 76 L${x+8} 76 Q${x+4} 76 ${x+5} 73 Z" fill="${C.ink2}"/>`;
-    h+=`<rect x="${x+12}" y="36" width="16" height="5" rx="1.5" fill="${C.mute}"/>`;
+    h+=`<path d="M${x+14} 40 L${x+14} 52 L${x+4} 74 Q${x+2} 78 ${x+7} 78 L${x+33} 78 Q${x+38} 78 ${x+36} 74 L${x+26} 52 L${x+26} 40 Z" fill="#3C3C41" stroke="${fresh?"#ECEAE5":"#8E8B85"}" stroke-width="1.5"/>`;
+    h+=`<path d="M${x+8} 66 L${x+32} 66 L${x+35} 73 Q${x+36} 76 ${x+32} 76 L${x+8} 76 Q${x+4} 76 ${x+5} 73 Z" fill="#86A872"/>`;
+    h+=`<rect x="${x+12}" y="36" width="16" height="5" rx="1.5" fill="#8E8B85"/>`;
     const label=r.name.length>9?r.name.slice(0,8)+"…":r.name;
-    h+=`<text x="${x+20}" y="98" text-anchor="middle" font-size="9" fill="${C.ink2}">${esc(label)}</text></g>`;});
-  if(!items.length)h=`<text x="147" y="64" text-anchor="middle" font-size="10" fill="${C.dim}">shelf: no distilled steps yet</text>`;
+    h+=`<text x="${x+20}" y="98" text-anchor="middle" font-size="9" fill="#C6C3BD">${esc(label)}</text></g>`;});
+  if(!items.length)h=`<text x="147" y="66" text-anchor="middle" font-size="10" fill="#605E5A">shelf: no distilled steps yet</text>`;
   g.innerHTML=h;
 }
+function hl(src){return esc(src).split("\n").map(l=>/^\s*#/.test(l)?`<span class="cm">${l}</span>`:l.replace(/^(\s*)(def|class)(\s+)(\w+)/,'$1$2$3<span class="fn">$4</span>')).join("\n")}
+function renderCode(){if(!lastCode)return;$("code").innerHTML=hl(codeView==="impl"?lastCode.impl:lastCode.tests);
+  $("codeTitle").textContent=`${lastCode.capability} · attempt ${lastCode.attempt}`;$("tImpl").classList.toggle("on",codeView==="impl");$("tTests").classList.toggle("on",codeView!=="impl");$("code").scrollTop=0}
+$("tImpl").onclick=()=>{codeView="impl";renderCode()};$("tTests").onclick=()=>{codeView="tests";renderCode()};
 
 function showGate(ev,live){gateId=ev.id;$("gateTitle").textContent=ev.title;const d=ev.detail||{};
   $("gateKind").textContent=ev.gate==="authority"?"authority request · operator decision":"install request · operator decision";
@@ -284,16 +309,17 @@ function knock(){const L=$("lab");L.classList.add("knock");$("doorTxt").textCont
 
 function handle(ev){
   const live=ev.ts>LOADED-1;const k=ev.kind;
-  if(k==="task"){monster=[];setAlive(false);drawMonster();curScope="";$("result").style.display="none";log("▶ "+ev.text,"stage")}
+  if(k==="task"){monster=[];setAlive(false);drawMonster();$("result").style.display="none";log("▶ "+ev.text,"stage")}
   else if(k==="stage"){$("stage").textContent=ev.stage;log("— "+ev.msg,"stage");
     if(["learn","test","distill"].includes(ev.stage))setScene(true);
     if(["accept","assemble","run","plan"].includes(ev.stage))setScene(false);
     if(ev.capability&&ev.stage==="learn")setPart(ev.capability,"building");
     if(ev.stage==="run")$("wfname").textContent=ev.workflow}
   else if(k==="log")log(ev.msg,"dim");
+  else if(k==="code"){lastCode=ev;codeView="impl";renderCode();log("✎ "+ev.msg,"dim")}
   else if(k==="test"){const m=ev.msg||"";log(m,/passed|succeeded|PASSED/.test(m)&&!/failed|error|FAILED/i.test(m)?"pass":/fail|error|rejected/i.test(m)?"fail":"dim")}
   else if(k==="say")say(ev.text,live);
-  else if(k==="cost"){if(String(ev.scope).startsWith("task:")){$("buildUsd").textContent="$"+ev.total_usd.toFixed(3);$("buildSub").textContent=`${ev.total_tokens.toLocaleString()} tokens · ${String(ev.scope).slice(5,30)}…`}}
+  else if(k==="cost"){if(String(ev.scope).startsWith("task:")){$("buildUsd").textContent="$"+ev.total_usd.toFixed(3);$("buildSub").textContent=`${ev.total_tokens.toLocaleString()} tokens to build`}}
   else if(k==="monster"){monster=ev.steps;setAlive(false);drawMonster()}
   else if(k==="monster_part")setPart(ev.uses,ev.state);
   else if(k==="gate"){setScene(false);showGate(ev,live)}
