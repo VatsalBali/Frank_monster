@@ -36,10 +36,14 @@ async def events(replay: int = 300):
             lines = f.readlines()
             for line in lines[-replay:]:
                 yield f"data: {line.strip()}\n\n"
+            buf = ""
             while True:
-                line = f.readline()
-                if line:
-                    yield f"data: {line.strip()}\n\n"
+                chunk = f.readline()
+                if chunk:
+                    buf += chunk
+                    if buf.endswith("\n"):  # only complete lines; a writer may be mid-line
+                        yield f"data: {buf.strip()}\n\n"
+                        buf = ""
                 else:
                     await asyncio.sleep(0.25)
     return StreamingResponse(gen(), media_type="text/event-stream")

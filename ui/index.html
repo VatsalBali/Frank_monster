@@ -5,104 +5,202 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Frankenstein Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f1012;--panel:#17191c;--panel2:#1e2125;--line:#2c3036;--text:#e8e6e1;--muted:#9a9890;--dim:#6b6a65;
---green:#5DCAA5;--green-bg:#0f2e25;--coral:#F0997B;--coral-bg:#3a1d14;--amber:#EF9F27;--purple:#AFA9EC;--red:#F09595;--red-bg:#3a1616}
+:root{
+  --bg:#F2F0EB; --panel:#FAF9F6; --soft:#ECE9E3; --soft2:#E2DED6; --line:#D9D5CC; --line2:#C4BFB5;
+  --ink:#2C2B29; --ink2:#55534E; --mute:#8A877F; --dim:#AEAAA2;
+  --fail:#9A5B4F; --fail-bg:#F3E7E3;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,sans-serif}
-header{display:flex;gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--line)}
-header h1{font-size:16px;font-weight:600;margin:0;letter-spacing:.2px;white-space:nowrap}
-header h1 span{color:var(--green)}
-#task{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 12px;font:inherit}
-button{font:inherit;font-size:13px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer}
-button:hover{border-color:var(--muted)}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+header{display:flex;gap:12px;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font:600 20px/1 Fraunces,Georgia,serif;margin:0;letter-spacing:.2px;white-space:nowrap}
+header h1 span{color:var(--mute);font-weight:500}
+#task{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 14px;font:inherit;outline:none}
+#task:focus{border-color:var(--line2);background:#fff}
+button{font:inherit;font-size:13px;padding:9px 15px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;transition:background .15s,border-color .15s}
+button:hover{border-color:var(--line2);background:#fff}
 button:disabled{opacity:.4;cursor:default}
-button.go{border-color:var(--green);color:var(--green)}
-button.no{border-color:var(--red);color:var(--red)}
-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:16px;padding:16px 20px}
-.col{display:flex;flex-direction:column;gap:16px;min-width:0}
-.pn{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
-.lb{font-size:12px;color:var(--muted);margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
-.flask{display:inline-flex;gap:6px;align-items:center;font-size:12px;padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);margin:0 6px 6px 0}
-.flask.new{border-color:var(--green);background:var(--green-bg)}
-#bench{position:relative}
-#bubble{position:absolute;left:96px;top:4px;max-width:calc(100% - 110px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13px;opacity:0;transition:opacity .3s}
-#bubble.on{opacity:1}
-#stage{font-family:'JetBrains Mono',monospace;color:var(--text)}
-#gate{display:none;border:1px solid var(--amber);background:#2b2110;border-radius:10px;padding:12px;margin-top:10px}
-#gate .t{font-weight:500;margin-bottom:6px}
-#gate pre{font:12px 'JetBrains Mono',monospace;color:var(--muted);white-space:pre-wrap;margin:0 0 10px;max-height:140px;overflow:auto}
-#log{font:12px/1.65 'JetBrains Mono',monospace;color:var(--muted);height:260px;overflow:auto;white-space:pre-wrap;word-break:break-word}
-#log .pass{color:var(--green)} #log .fail{color:var(--red)} #log .stage{color:var(--text)} #log .gate{color:var(--amber)}
-.gauge{display:flex;gap:20px;flex-wrap:wrap}
-.gauge .big{font-size:30px;font-weight:600;line-height:1.1}
-.gauge .sub{font-size:12px;color:var(--muted)}
-#door{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
-#door .d{width:26px;height:38px;border:2px solid var(--line);border-radius:4px 4px 0 0;position:relative;transition:all .3s}
-#door .d::after{content:"";position:absolute;right:4px;top:18px;width:4px;height:4px;border-radius:2px;background:var(--dim)}
-#door.knock .d{border-color:var(--amber);transform:rotate(-4deg)}
-#door.knock{color:var(--amber)}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.tl{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel2);cursor:pointer;min-height:84px}
-.tl:hover{border-color:var(--muted)}
-.tl b{display:block;font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tl .k{font-size:11px;color:var(--dim);text-transform:lowercase}
-.tl .m{font-size:12px;color:var(--muted);margin-top:4px}
-.tl.wf{border-color:#3d3a6b}
-.tl.new{border-color:var(--green);background:var(--green-bg)}
+button.primary{background:var(--ink);border-color:var(--ink);color:var(--panel)}
+button.primary:hover{background:#45433F}
+button.no{color:var(--fail)}
+main{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;padding:18px 24px;max-width:1600px;margin:0 auto}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.pn{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.lb{font-size:12px;color:var(--mute);margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;letter-spacing:.2px}
+.lb b{font-weight:500;color:var(--ink2)}
+/* scene */
+#scene{position:relative;padding:0;overflow:hidden}
+#scene .top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}
+#stage{font:500 12px 'JetBrains Mono',monospace;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+#wfname{font:12px 'JetBrains Mono',monospace;color:var(--mute)}
+#bubble{position:absolute;left:150px;top:46px;max-width:min(380px,calc(100% - 170px));background:#fff;border:1px solid var(--line2);border-radius:14px;padding:9px 13px;font-size:13px;color:var(--ink);box-shadow:0 1px 0 var(--line);opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s;z-index:2}
+#bubble::after{content:"";position:absolute;left:-7px;bottom:12px;width:12px;height:12px;background:#fff;border-left:1px solid var(--line2);border-bottom:1px solid var(--line2);transform:rotate(45deg)}
+#bubble.on{opacity:1;transform:none}
+svg text{font-family:'JetBrains Mono',monospace}
+.spark{opacity:0}
+.building .spark{animation:flick 0.9s infinite}
+.building .spark.b{animation-delay:.3s}.building .spark.c{animation-delay:.6s}
+@keyframes flick{0%,100%{opacity:0}10%{opacity:1}30%{opacity:.2}45%{opacity:.9}60%{opacity:0}}
+.building #lever{transform:rotate(38deg)}
+#lever{transform-origin:216px 252px;transition:transform .4s}
+.part-building{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+#doorPanel{transform-origin:686px 236px;transition:transform .5s}
+.knock #doorPanel{transform:scaleX(.45)}
+#visitor{opacity:0;transition:opacity .4s .2s}
+.knock #visitor{opacity:1}
+.eyes-open{display:none}.alive .eyes-open{display:inline}.alive .eyes-closed{display:none}
+.alive #glow{opacity:1}
+#glow{opacity:0;transition:opacity .6s}
+#parts{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px}
+.part{display:inline-flex;align-items:center;gap:7px;font:12px 'JetBrains Mono',monospace;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink2)}
+.part i{font-style:normal;width:16px;height:16px;border-radius:50%;display:inline-grid;place-items:center;font-size:10px;background:var(--soft2);color:var(--ink)}
+.part.missing{border-style:dashed;color:var(--mute)}
+.part.building{background:var(--soft)}
+.part.ready i{background:var(--ink);color:var(--panel)}
+.part.failed{color:var(--fail);border-color:var(--fail)}
+/* gate */
+#gate{display:none;margin:0 16px 16px;border:1px solid var(--line2);background:#fff;border-radius:12px;padding:14px}
+#gate .t{font-weight:600;margin-bottom:6px}
+#gate .k{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+#gate pre{font:12px/1.55 'JetBrains Mono',monospace;color:var(--ink2);white-space:pre-wrap;margin:0 0 12px;max-height:150px;overflow:auto}
+/* log */
+#log{font:12px/1.7 'JetBrains Mono',monospace;color:var(--ink2);height:250px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+#log .stage{color:var(--ink);font-weight:500}
+#log .pass{color:var(--ink)} #log .pass::first-letter{font-weight:600}
+#log .fail{color:var(--fail)}
+#log .gate{color:var(--ink);background:var(--soft);border-radius:4px;padding:0 4px}
+#log .dim{color:var(--mute)}
+/* gauges */
+.gauge{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gauge>div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.gauge .big{font:600 32px/1.1 Fraunces,Georgia,serif;letter-spacing:-.5px}
+.gauge .sub{font-size:12px;color:var(--mute)}
+/* registry */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.tl{border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff;cursor:pointer;min-height:92px;transition:border-color .15s,transform .15s}
+.tl:hover{border-color:var(--line2);transform:translateY(-1px)}
+.tl b{display:block;font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:2px 0}
+.tl .k{font-size:11px;color:var(--mute)}
+.tl .m{font-size:12px;color:var(--ink2)}
+.tl.wf{background:var(--soft)}
+.tl.new{border-color:var(--ink);box-shadow:0 0 0 3px var(--soft2)}
 .tl.revoked{opacity:.45}
 .tl.empty{border-style:dashed;background:transparent;cursor:default}
-#drawer{display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
-#drawer pre{font:12px 'JetBrains Mono',monospace;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:260px;overflow:auto;white-space:pre-wrap}
-.vrow{display:flex;gap:8px;align-items:center;font-size:12px;margin:4px 0;flex-wrap:wrap}
-.pill{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
-.pill.active{border-color:var(--green);color:var(--green)}
+.tl.empty:hover{transform:none}
+#drawer{display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+#drawer pre{font:12px 'JetBrains Mono',monospace;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;max-height:260px;overflow:auto;white-space:pre-wrap}
+#drawer code{font:12px 'JetBrains Mono',monospace;color:var(--ink2)}
+.vrow{display:flex;gap:8px;align-items:center;font-size:12px;margin:5px 0;flex-wrap:wrap}
+.pill{font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--mute);background:var(--panel)}
+.pill.active{border-color:var(--ink);color:var(--ink)}
 #result{display:none}
-#result pre{font:12px 'JetBrains Mono',monospace;white-space:pre-wrap;margin:0;max-height:200px;overflow:auto;color:var(--text)}
-@media(max-width:900px){main{grid-template-columns:1fr}header{flex-wrap:wrap}}
+#result pre{font:12px/1.55 'JetBrains Mono',monospace;white-space:pre-wrap;margin:0;max-height:220px;overflow:auto;color:var(--ink)}
+@media(max-width:980px){main{grid-template-columns:1fr;padding:16px}header{flex-wrap:wrap;padding:12px 16px}#task{flex-basis:100%;order:3}}
 </style>
 </head>
 <body>
 <header>
   <h1>Frankenstein <span>Lab</span></h1>
   <input id="task" placeholder="Give the scientist a task…" autocomplete="off">
-  <button id="go" class="go">Bring it to life</button>
+  <button id="go" class="primary">Bring it to life</button>
   <button id="voiceBtn" title="Browsers need a click before audio can play">Voice: off</button>
 </header>
 <main>
 <div class="col">
-  <div class="pn"><p class="lb">Shelf · LLM steps the factory distilled into code</p><div id="shelf"><span class="sub" style="color:var(--dim);font-size:12px">empty</span></div></div>
-  <div class="pn" id="bench">
-    <p class="lb"><span>Workbench · <span id="stage">idle</span></span><span id="wfname" style="font-family:'JetBrains Mono',monospace"></span></p>
+  <div class="pn" id="scene">
+    <div class="top"><span class="lb" style="margin:0">Workbench <span id="stage">idle</span></span><span id="wfname"></span></div>
     <div id="bubble"></div>
-    <svg width="100%" viewBox="0 0 520 210" role="img" aria-label="Scientist at workbench building a workflow">
-      <g stroke="#9a9890" stroke-width="2" fill="none" stroke-linecap="round">
-        <circle cx="54" cy="70" r="22"/><circle cx="46" cy="68" r="6"/><circle cx="62" cy="68" r="6"/><line x1="52" y1="68" x2="56" y2="68"/>
-        <path d="M34 58 Q54 30 76 56"/>
-        <line x1="54" y1="92" x2="54" y2="152"/><line x1="54" y1="108" x2="112" y2="132" id="arm"/>
-        <line x1="54" y1="152" x2="38" y2="196"/><line x1="54" y1="152" x2="70" y2="196"/>
+    <svg id="lab" width="100%" viewBox="0 0 760 340" role="img" aria-label="The scientist builds a monster from workflow steps">
+      <defs>
+        <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#9A5B4F" stroke-width="2"/></pattern>
+        <radialGradient id="glowG"><stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+      </defs>
+      <!-- room -->
+      <rect x="0" y="318" width="760" height="22" fill="#E6E2DA"/>
+      <line x1="0" y1="318" x2="760" y2="318" stroke="#C4BFB5"/>
+      <!-- wall shelf with distilled flasks -->
+      <line x1="24" y1="78" x2="270" y2="78" stroke="#8A877F" stroke-width="3" stroke-linecap="round"/>
+      <line x1="44" y1="78" x2="52" y2="90" stroke="#AEAAA2" stroke-width="2"/><line x1="250" y1="78" x2="242" y2="90" stroke="#AEAAA2" stroke-width="2"/>
+      <g id="flasks"></g>
+      <!-- control box + lever -->
+      <rect x="194" y="252" width="44" height="66" rx="5" fill="#E2DED6" stroke="#8A877F"/>
+      <circle cx="206" cy="270" r="3.5" fill="#55534E"/><circle cx="218" cy="270" r="3.5" fill="#AEAAA2"/><circle cx="230" cy="270" r="3.5" fill="#AEAAA2"/>
+      <rect x="203" y="284" width="26" height="22" rx="2" fill="#FAF9F6" stroke="#AEAAA2"/>
+      <g id="lever"><line x1="216" y1="252" x2="216" y2="212" stroke="#55534E" stroke-width="4" stroke-linecap="round"/><circle cx="216" cy="208" r="7" fill="#2C2B29"/></g>
+      <!-- scientist -->
+      <g id="scientist">
+        <rect x="100" y="308" width="18" height="8" rx="3" fill="#2C2B29"/><rect x="124" y="308" width="18" height="8" rx="3" fill="#2C2B29"/>
+        <rect x="106" y="256" width="11" height="54" fill="#55534E"/><rect x="125" y="256" width="11" height="54" fill="#55534E"/>
+        <path d="M94 172 Q121 162 148 172 L160 270 Q121 278 82 270 Z" fill="#FFFFFF" stroke="#8A877F" stroke-width="1.5"/>
+        <path d="M121 176 L121 272" stroke="#C4BFB5" stroke-width="1.5"/>
+        <path d="M108 172 L121 196 L134 172" fill="#E2DED6" stroke="#8A877F" stroke-width="1.2"/>
+        <rect x="132" y="214" width="16" height="12" rx="2" fill="none" stroke="#AEAAA2"/>
+        <line x1="136" y1="210" x2="136" y2="218" stroke="#55534E" stroke-width="1.5"/>
+        <path d="M94 180 Q80 218 90 252" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
+        <path d="M94 180 Q80 218 90 252" fill="none" stroke="#8A877F" stroke-width="1.5" stroke-dasharray="0" opacity=".0"/>
+        <circle cx="90" cy="256" r="6" fill="#E9E4DC" stroke="#8A877F"/>
+        <path id="armR" d="M146 180 Q182 190 208 210" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"/>
+        <path d="M146 180 Q182 190 208 210" fill="none" stroke="#8A877F" stroke-width="1.2" opacity=".5"/>
+        <circle cx="210" cy="210" r="6" fill="#E9E4DC" stroke="#8A877F"/>
+        <rect x="114" y="154" width="14" height="14" fill="#E9E4DC"/>
+        <circle cx="121" cy="136" r="23" fill="#EFEBE4" stroke="#8A877F" stroke-width="1.5"/>
+        <path d="M96 132 L88 118 L100 120 L94 104 L108 110 L108 94 L120 106 L128 92 L132 108 L146 98 L142 114 L156 112 L146 126 L152 136 L142 132" fill="#FFFFFF" stroke="#8A877F" stroke-width="1.5" stroke-linejoin="round"/>
+        <line x1="99" y1="134" x2="143" y2="134" stroke="#55534E" stroke-width="2"/>
+        <circle cx="112" cy="134" r="7.5" fill="#E2DED6" stroke="#2C2B29" stroke-width="2.2"/><circle cx="130" cy="134" r="7.5" fill="#E2DED6" stroke="#2C2B29" stroke-width="2.2"/>
+        <circle cx="114" cy="132" r="2" fill="#FFFFFF"/><circle cx="132" cy="132" r="2" fill="#FFFFFF"/>
+        <path d="M114 148 Q121 152 128 148" fill="none" stroke="#55534E" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M110 145 Q121 141 132 145" fill="none" stroke="#AEAAA2" stroke-width="2.5" stroke-linecap="round"/>
       </g>
-      <rect x="108" y="150" width="404" height="9" rx="2" fill="#1e2125" stroke="#6b6a65"/>
-      <line x1="122" y1="159" x2="122" y2="200" stroke="#6b6a65" stroke-width="2"/><line x1="498" y1="159" x2="498" y2="200" stroke="#6b6a65" stroke-width="2"/>
+      <!-- tesla coil -->
+      <g id="coil">
+        <rect x="592" y="294" width="40" height="24" rx="3" fill="#E2DED6" stroke="#8A877F"/>
+        <rect x="605" y="178" width="14" height="116" fill="#FAF9F6" stroke="#8A877F"/>
+        <g stroke="#AEAAA2">
+          <line x1="605" y1="190" x2="619" y2="190"/><line x1="605" y1="200" x2="619" y2="200"/><line x1="605" y1="210" x2="619" y2="210"/><line x1="605" y1="220" x2="619" y2="220"/><line x1="605" y1="230" x2="619" y2="230"/><line x1="605" y1="240" x2="619" y2="240"/><line x1="605" y1="250" x2="619" y2="250"/><line x1="605" y1="260" x2="619" y2="260"/><line x1="605" y1="270" x2="619" y2="270"/><line x1="605" y1="280" x2="619" y2="280"/>
+        </g>
+        <circle cx="612" cy="164" r="17" fill="#ECE9E3" stroke="#55534E" stroke-width="1.5"/>
+        <polyline class="spark" points="596,158 572,148 580,140 548,124 556,118 516,104" fill="none" stroke="#2C2B29" stroke-width="2" stroke-linejoin="round"/>
+        <polyline class="spark b" points="600,172 576,180 584,188 556,196 562,204 528,214" fill="none" stroke="#55534E" stroke-width="1.6" stroke-linejoin="round"/>
+        <polyline class="spark c" points="612,146 606,124 616,120 604,98" fill="none" stroke="#8A877F" stroke-width="1.6" stroke-linejoin="round"/>
+      </g>
+      <!-- door for external agents -->
+      <g id="door">
+        <rect x="680" y="150" width="68" height="168" fill="#55534E"/>
+        <g id="visitor"><circle cx="728" cy="196" r="11" fill="#8A877F"/><path d="M714 260 Q728 208 742 260 L742 318 L714 318 Z" fill="#8A877F"/>
+          <text x="728" y="246" text-anchor="middle" font-size="8" fill="#FAF9F6">MCP</text></g>
+        <rect x="676" y="146" width="76" height="172" fill="none" stroke="#8A877F" stroke-width="4"/>
+        <g id="doorPanel"><rect x="686" y="152" width="58" height="166" fill="#ECE9E3" stroke="#8A877F"/>
+          <rect x="694" y="162" width="42" height="56" rx="3" fill="none" stroke="#C4BFB5"/><rect x="694" y="232" width="42" height="74" rx="3" fill="none" stroke="#C4BFB5"/>
+          <circle cx="736" cy="242" r="3.5" fill="#55534E"/></g>
+        <text id="doorTxt" x="714" y="138" text-anchor="middle" font-size="10" fill="#8A877F">door</text>
+      </g>
+      <!-- operating table -->
+      <rect x="300" y="258" width="240" height="10" rx="3" fill="#C4BFB5" stroke="#8A877F"/>
+      <line x1="322" y1="268" x2="322" y2="308" stroke="#8A877F" stroke-width="4"/><line x1="518" y1="268" x2="518" y2="308" stroke="#8A877F" stroke-width="4"/>
+      <circle cx="322" cy="312" r="5" fill="#55534E"/><circle cx="518" cy="312" r="5" fill="#55534E"/>
+      <!-- monster -->
+      <ellipse id="glow" cx="420" cy="150" rx="120" ry="120" fill="url(#glowG)"/>
       <g id="monster"></g>
     </svg>
-    <div id="gate"><div class="t" id="gateTitle"></div><pre id="gateDetail"></pre>
-      <button class="go" id="approve">It's alive · approve</button> <button class="no" id="reject">Reject</button></div>
+    <div id="parts"></div>
+    <div id="gate"><div class="k" id="gateKind">approval needed</div><div class="t" id="gateTitle"></div><pre id="gateDetail"></pre>
+      <button class="primary" id="approve">It's alive · install</button> <button class="no" id="reject">Reject</button></div>
   </div>
-  <div class="pn"><p class="lb">Lab notebook · build &amp; test log</p><div id="log"></div></div>
+  <div class="pn"><p class="lb"><b>Lab notebook</b><span>build &amp; test log</span></p><div id="log"></div></div>
 </div>
 <div class="col">
   <div class="pn">
     <div class="gauge">
-      <div><p class="lb">Last build</p><div class="big" id="buildUsd">$0.00</div><div class="sub" id="buildSub">no build yet</div></div>
-      <div><p class="lb">Last run</p><div class="big" id="runTok">–</div><div class="sub" id="runSub">tokens per run</div></div>
-      <div style="margin-left:auto" id="door"><div class="d"></div><span id="doorTxt">no visitors</span></div>
+      <div><p class="lb">Last build · one-time</p><div class="big" id="buildUsd">$0.00</div><div class="sub" id="buildSub">no build yet</div></div>
+      <div><p class="lb">Last run · every time</p><div class="big" id="runTok">–</div><div class="sub" id="runSub">tokens per run</div></div>
     </div>
   </div>
-  <div class="pn" id="result"><p class="lb">Result</p><pre id="resultBody"></pre></div>
+  <div class="pn" id="result"><p class="lb"><b>Result</b><span id="resultWf"></span></p><pre id="resultBody"></pre></div>
   <div class="pn">
-    <p class="lb"><span>Registry wall · agent-built capabilities &amp; workflows</span><span id="regCount"></span></p>
+    <p class="lb"><b>Registry wall</b><span id="regCount"></span></p>
     <div class="tiles" id="tiles"></div>
     <div id="drawer"></div>
   </div>
@@ -111,70 +209,128 @@ main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:16px;
 <script>
 const $=id=>document.getElementById(id);
 const LOADED=Date.now()/1000;
-let voiceOn=false, monster=[], gateId=null, freshTiles=new Set(), buildTotal=0, curScope="";
+let voiceOn=false, monster=[], gateId=null, freshTiles=new Set(), alive=false, curScope="";
+const C={ink:"#2C2B29",ink2:"#55534E",mute:"#8A877F",dim:"#AEAAA2",line:"#C4BFB5",soft:"#E2DED6",skin:"#CFCAC0",skinD:"#BDB8AD",panel:"#FAF9F6"};
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function log(text,cls=""){const d=document.createElement("div");if(cls)d.className=cls;d.textContent=text;const L=$("log");L.appendChild(d);while(L.children.length>400)L.firstChild.remove();L.scrollTop=L.scrollHeight}
-function say(text,live){$("bubble").textContent=text;$("bubble").classList.add("on");clearTimeout(say.t);say.t=setTimeout(()=>$("bubble").classList.remove("on"),6000);
+function say(text,live){$("bubble").textContent=text;$("bubble").classList.add("on");clearTimeout(say.t);say.t=setTimeout(()=>$("bubble").classList.remove("on"),6500);
   if(live&&voiceOn){const a=new Audio("/api/voice?text="+encodeURIComponent(text));a.play().catch(()=>{})}}
+function setScene(building){$("lab").classList.toggle("building",!!building)}
+function setAlive(a){alive=a;$("lab").classList.toggle("alive",a)}
+
 function drawMonster(){
-  const g=$("monster");if(!monster.length){g.innerHTML="";return}
-  const n=monster.length,w=Math.min(84,(380-(n-1)*10)/n),x0=128;let h="";
-  monster.forEach((p,i)=>{const x=x0+i*(w+10);const col=p.state==="ready"?"#5DCAA5":p.state==="building"?"#F0997B":p.state==="failed"?"#F09595":"#6b6a65";
-    const dash=p.state==="missing"?' stroke-dasharray="4 4"':"";
-    h+=`<rect x="${x}" y="96" width="${w}" height="50" rx="6" fill="#1e2125" stroke="${col}" stroke-width="2"${dash}/>`;
-    const label=p.uses.length*6.2>w-8?p.uses.slice(0,Math.floor((w-8)/6.2)-1)+"…":p.uses;
-    h+=`<text x="${x+w/2}" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#e8e6e1">${esc(label)}</text>`;
-    if(i<n-1)h+=`<line x1="${x+w}" y1="121" x2="${x+w+10}" y2="121" stroke="#9a9890" stroke-width="2"/>`;});
-  g.innerHTML=h}
+  const g=$("monster");const parts=monster.length?monster:[{uses:"",state:"dormant"}];
+  const n=parts.length, tx=376, tw=88, ty=120, th=94, bh=th/n;
+  let h="";
+  const dorm=!monster.length;
+  const op=dorm?' opacity=".35"':"";
+  // legs + boots
+  h+=`<g${op}><rect x="386" y="${ty+th}" width="26" height="40" fill="${C.ink2}"/><rect x="428" y="${ty+th}" width="26" height="40" fill="${C.ink2}"/>`;
+  h+=`<rect x="380" y="250" width="34" height="9" rx="3" fill="${C.ink}"/><rect x="426" y="250" width="34" height="9" rx="3" fill="${C.ink}"/>`;
+  // arms
+  h+=`<rect x="356" y="${ty+4}" width="18" height="82" rx="6" fill="${C.skinD}" stroke="${C.mute}"/><rect x="466" y="${ty+4}" width="18" height="82" rx="6" fill="${C.skinD}" stroke="${C.mute}"/>`;
+  h+=`<path d="M356 ${ty+40} h18 M466 ${ty+52} h18" stroke="${C.ink2}" stroke-width="1.2"/>`;
+  h+=`<rect x="354" y="${ty+84}" width="22" height="16" rx="5" fill="${C.skin}" stroke="${C.mute}"/><rect x="464" y="${ty+84}" width="22" height="16" rx="5" fill="${C.skin}" stroke="${C.mute}"/>`;
+  // neck, head, bolts
+  h+=`<rect x="404" y="110" width="32" height="12" fill="${C.skinD}"/>`;
+  h+=`<rect x="370" y="102" width="12" height="9" rx="2" fill="${C.ink2}"/><rect x="458" y="102" width="12" height="9" rx="2" fill="${C.ink2}"/>`;
+  h+=`<rect x="382" y="50" width="76" height="62" rx="8" fill="${C.skin}" stroke="${C.mute}" stroke-width="1.5"/>`;
+  h+=`<path d="M380 62 L380 46 L460 46 L460 62 L452 56 L444 63 L436 56 L428 63 L420 56 L412 63 L404 56 L396 63 L388 56 Z" fill="${C.ink}"/>`;
+  h+=`<path d="M392 70 L414 70" stroke="${C.ink2}" stroke-width="1.2"/><path d="M396 67 v6 M402 67 v6 M408 67 v6" stroke="${C.ink2}" stroke-width="1"/>`;
+  h+=`<g class="eyes-closed"><path d="M398 84 q7 4 14 0 M428 84 q7 4 14 0" fill="none" stroke="${C.ink}" stroke-width="2" stroke-linecap="round"/></g>`;
+  h+=`<g class="eyes-open"><circle cx="405" cy="84" r="6.5" fill="#fff" stroke="${C.ink}" stroke-width="1.5"/><circle cx="435" cy="84" r="6.5" fill="#fff" stroke="${C.ink}" stroke-width="1.5"/><circle cx="406" cy="85" r="2.6" fill="${C.ink}"/><circle cx="436" cy="85" r="2.6" fill="${C.ink}"/></g>`;
+  h+=`<path d="M404 100 L436 100" stroke="${C.ink}" stroke-width="1.8"/><path d="M410 97 v6 M418 97 v6 M426 97 v6 M432 97 v6" stroke="${C.ink}" stroke-width="1.1"/></g>`;
+  // torso bands = workflow steps
+  parts.forEach((p,i)=>{const y=ty+i*bh;
+    let fill=C.soft,stroke=C.mute,dash="",cls="";
+    if(p.state==="ready"){fill=C.skinD;stroke=C.ink2}
+    else if(p.state==="building"){fill="#E9E5DE";stroke=C.ink2;cls="part-building"}
+    else if(p.state==="failed"){fill="url(#hatch)";stroke="#9A5B4F"}
+    else if(p.state==="missing"||p.state==="dormant"){fill="#F6F4F0";stroke=C.dim;dash=' stroke-dasharray="5 4"'}
+    h+=`<rect class="${cls}" x="${tx}" y="${y}" width="${tw}" height="${bh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"${dash}${dorm?' opacity=".5"':""}/>`;
+    if(!dorm)h+=`<text x="${tx+tw/2}" y="${y+bh/2+4}" text-anchor="middle" font-size="12" font-weight="500" fill="${p.state==="ready"?C.ink:C.mute}">${i+1}</text>`;
+    if(i>0){for(let sx=tx+6;sx<tx+tw-4;sx+=9)h+=`<line x1="${sx}" y1="${y-3}" x2="${sx+4}" y2="${y+3}" stroke="${C.ink2}" stroke-width="1"/>`}
+  });
+  if(dorm)h+=`<text x="420" y="${ty+th/2+4}" text-anchor="middle" font-size="11" fill="${C.mute}">dormant</text>`;
+  g.innerHTML=h;
+  $("parts").innerHTML=monster.map((p,i)=>`<span class="part ${p.state}"><i>${i+1}</i>${esc(p.uses)}<span style="color:var(--mute)">· ${p.state}</span></span>`).join("");
+}
+async function showWorkflow(name){
+  try{const vs=await (await fetch("/api/artifact/"+name)).json();const a=vs.find(v=>v.status==="active")||vs[vs.length-1];
+    monster=(a.manifest.steps||[]).map(s=>({uses:s.uses,state:"ready"}));drawMonster();setAlive(true)}catch(e){}}
 function setPart(uses,state){monster.forEach(p=>{if(p.uses===uses)p.state=state});drawMonster()}
+
+function drawFlasks(items){
+  const g=$("flasks");let h="";
+  items.slice(0,4).forEach((r,i)=>{const x=40+i*56;const fresh=freshTiles.has(r.name);
+    h+=`<g><title>${esc(r.name)} · distilled to code · 0 tok/run</title>`;
+    h+=`<path d="M${x+14} 40 L${x+14} 52 L${x+4} 74 Q${x+2} 78 ${x+7} 78 L${x+33} 78 Q${x+38} 78 ${x+36} 74 L${x+26} 52 L${x+26} 40 Z" fill="#FFFFFF" stroke="${fresh?C.ink:C.mute}" stroke-width="1.5"/>`;
+    h+=`<path d="M${x+8} 66 L${x+32} 66 L${x+35} 73 Q${x+36} 76 ${x+32} 76 L${x+8} 76 Q${x+4} 76 ${x+5} 73 Z" fill="${C.ink2}"/>`;
+    h+=`<rect x="${x+12}" y="36" width="16" height="5" rx="1.5" fill="${C.mute}"/>`;
+    const label=r.name.length>9?r.name.slice(0,8)+"…":r.name;
+    h+=`<text x="${x+20}" y="98" text-anchor="middle" font-size="9" fill="${C.ink2}">${esc(label)}</text></g>`;});
+  if(!items.length)h=`<text x="147" y="64" text-anchor="middle" font-size="10" fill="${C.dim}">shelf: no distilled steps yet</text>`;
+  g.innerHTML=h;
+}
+
 function showGate(ev,live){gateId=ev.id;$("gateTitle").textContent=ev.title;const d=ev.detail||{};
+  $("gateKind").textContent=ev.gate==="authority"?"authority request · operator decision":"install request · operator decision";
   $("gateDetail").textContent=Object.entries(d).map(([k,v])=>`${k}: ${typeof v==="object"?JSON.stringify(v):v}`).join("\n");
-  $("approve").textContent=ev.gate==="authority"?"Grant access":"It's alive · install";$("gate").style.display="block";$("approve").disabled=$("reject").disabled=false;if(live)say(ev.gate==="authority"?"I need more power. May I?":"It's alive! May I install it?",true)}
+  $("approve").textContent=ev.gate==="authority"?"Grant access":"It's alive · install";$("gate").style.display="block";$("approve").disabled=$("reject").disabled=false;
+  if(live)say(ev.gate==="authority"?"I need more power. May I?":"It's alive! May I install it?",true)}
 async function decide(ok){if(!gateId)return;$("approve").disabled=$("reject").disabled=true;await fetch("/api/gate/"+gateId,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({approved:ok})})}
 $("approve").onclick=()=>decide(true);$("reject").onclick=()=>decide(false);
-function knock(who){const D=$("door");D.classList.add("knock");$("doorTxt").textContent=who;clearTimeout(knock.t);knock.t=setTimeout(()=>{D.classList.remove("knock");$("doorTxt").textContent="no visitors"},9000)}
+function knock(){const L=$("lab");L.classList.add("knock");$("doorTxt").textContent="visitor";clearTimeout(knock.t);knock.t=setTimeout(()=>{L.classList.remove("knock");$("doorTxt").textContent="door"},9000)}
+
 function handle(ev){
   const live=ev.ts>LOADED-1;const k=ev.kind;
-  if(k==="task"){monster=[];drawMonster();buildTotal=0;curScope="";$("result").style.display="none";log("▶ "+ev.text,"stage")}
-  else if(k==="stage"){$("stage").textContent=ev.stage;log("— "+ev.msg,"stage");if(ev.capability&&ev.stage==="learn")setPart(ev.capability,"building");if(ev.stage==="run")$("wfname").textContent=ev.workflow}
-  else if(k==="log")log(ev.msg);
-  else if(k==="test"){const m=ev.msg||"";log(m,/passed|succeeded|schema-valid/.test(m)&&!/failed|error/i.test(m)?"pass":/fail|error/i.test(m)?"fail":"")}
+  if(k==="task"){monster=[];setAlive(false);drawMonster();curScope="";$("result").style.display="none";log("▶ "+ev.text,"stage")}
+  else if(k==="stage"){$("stage").textContent=ev.stage;log("— "+ev.msg,"stage");
+    if(["learn","test","distill"].includes(ev.stage))setScene(true);
+    if(["accept","assemble","run","plan"].includes(ev.stage))setScene(false);
+    if(ev.capability&&ev.stage==="learn")setPart(ev.capability,"building");
+    if(ev.stage==="run")$("wfname").textContent=ev.workflow}
+  else if(k==="log")log(ev.msg,"dim");
+  else if(k==="test"){const m=ev.msg||"";log(m,/passed|succeeded|PASSED/.test(m)&&!/failed|error|FAILED/i.test(m)?"pass":/fail|error|rejected/i.test(m)?"fail":"dim")}
   else if(k==="say")say(ev.text,live);
-  else if(k==="cost"){if(String(ev.scope).startsWith("task:")){buildTotal=ev.total_usd;$("buildUsd").textContent="$"+buildTotal.toFixed(3);$("buildSub").textContent=`${ev.total_tokens.toLocaleString()} tokens to build`}}
-  else if(k==="monster"){monster=ev.steps;drawMonster()}
+  else if(k==="cost"){if(String(ev.scope).startsWith("task:")){$("buildUsd").textContent="$"+ev.total_usd.toFixed(3);$("buildSub").textContent=`${ev.total_tokens.toLocaleString()} tokens · ${String(ev.scope).slice(5,30)}…`}}
+  else if(k==="monster"){monster=ev.steps;setAlive(false);drawMonster()}
   else if(k==="monster_part")setPart(ev.uses,ev.state);
-  else if(k==="gate")showGate(ev,live);
+  else if(k==="gate"){setScene(false);showGate(ev,live)}
   else if(k==="gate_result"){log((ev.approved?"✓ ":"✗ ")+ev.msg,"gate");if(ev.id===gateId){$("gate").style.display="none";gateId=null}}
   else if(k==="tile"){log("◆ "+ev.msg,"pass");if(live){freshTiles.add(ev.name);loadRegistry()}}
-  else if(k==="run"){log((ev.ok?"✓ ":"✗ ")+ev.msg,ev.ok?"pass":"fail");if(ev.ok){$("runTok").textContent=ev.tokens.toLocaleString();$("runSub").textContent=`tokens · ${(ev.ms/1000).toFixed(1)} s · ${ev.workflow}`;monster.forEach(p=>p.state="ready");drawMonster()}}
-  else if(k==="result"){$("result").style.display="block";$("resultBody").textContent=JSON.stringify(ev.result,null,2);log("■ "+ev.msg,"pass")}
-  else if(k==="knock"){log("🚪 "+ev.msg,"gate");if(live){knock(ev.who||"visitor");say(ev.say||"Someone's at the door.",true)}}
+  else if(k==="run"){log((ev.ok?"✓ ":"✗ ")+ev.msg,ev.ok?"pass":"fail");setScene(false);
+    if(ev.ok){$("runTok").textContent=ev.tokens.toLocaleString();$("runSub").textContent=`tokens · ${(ev.ms/1000).toFixed(1)} s · ${ev.workflow}`;
+      if(monster.length){monster.forEach(p=>p.state="ready");drawMonster();setAlive(true)}else showWorkflow(ev.workflow)}}
+  else if(k==="result"){$("result").style.display="block";$("resultWf").textContent=ev.workflow||"";$("resultBody").textContent=JSON.stringify(ev.result,null,2);log("■ "+ev.msg,"pass");setAlive(true)}
+  else if(k==="knock"){log("⌂ "+ev.msg,"gate");if(live){knock();say(ev.say||"Someone's at the door.",true)}}
   else if(k==="flask"){log("⚗ "+ev.msg,"pass");if(live){freshTiles.add(ev.name);loadRegistry()}}
-  else if(k==="error")log("✗ "+ev.msg,"fail");
+  else if(k==="error"){log("✗ "+ev.msg,"fail");setScene(false);monster.forEach(p=>{if(p.state==="building")p.state="failed"});drawMonster()}
 }
+
 async function loadRegistry(){
   const rows=await (await fetch("/api/registry")).json();
   const latest={};rows.forEach(r=>{if(r.status==="candidate")return;if(!latest[r.name]||r.status==="active"||(latest[r.name].status!=="active"&&r.version>latest[r.name].version))latest[r.name]=r});
   const items=Object.values(latest).sort((a,b)=>(a.kind==="workflow")-(b.kind==="workflow")||a.name.localeCompare(b.name));
-  $("regCount").textContent=items.length?items.length+" built by the agent":"empty: nothing pre-installed";
-  const distilled=rows.filter(r=>(r.manifest.lineage||{}).created_by==="distillation"&&r.status==="active");
-  $("shelf").innerHTML=distilled.length?distilled.map(r=>`<span class="flask${freshTiles.has(r.name)?" new":""}" title="${esc((r.manifest.lineage||{}).notes||"")}">⚗ ${esc(r.name)} · llm→code · 0 tok</span>`).join(""):'<span style="color:var(--dim);font-size:12px">empty: nothing distilled yet</span>';
+  $("regCount").textContent=items.length?items.length+" built by the agent":"empty · nothing pre-installed";
+  drawFlasks(rows.filter(r=>(r.manifest.lineage||{}).created_by==="distillation"&&r.status==="active"));
   const T=$("tiles");T.innerHTML="";
   items.forEach(r=>{const d=document.createElement("div");d.className="tl"+(r.kind==="workflow"?" wf":"")+(freshTiles.has(r.name)?" new":"")+(r.status==="revoked"?" revoked":"");
     const tok=r.runs?Math.round(r.tokens/r.runs):0;const llm=r.manifest.impl==="llm"||(r.manifest.permissions||{}).llm;
-    d.innerHTML=`<span class="k">${r.kind}${llm?" · llm":""} · ${r.status}</span><b>${esc(r.name)}</b><div class="m">v${r.version} · ${r.runs} runs · ${tok} tok/run</div>`;
+    const dist=(r.manifest.lineage||{}).created_by==="distillation";
+    d.innerHTML=`<span class="k">${r.kind}${dist?" · distilled":llm?" · llm":""} · ${r.status}</span><b>${esc(r.name)}</b><div class="m">v${r.version} · ${r.runs} runs · ${tok.toLocaleString()} tok/run</div>`;
     d.onclick=()=>openDrawer(r.name);T.appendChild(d)});
-  for(let i=items.length;i<Math.max(8,items.length);i++){const d=document.createElement("div");d.className="tl empty";T.appendChild(d)}
+  for(let i=items.length;i<Math.max(6,items.length+(items.length%2));i++){const d=document.createElement("div");d.className="tl empty";T.appendChild(d)}
 }
 async function openDrawer(name){
   const vs=await (await fetch("/api/artifact/"+name)).json();const D=$("drawer");D.style.display="block";
   const act=vs.find(v=>v.status==="active")||vs[vs.length-1];const m=act.manifest;
-  let h=`<div class="vrow"><b style="font-weight:500">${esc(name)}</b><span class="pill">${m.kind}</span><span style="margin-left:auto"></span><button id="rb">Roll back</button> <button class="no" id="rv">Revoke</button> <button id="cl">Close</button></div>`;
-  h+=`<div class="vrow" style="color:var(--muted)">${esc(m.description||"")}</div>`;
-  h+=`<div class="vrow">permissions: <code>${esc(JSON.stringify(m.permissions))}</code> · budget: <code>${esc(JSON.stringify(m.budget))}</code></div>`;
-  h+=`<p class="lb" style="margin-top:10px">Lineage</p>`+vs.map(v=>`<div class="vrow"><span class="pill ${v.status==="active"?"active":""}">v${v.version} · ${v.status}</span><span style="color:var(--muted)">${v.runs} runs · ${v.ok_runs} ok</span></div>`).join("");
-  if(m.steps)h+=`<p class="lb" style="margin-top:10px">Steps</p><pre>${esc(m.steps.map(s=>s.id+": "+s.uses).join("\n"))}</pre>`;
-  const f=act.files||{};["impl.py","prompt.txt","test_impl.py","test_report.json"].forEach(n=>{if(f[n])h+=`<p class="lb" style="margin-top:10px">${n}</p><pre>${esc(f[n])}</pre>`});
+  let h=`<div class="vrow"><b style="font-weight:600;font-size:14px">${esc(name)}</b><span class="pill">${m.kind}</span><span style="margin-left:auto"></span><button id="rb">Roll back</button> <button class="no" id="rv">Revoke</button> <button id="cl">Close</button></div>`;
+  h+=`<div class="vrow" style="color:var(--ink2)">${esc(m.description||"")}</div>`;
+  h+=`<div class="vrow">permissions <code>${esc(JSON.stringify(m.permissions))}</code></div><div class="vrow">budget <code>${esc(JSON.stringify(m.budget))}</code></div>`;
+  h+=`<p class="lb" style="margin-top:12px"><b>Lineage</b></p>`+vs.map(v=>`<div class="vrow"><span class="pill ${v.status==="active"?"active":""}">v${v.version} · ${v.status}</span><span style="color:var(--mute)">${v.runs} runs · ${v.ok_runs} ok${(v.manifest.lineage||{}).created_by==="distillation"?" · distilled":""}</span></div>`).join("");
+  if(m.steps)h+=`<p class="lb" style="margin-top:12px"><b>Steps</b></p><pre>${esc(m.steps.map(s=>s.id+": "+s.uses+(s.foreach?"  (foreach)":"")).join("\n"))}</pre>`;
+  const f=act.files||{};["impl.py","prompt.txt","test_impl.py","test_replay.py","test_report.json"].forEach(n=>{if(f[n])h+=`<p class="lb" style="margin-top:12px"><b>${n}</b></p><pre>${esc(f[n])}</pre>`});
   D.innerHTML=h;
   $("cl").onclick=()=>{D.style.display="none"};
   $("rb").onclick=async()=>{const r=await fetch("/api/rollback/"+name,{method:"POST"});if(!r.ok)alert((await r.json()).detail);loadRegistry();openDrawer(name)};
@@ -184,7 +340,7 @@ $("go").onclick=async()=>{const t=$("task").value.trim();if(!t)return;const r=aw
 $("task").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
 $("voiceBtn").onclick=()=>{voiceOn=!voiceOn;$("voiceBtn").textContent="Voice: "+(voiceOn?"on":"off");if(voiceOn)say("I'm listening.",true)};
 const es=new EventSource("/events");es.onmessage=e=>{try{handle(JSON.parse(e.data))}catch(err){console.error(err)}};
-loadRegistry();drawMonster();
+drawMonster();drawFlasks([]);loadRegistry();
 </script>
 </body>
 </html>
