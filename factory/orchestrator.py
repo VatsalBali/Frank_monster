@@ -201,7 +201,8 @@ def install_workflow(wf: dict, task_input: dict, output, budget: gateway.Budget)
     _record_replay(wf, task_input, output)
     emit("result", workflow=wf["name"], result=output, build_usd=round(budget.spent_usd, 4),
          msg=f"done · build ${budget.spent_usd:.3f} · {budget.calls} LLM calls")
-    emit("say", text="It's alive. From now on, this job costs zero tokens.")
+    emit("say", text="It's alive. It still uses a language model for judgment, so each run costs tokens."
+         if m["permissions"].get("llm") else "It's alive. From now on, this job costs zero tokens.")
     return {"workflow": wf["name"], "version": wf["version"], "result": output, "build_usd": budget.spent_usd}
 
 

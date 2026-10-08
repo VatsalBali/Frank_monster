@@ -48,12 +48,25 @@ def candidates() -> list[dict]:
             if c["manifest"].get("impl") == "llm" and len(samples(c)) >= MIN_SAMPLES]
 
 
-def replay_test(rows: list[dict]) -> str:
-    """Harness-generated equivalence test: every recorded run must be reproduced or explicitly deferred,
-    and at least 70% must be reproduced."""
+def decision_keys(rows: list[dict]) -> list[str]:
+    """Output fields that carry the decision: everything except long free text (rationales, explanations),
+    which no deterministic code can or should reproduce word for word."""
+    keys = []
+    for k in rows[0]["output"]:
+        vals = [r["output"].get(k) for r in rows]
+        if all(isinstance(v, str) for v in vals) and max(len(v) for v in vals) > 40:
+            continue
+        keys.append(k)
+    return keys
+
+
+def replay_test(rows: list[dict], keys: list[str]) -> str:
+    """Harness-generated equivalence test: every recorded run must be reproduced (on its decision fields)
+    or explicitly deferred, and at least 70% must be reproduced."""
     return f'''import json
 from impl import run
 ROWS = json.loads({json.dumps(json.dumps(rows, ensure_ascii=False))})
+KEYS = {keys!r}
 
 def test_reproduces_recorded_runs():
     hits, wrong = 0, []
@@ -61,7 +74,7 @@ def test_reproduces_recorded_runs():
         out = run(r["input"])
         if out == {{"__fallback__": True}}:
             continue
-        if out == r["output"]:
+        if all(out.get(k) == r["output"].get(k) for k in KEYS):
             hits += 1
         else:
             wrong.append((r["input"], out, r["output"]))
@@ -84,11 +97,14 @@ def distill(cap: dict, budget: gateway.Budget) -> bool:
     base = (f"Step: {name}\nPrompt the LLM was given:\n{prompt_txt}\n\nOutput schema: {cap['manifest']['signature']['out_schema']}"
             f"\n\nRecorded runs (input → output):\n" +
             "\n".join(json.dumps(r, ensure_ascii=False) for r in rows[:60]))
+    keys = decision_keys(rows)
+    base += (f"\n\nOnly these output fields must match the recordings exactly: {keys}. Other fields may be short "
+             f"generic text.")
     feedback = ""
     for attempt in range(1, config.MAX_REPAIR_ATTEMPTS + 1):
         d: Distilled = gateway.complete_json(budget, f"distill:{name}", system=SYSTEM, schema=Distilled,
                                              prompt=base + feedback)
-        files = {"impl.py": d.impl_py, "test_replay.py": replay_test(rows)}
+        files = {"impl.py": d.impl_py, "test_replay.py": replay_test(rows, keys)}
         emit("stage", stage="test", capability=name, msg=f"equivalence test vs {len(rows)} recorded runs (attempt {attempt})")
         r = sandbox.run(files, ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=short"], net=[],
                         timeout=60, label=name)
@@ -126,9 +142,10 @@ def distill(cap: dict, budget: gateway.Budget) -> bool:
 def optimize_all() -> int:
     budget = gateway.Budget(scope="task:optimize", max_usd=config.MAX_USD_PER_TASK)
     n = 0
-    for cap in candidates():
+    found = candidates()
+    for cap in found:
         if distill(cap, budget):
             n += 1
-    if not n:
+    if not found:
         emit("log", msg="optimize: nothing to distill yet (needs an LLM step with ≥3 recorded runs)")
     return n
