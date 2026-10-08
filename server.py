@@ -104,28 +104,96 @@ class Task(BaseModel):
     task: str
 
 
-@app.post("/api/solve")
-def api_solve(t: Task):
+def _background(label: str, fn) -> dict:
+    """Run one lab job at a time in a thread; failures are reported as events, never swallowed."""
     if not _busy.acquire(blocking=False):
         raise HTTPException(409, "the scientist is busy")
 
     def work():
-        from factory.orchestrator import solve
         try:
             sandbox.ensure_infra()
-            solve(t.task)
+            fn()
         except Exception as e:
-            emit("error", msg=f"task failed: {e}")
+            emit("error", msg=f"{label} failed: {e}")
             emit("say", text="That experiment failed.")
         finally:
             _busy.release()
+            emit("idle", msg=f"{label} finished")
     threading.Thread(target=work, daemon=True).start()
     return {"started": True}
 
 
+@app.post("/api/solve")
+def api_solve(t: Task):
+    from factory.orchestrator import solve
+    return _background("task", lambda: solve(t.task))
+
+
+@app.post("/api/optimize")
+def api_optimize():
+    from factory.compiler import optimize_all
+    return _background("optimize", optimize_all)
+
+
+class RunReq(BaseModel):
+    input_json: str
+
+
+@app.post("/api/run/{name}")
+def api_run(name: str, req: RunReq):
+    """Operator runs an installed workflow directly (with self-repair), like an external agent would."""
+    a = registry.get(name)
+    if not a or a["kind"] != "workflow":
+        raise HTTPException(404, "no such active workflow")
+    try:
+        inp = json.loads(req.input_json)
+    except json.JSONDecodeError as e:
+        raise HTTPException(400, f"input is not valid JSON: {e}")
+
+    def go():
+        from factory.orchestrator import run_with_heal
+        m = a["manifest"]
+        out = run_with_heal(a, inp, gateway.Budget(scope=f"run:{name}", max_usd=0.5,
+                                                   max_tokens=m.get("budget", {}).get("max_tokens_per_run") or None),
+                            gateway.Budget(scope=f"task:heal {name}", max_usd=config.MAX_USD_PER_TASK))
+        emit("result", workflow=name, result=out, msg=f"ran {name} from the lab")
+    return _background(f"run {name}", go)
+
+
+@app.post("/api/reset")
+def api_reset():
+    """Empty the registry for a clean demo. Refused while a job is running."""
+    if not _busy.acquire(blocking=False):
+        raise HTTPException(409, "the scientist is busy")
+    try:
+        import subprocess, sys
+        subprocess.run([sys.executable, str(Path(__file__).parent / "scripts" / "reset_registry.py")], check=True)
+        emit("reset", msg="lab reset: registry is empty")
+    finally:
+        _busy.release()
+    return {"reset": True}
+
+
+@app.get("/api/status")
+def api_status():
+    return {"busy": _busy.locked(), "gate_mode": gate.MODE, "build_model": config.BUILD_MODEL,
+            "runtime_model": config.RUNTIME_MODEL, "caps": {"usd_per_task": config.MAX_USD_PER_TASK,
+            "iterations": config.MAX_FACTORY_ITERATIONS, "repairs": config.MAX_REPAIR_ATTEMPTS,
+            "replans": config.MAX_REPLANS, "llm_calls": config.MAX_LLM_CALLS_PER_TASK}}
+
+
 @app.get("/api/ledger")
 def api_ledger():
-    return gateway.ledger_summary()
+    import sqlite3
+    since = float((config.DATA / "reset_ts").read_text()) if (config.DATA / "reset_ts").exists() else 0.0
+    con = sqlite3.connect(config.DB_PATH)
+    by_model = con.execute("SELECT model, COUNT(*), COALESCE(SUM(input_tokens+output_tokens),0), COALESCE(SUM(usd),0) "
+                           "FROM ledger WHERE exact=1 AND ts >= ? GROUP BY model ORDER BY 2 DESC", (since,)).fetchall()
+    tot = con.execute("SELECT COUNT(*), COALESCE(SUM(input_tokens+output_tokens),0), COALESCE(SUM(usd),0) "
+                      "FROM ledger WHERE ts >= ?", (since,)).fetchone()
+    con.close()
+    return {"calls": tot[0], "tokens": tot[1], "usd": round(tot[2], 4), "since": since,
+            "by_model": [{"model": m, "calls": c, "tokens": t, "usd": round(u, 4)} for m, c, t, u in by_model]}
 
 
 @app.get("/api/voice")
