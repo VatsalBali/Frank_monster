@@ -31,7 +31,7 @@ button.primary{background:var(--ink);border-color:var(--ink);color:#1A1A1C;font-
 button.primary:hover{background:#fff}
 button.ghost{background:transparent}
 button.no{color:var(--fail)}
-.taskbar{max-width:1700px;margin:14px auto 0;padding:0 22px;display:flex;flex-direction:column;gap:8px}
+.taskbar{max-width:1080px;margin:14px auto 0;padding:0 22px;display:flex;flex-direction:column;gap:8px}
 .taskrow{display:flex;gap:10px}
 #task{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line2);color:var(--ink);border-radius:12px;padding:12px 16px;font:inherit;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s}
 #task:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(141,176,119,.15)}
@@ -39,7 +39,7 @@ button.no{color:var(--fail)}
 #examples{display:flex;gap:6px;flex-wrap:wrap}
 #examples button{font-size:12px;padding:4px 10px;border-radius:999px;background:transparent;color:var(--ink2)}
 #examples span{font-size:12px;color:var(--mute);align-self:center;margin-right:2px}
-main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;padding:14px 22px 22px;max-width:1700px;margin:0 auto}
+main{display:flex;flex-direction:column;gap:16px;padding:14px 22px 28px;max-width:1080px;margin:0 auto}
 .col{display:flex;flex-direction:column;gap:16px;min-width:0}
 .pn{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 1px 0 rgba(255,255,255,.03) inset}
 .lb{font-size:12px;color:var(--mute);margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;letter-spacing:.2px}
@@ -50,8 +50,8 @@ main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;p
 #stage{font:500 12px 'JetBrains Mono',monospace;color:var(--ink);background:var(--soft2);border-radius:999px;padding:2px 10px;transition:background .3s}
 #stage.hot{background:var(--green);color:#1A1A1C}
 #wfname{font:12px 'JetBrains Mono',monospace;color:var(--mute)}
-#lab{display:block;width:100%;max-height:270px;margin:0 auto}
-#bubble{position:absolute;left:19%;top:40px;max-width:min(300px,31%);background:var(--ink);color:#1A1A1C;border-radius:12px;padding:8px 12px;font-size:13px;font-weight:500;opacity:0;transform:translateY(6px) scale(.97);transform-origin:left bottom;transition:opacity .25s,transform .25s;z-index:4}
+#lab{display:block;width:100%;max-height:400px;margin:0 auto}
+#bubble{position:absolute;left:19%;top:56px;max-width:min(300px,31%);background:var(--ink);color:#1A1A1C;border-radius:12px;padding:8px 12px;font-size:13px;font-weight:500;opacity:0;transform:translateY(6px) scale(.97);transform-origin:left bottom;transition:opacity .25s,transform .25s;z-index:4}
 #bubble::after{content:"";position:absolute;left:-6px;bottom:10px;width:12px;height:12px;background:var(--ink);transform:rotate(45deg)}
 #bubble.on{opacity:1;transform:none}
 svg text{font-family:'JetBrains Mono',monospace}
@@ -216,27 +216,39 @@ table.audit td.n{text-align:right;color:var(--mute)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:1100px){#workshop{grid-template-columns:1fr}}
 @media(max-width:980px){main{grid-template-columns:1fr;padding:12px 14px}header{flex-wrap:wrap;padding:10px 14px}.taskbar{padding:0 14px}.taskrow{flex-wrap:wrap}#modelTxt{display:none}}
+[hidden]{display:none!important}
+.menu{position:relative}
+#menu{display:none;position:absolute;right:0;top:calc(100% + 6px);min-width:210px;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:30}
+#menu.open{display:flex;flex-direction:column;gap:2px;animation:fadein .15s}
+#menu button{border:0;background:transparent;text-align:left;border-radius:8px;padding:8px 10px}
+#menu button:hover{background:var(--soft2)}
+#details{display:none;flex-direction:column;gap:16px}
+#details.open{display:flex;animation:fadein .25s}
+#details .pn{background:var(--panel)}
 </style>
 </head>
 <body>
 <header>
   <h1>Frankenstein <span>Lab</span></h1>
   <span id="status" title="Lab status"><i></i><span id="statusTxt">idle</span></span>
-  <span id="modelTxt" style="font-size:12px;color:var(--mute)"></span>
+  <span id="modelTxt" hidden></span>
   <span class="spacer"></span>
-  <button id="optBtn" class="ghost" title="Distill LLM steps that have enough recorded runs into code">⚗ Optimize</button>
   <button id="voiceBtn" class="ghost" title="Browsers need a click before audio can play">🔈 Voice: off</button>
-  <button id="resetBtn" class="ghost no" title="Empty the registry for a clean demo">Reset lab</button>
+  <div class="menu"><button id="menuBtn" class="ghost" aria-haspopup="true" aria-expanded="false" title="More">⋯</button>
+    <div id="menu" role="menu">
+      <button id="detailsBtn" role="menuitem">Show workshop</button>
+      <button id="optBtn" role="menuitem" title="Distill LLM steps that have enough recorded runs into code">⚗ Optimize LLM steps</button>
+      <button id="resetBtn" role="menuitem" class="no" title="Empty the registry for a clean demo">Reset lab</button>
+    </div></div>
 </header>
 <div class="taskbar">
   <div class="taskrow">
     <input id="task" placeholder="Give the scientist a task… e.g. check a supplier in the Czech company registry" autocomplete="off">
     <button id="go" class="primary">Bring it to life ⚡</button>
   </div>
-  <div id="examples"><span>Try:</span></div>
+  <div id="examples" hidden></div>
 </div>
 <main>
-<div class="col">
   <div class="pn" id="scene">
     <div class="top"><span class="lb" style="margin:0">Workbench <span id="stage">idle</span></span><span id="wfname"></span></div>
     <div id="bubble"></div>
@@ -317,20 +329,19 @@ table.audit td.n{text-align:right;color:var(--mute)}
     <div id="gate"><div class="k" id="gateKind">approval needed</div><div class="t" id="gateTitle"></div><pre id="gateDetail"></pre>
       <button class="primary" id="approve">It's alive · install</button> <button class="no" id="reject">Reject</button></div>
   </div>
-  <div class="pn">
-    <div id="workshop">
-      <div><p class="lb"><b>Lab notebook</b><span>build &amp; test log</span></p><div id="log"></div></div>
-      <div><p class="lb"><b id="codeTitle">Code on the bench</b><span id="codeTabs"><button id="tImpl" class="on">impl.py</button> <button id="tTests">tests</button></span></p><div id="code"><span class="cm"># the code the agent writes appears here, attempt by attempt</span></div></div>
-    </div>
-  </div>
-</div>
-<div class="col">
   <div class="pn" id="result">
     <p class="lb"><b>Output</b><span class="outbtns"><button id="bCopy">Copy JSON</button><button id="bCsv">Download CSV</button><button id="bRaw">Raw JSON</button></span></p>
     <div class="q" id="outQ">No output yet</div>
     <div class="meta" id="outMeta"></div>
     <div id="outBody"><div class="empty">Give the scientist a task. The answer appears here, ready to read.</div></div>
     <pre id="outRaw"></pre>
+  </div>
+  <section id="details">
+  <div class="pn">
+    <div id="workshop">
+      <div><p class="lb"><b>Lab notebook</b><span>build &amp; test log</span></p><div id="log"></div></div>
+      <div><p class="lb"><b id="codeTitle">Code on the bench</b><span id="codeTabs"><button id="tImpl" class="on">impl.py</button> <button id="tTests">tests</button></span></p><div id="code"><span class="cm"># the code the agent writes appears here, attempt by attempt</span></div></div>
+    </div>
   </div>
   <div class="pn">
     <div class="gauge">
@@ -348,7 +359,7 @@ table.audit td.n{text-align:right;color:var(--mute)}
     <table class="audit" id="audit"></table>
     <p class="lb" style="margin:10px 0 0" id="caps"></p>
   </div>
-</div>
+  </section>
 </main>
 <div id="toasts"></div>
 <script>
@@ -415,7 +426,7 @@ function drawFlasks(items){
     h+=`<rect x="${x+12}" y="36" width="16" height="5" rx="1.5" fill="#8E8B85"/>`;
     const label=r.name.length>9?r.name.slice(0,8)+"…":r.name;
     h+=`<text x="${x+20}" y="98" text-anchor="middle" font-size="9" fill="#C6C3BD">${esc(label)}</text></g>`;});
-  if(!items.length)h=`<text x="147" y="66" text-anchor="middle" font-size="10" fill="#5F5D59">shelf: no distilled steps yet</text>`;
+
   g.innerHTML=h;
 }
 (function dust(){let h="";for(let i=0;i<16;i++){const x=40+Math.random()*680,y=200+Math.random()*110,d=8+Math.random()*10,del=-Math.random()*d;
@@ -563,9 +574,16 @@ async function loadStatus(){try{const s=await (await fetch("/api/status")).json(
   $("caps").textContent=`caps in code: $${s.caps.usd_per_task}/task · ${s.caps.llm_calls} LLM calls · ${s.caps.iterations} build iterations · ${s.caps.repairs} repairs · ${s.caps.replans} replans · gate: ${s.gate_mode}`}catch(e){}}
 $("go").onclick=async()=>{const t=$("task").value.trim();if(!t){$("task").focus();return}const r=await fetch("/api/solve",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({task:t})});if(!r.ok)toast((await r.json()).detail,"bad");else setBusy(true)};
 $("task").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
-$("optBtn").onclick=async()=>{const r=await fetch("/api/optimize",{method:"POST"});if(!r.ok)toast((await r.json()).detail,"bad");else{setBusy(true);toast("Looking for LLM steps worth distilling…")}};
-$("resetBtn").onclick=async()=>{if(!confirm("Reset the lab? This deletes every agent-built capability and workflow so the registry is empty."))return;const r=await fetch("/api/reset",{method:"POST"});if(!r.ok)toast((await r.json()).detail,"bad")};
+$("optBtn").onclick=async()=>{$("menu").classList.remove("open");const r=await fetch("/api/optimize",{method:"POST"});if(!r.ok)toast((await r.json()).detail,"bad");else{setBusy(true);toast("Looking for LLM steps worth distilling…")}};
+$("resetBtn").onclick=async()=>{$("menu").classList.remove("open");if(!confirm("Reset the lab? This deletes every agent-built capability and workflow so the registry is empty."))return;const r=await fetch("/api/reset",{method:"POST"});if(!r.ok)toast((await r.json()).detail,"bad")};
 $("voiceBtn").onclick=()=>{voiceOn=!voiceOn;$("voiceBtn").textContent=(voiceOn?"🔊 Voice: on":"🔈 Voice: off");if(voiceOn)say("I'm listening.",true)};
+
+$("menuBtn").onclick=e=>{e.stopPropagation();const m=$("menu");const o=!m.classList.contains("open");m.classList.toggle("open",o);$("menuBtn").setAttribute("aria-expanded",o)};
+document.addEventListener("click",e=>{if(!e.target.closest(".menu"))$("menu").classList.remove("open")});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("menu").classList.remove("open")});
+$("detailsBtn").onclick=()=>{const d=$("details");const o=!d.classList.contains("open");d.classList.toggle("open",o);$("detailsBtn").textContent=o?"Hide workshop":"Show workshop";$("menu").classList.remove("open");
+  try{localStorage.setItem("lab.details",o?"1":"0")}catch(e){}if(o){$("log").scrollTop=$("log").scrollHeight;d.scrollIntoView({behavior:"smooth",block:"start"})}};
+try{if(localStorage.getItem("lab.details")==="1"){$("details").classList.add("open");$("detailsBtn").textContent="Hide workshop"}}catch(e){}
 const es=new EventSource("/events");es.onmessage=e=>{try{handle(JSON.parse(e.data))}catch(err){console.error(err)}};
 drawMonster();drawFlasks([]);loadRegistry();loadLedger();loadStatus();setInterval(loadLedger,15000);setInterval(loadStatus,10000);
 </script>
