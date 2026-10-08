@@ -22,10 +22,12 @@ class StepFailed(RuntimeError):
 FALLBACK = {"__fallback__": True}
 
 
-def _log_io(cap: dict, inp, out) -> None:
-    """Per-capability I/O history: the raw material for distillation and regression tests."""
+def _log_io(cap: dict, inp, out, via: str = "") -> None:
+    """Per-capability I/O history: the raw material for distillation and regression tests.
+    via='fallback' marks inputs the distilled code deferred to the LLM: the next distillation learns them."""
+    row = {"input": inp, "output": out, **({"via": via} if via else {})}
     with Path(cap["path"], "io.jsonl").open("a", encoding="utf-8") as f:
-        f.write(json.dumps({"input": inp, "output": out}, ensure_ascii=False, default=str) + "\n")
+        f.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
 
 
 def _sandbox_call(cap: dict, payload, timeout: int = config.SANDBOX_TIMEOUT_S):
@@ -54,6 +56,8 @@ def run_capability(cap: dict, inp: dict, budget: gateway.Budget) -> tuple[dict, 
         out, tok = _sandbox_call(cap, inp), 0
         if out == FALLBACK:
             out, tok = _fallback(cap, inp, budget)
+            _log_io(cap, inp, out, "fallback")
+            return out, tok
     _log_io(cap, inp, out)
     return out, tok
 
@@ -66,7 +70,7 @@ def run_capability_batch(cap: dict, inputs: list[dict], budget: gateway.Budget) 
     for i, (x, o) in enumerate(zip(inputs, outs)):
         if o == FALLBACK:
             outs[i], _ = _fallback(cap, x, budget)
-        _log_io(cap, x, outs[i])
+        _log_io(cap, x, outs[i], "fallback" if o == FALLBACK else "")
     return outs
 
 

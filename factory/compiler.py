@@ -43,9 +43,36 @@ def samples(cap: dict) -> list[dict]:
     return out
 
 
+def _llm_parent(cap: dict) -> dict:
+    """The LLM version a capability distills from: itself, or the fallback of an already-distilled version."""
+    fb = cap["manifest"].get("fallback")
+    return registry.get(fb["name"], fb["version"]) if fb else cap
+
+
+def training_rows(cap: dict) -> list[dict]:
+    """All known-good LLM answers for this step: the LLM version's history plus every fallback answer since."""
+    parent = _llm_parent(cap)
+    rows = samples(parent)
+    if parent is not cap:
+        rows += [r for r in samples(cap) if r.get("via") == "fallback"]
+    seen, out = set(), []
+    for r in rows:
+        k = json.dumps(r["input"], sort_keys=True, ensure_ascii=False)
+        if k not in seen:
+            seen.add(k)
+            out.append({"input": r["input"], "output": r["output"]})
+    return out
+
+
 def candidates() -> list[dict]:
-    return [c for c in registry.list_artifacts("capability")
-            if c["manifest"].get("impl") == "llm" and len(samples(c)) >= MIN_SAMPLES]
+    """LLM steps with enough history, and distilled steps that keep deferring new inputs to the LLM."""
+    out = []
+    for c in registry.list_artifacts("capability"):
+        if c["manifest"].get("impl") == "llm" and len(samples(c)) >= MIN_SAMPLES:
+            out.append(c)
+        elif c["manifest"].get("fallback") and sum(r.get("via") == "fallback" for r in samples(c)) >= MIN_SAMPLES - 1:
+            out.append(c)
+    return out
 
 
 def decision_keys(rows: list[dict]) -> list[str]:
@@ -88,12 +115,13 @@ def test_unknown_input_defers_or_answers():
 
 
 def distill(cap: dict, budget: gateway.Budget) -> bool:
-    rows = samples(cap)
+    rows = training_rows(cap)
+    parent = _llm_parent(cap)
     name = cap["name"]
     tok = round(cap["tokens"] / cap["runs"]) if cap["runs"] else 0
     emit("stage", stage="distill", capability=name, msg=f"distilling {name}: {len(rows)} recorded runs, ~{tok} tok/run")
     emit("say", text=f"I keep paying tokens for {name.replace('_', ' ')}. Let me turn it into plain code.")
-    prompt_txt = Path(cap["path"], "prompt.txt").read_text(encoding="utf-8")
+    prompt_txt = Path(parent["path"], "prompt.txt").read_text(encoding="utf-8")
     base = (f"Step: {name}\nPrompt the LLM was given:\n{prompt_txt}\n\nOutput schema: {cap['manifest']['signature']['out_schema']}"
             f"\n\nRecorded runs (input → output):\n" +
             "\n".join(json.dumps(r, ensure_ascii=False) for r in rows[:60]))
@@ -118,19 +146,22 @@ def distill(cap: dict, budget: gateway.Budget) -> bool:
         emit("say", text=f"I couldn't distill {name}. It stays an LLM step.")
         return False
 
-    manifest = {**cap["manifest"], "impl": "code", "description": cap["description"] + " (distilled to code)",
+    manifest = {**parent["manifest"], "impl": "code", "description": parent["description"] + " (distilled to code)",
                 "permissions": {"net": [], "fs": "none", "llm": False}, "budget": {"max_tokens_per_run": 0},
-                "fallback": {"name": name, "version": cap["version"]},
+                "fallback": {"name": name, "version": parent["version"]},
                 "lineage": {"created_by": "distillation", "parent": f"{name}@v{cap['version']}",
+                            "llm_source": f"{name}@v{parent['version']}",
                             "samples": len(rows), "notes": d.notes}}
     manifest.pop("version", None)
     version = registry.save_candidate(manifest, files)
     summary = re.findall(r"\d+ passed[^\n]*", out)
     rep = {"passed": True, "summary": (summary[-1] if summary else "passed") + f" · equivalent on {len(rows)} recorded runs",
            "output": out[-2000:]}
-    if not gate.ask("install", f"replace LLM step {name} v{cap['version']} (~{tok} tok/run) with code v{version} (0 tok/run)",
-                    {"recorded runs": len(rows), "tests": rep["summary"], "how": d.notes,
-                     "unsure inputs": f"fall back to LLM v{cap['version']}"}):
+    title = (f"replace LLM step {name} v{cap['version']} (~{tok} tok/run) with code v{version} (0 tok/run)"
+             if parent is cap else
+             f"re-distill {name}: code v{cap['version']} → v{version}, learned from {len(rows)} answers incl. LLM fallbacks")
+    if not gate.ask("install", title, {"recorded runs": len(rows), "tests": rep["summary"], "how": d.notes,
+                                       "unsure inputs": f"fall back to LLM v{parent['version']}"}):
         registry.set_status(name, version, "archived")
         return False
     registry.install(name, version, rep)

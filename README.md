@@ -39,6 +39,14 @@ Task ──► PLAN ─► DISCOVER ─► GAP? ──► LEARN (probe real APIs
   (workflow) on the bench, the wall shows the registry, a cost gauge shows build cost vs run cost, a knock on the
   door shows external agents arriving via MCP. Voice by ElevenLabs.
 
+## Measured (from the ledger, real runs)
+
+| Workflow | Build (one-time) | Run cost |
+|---|---|---|
+| ARES company lookup (session 1, empty registry) | $0.18, 10 LLM calls | 0 tokens, ~3 s |
+| Check 3 suppliers + flag inactive (session 2, reuses session 1 via `foreach`) | $0.12, 4 LLM calls | 0 tokens, ~4 s |
+| Categorise 5 invoice lines (needs judgment → LLM step) | $0.06 | v1 LLM: ~4,270 tok → v2 distilled: 1,702 tok on unseen lines (2/5 fell back) → v3 re-distilled from fallbacks: 835 tok |
+
 ## Architecture
 
 | Part | File | Notes |
