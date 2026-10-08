@@ -1,0 +1,101 @@
+# Frankenstein Lab — a factory that builds its own workflows
+
+> AI agents cost money every time they run. This factory pays the model **once** to build a workflow — detecting
+> what it can't do yet, writing the missing capabilities, testing them in a sandbox and asking an operator to
+> install them — and from then on runs that workflow as plain code at **~0 tokens**.
+
+Topic: **Frankenstein** (Etnetera / prg.ai) — *build an agent that can build itself.*
+
+## What it does
+
+```
+Task ──► PLAN ─► DISCOVER ─► GAP? ──► LEARN (probe real APIs in sandbox) ─► WRITE code+tests ─► TEST (sandbox)
+                     │                    ▲                                                        │
+                     │ reuse              └──── repair (capped) ◄──── fail ◄───────────────────────┤
+                     ▼                                                                             ▼ pass
+                    RUN ◄── INSTALL ◄── OPERATOR GATE ◄── ACCEPTANCE CHECK ◄── E2E TEST ◄── INSTALL capability
+                     │                                          │ fail → replan with feedback (capped)
+                     └── every run is logged ──► DISTILL: LLM steps with history are rewritten as code (0 tok/run)
+```
+
+* **Gap detection from the task.** A planner maps the task onto the registry. Anything it can't cover becomes a
+  gap. Gaps are also detected *after* the fact: an end-to-end failure or a failed acceptance check ("the output
+  doesn't contain the registered address") sends the factory back to the bench with that feedback.
+* **Learn before writing.** The builder probes the real API / page from inside the sandbox, then writes
+  `impl.py` + pytest tests. Missing capabilities are built **on the real output of the previous steps**, so parts fit.
+* **Tests before install, visible in the log.** The harness rejects anything with failing tests or fewer than 3 tests.
+* **Operator control.** Every install, every upgrade and every *widening of authority* (new network host) needs
+  approval in the lab. Rollback and revoke per artifact.
+* **Capabilities grow, authority doesn't.** Each artifact declares its network hosts. The sandbox's egress proxy
+  enforces them. A builder that needs a new host must ask, with a reason (it once found that the planner had
+  granted an unofficial look-alike site and asked for the official `ares.gov.cz` instead).
+* **Fresh-session composition.** The registry persists (SQLite + a git repo of artifacts). A new process — or an
+  external agent over MCP — gets a different task and composes existing capabilities (incl. `foreach` over lists)
+  without rebuilding or manual wiring.
+* **Minimal tokens.** Workflows are code. LLM steps exist only where judgment is needed, and once they have
+  enough recorded runs the factory distills them into code, proven equivalent on that history by a
+  harness-generated test, falling back to the LLM only for inputs the code isn't sure about.
+* **The scientist talks.** The lab UI is a Frankenstein laboratory: the scientist (factory) builds the monster
+  (workflow) on the bench, the wall shows the registry, a cost gauge shows build cost vs run cost, a knock on the
+  door shows external agents arriving via MCP. Voice by ElevenLabs.
+
+## Architecture
+
+| Part | File | Notes |
+|---|---|---|
+| Orchestrator | `factory/orchestrator.py` | plan → gaps → build on real data → e2e → acceptance → gate → install |
+| Builder | `factory/builder.py` | probe / submit / request_access loop, repair capped |
+| Distiller | `factory/compiler.py` | LLM step → code, equivalence-tested on recorded runs |
+| Registry | `factory/registry.py` | versions, status, rollback; artifacts committed to `data/registry/.git` |
+| Sandbox | `factory/sandbox.py`, `sandbox/` | Docker in WSL, read-only fs, no caps, internal network + allowlisting egress proxy |
+| LLM gateway | `factory/gateway.py`, `factory/llm_elevenlabs.py` | the only holder of the key; caps calls / $ / tokens; ledger reconciled with real usage |
+| Gate | `factory/gate.py` | operator approvals (lab UI, CLI) |
+| Lab UI | `server.py`, `ui/index.html` | SSE event stream, approvals, registry wall, rollback/revoke, voice |
+| MCP gateway | `mcp_server.py` | `search_capabilities`, `describe`, `run`, `request_capability` |
+
+## Hard rules → where they are enforced
+
+| Rule | Enforcement |
+|---|---|
+| Generated code runs in a sandbox, never on a host with credentials | `sandbox.run()` is the only executor of generated code: Docker (WSL), `--read-only`, `--cap-drop ALL`, no env secrets, egress only via allowlist proxy. The API key lives only in the gateway process. |
+| No install without passing tests; test run visible | `registry.install()` raises unless the attached report passed; pytest output is streamed to the lab log. |
+| Gap comes from a task | No capability names in code; the registry starts empty (`scripts/reset_registry.py`). |
+| Self-iterations and spend capped in code | `config.py`: `MAX_FACTORY_ITERATIONS`, `MAX_REPAIR_ATTEMPTS`, `MAX_REPLANS`, `MAX_USD_PER_TASK`, `MAX_LLM_CALLS_PER_TASK`; per-workflow token budget enforced by `gateway.Budget`. |
+
+## Run it
+
+```bash
+# once: Docker inside WSL Ubuntu
+wsl -d Ubuntu-24.04 -- bash -lc "sudo apt-get install -y docker.io && sudo usermod -aG docker \$USER"
+py -3.12 -m venv .venv && .venv/Scripts/pip install -r requirements.txt
+echo ELEVENLABS_API_KEY=... > .env
+
+python scripts/reset_registry.py   # start from an empty registry
+python server.py                   # lab UI on http://localhost:8777
+python cli.py solve "..."          # or from the terminal
+python cli.py optimize             # distill LLM steps that have enough history
+```
+
+MCP (Claude Desktop): see the config snippet at the top of `mcp_server.py`.
+
+## Honest status: real, simulated, missing
+
+**Real**
+* Everything in the demo is generated live by the model from an empty registry; no capability was written or
+  seeded by us. We wrote the *machine* (planner/builder/harness/sandbox/registry/UI); the agent writes the *products*.
+* Real public data sources (e.g. the Czech ARES registry), real sandbox network enforcement, real test runs.
+* Token and dollar figures come from the provider's billing data for each call (reconciled a few seconds after the call).
+
+**Simulated / caveats**
+* The LLM is Claude (Opus 5.5 to build, Haiku 4.5 for runtime LLM steps) **served through ElevenLabs Agents in
+  text-only mode** — ElevenLabs has no plain completions endpoint, so each call is a short text conversation. We
+  read the raw stream because ElevenLabs' final message is normalised for speech (it strips `*`).
+* Development runs used an auto-approve gate mode; it is labelled `auto-mode` in every log line. The demo uses
+  real operator approvals.
+* The acceptance check is an LLM judge — it can be wrong.
+
+**Missing / limits**
+* Workflows are linear step lists (+ `foreach`), not arbitrary DAGs or branches.
+* Distillation is equivalence-tested only on recorded history; unseen inputs fall back to the LLM by design.
+* The candidate race ("compete") and adversarial test agent from our design are not implemented.
+* Single-user, single-machine; no auth on the lab UI (binds to 127.0.0.1).
