@@ -129,6 +129,50 @@ def api_solve(t: Task):
     return _background("task", lambda: solve(t.task))
 
 
+class Purpose(BaseModel):
+    purpose: str
+
+
+@app.post("/api/bots/create")
+def api_bot_create(b: Purpose):
+    from factory.orchestrator import create_bot
+    return _background("create bot", lambda: create_bot(b.purpose))
+
+
+@app.get("/api/bots")
+def api_bots():
+    out = []
+    for a in registry.list_artifacts("workflow"):
+        m = a["manifest"]
+        out.append({"name": a["name"], "version": a["version"], "description": a["description"],
+                    "purpose": m.get("purpose") or a["description"], "input_schema": m["signature"].get("in"),
+                    "example_input": m.get("example_input"), "steps": [s["uses"] for s in m.get("steps", [])],
+                    "runs": a["runs"], "avg_tokens": round(a["tokens"] / a["runs"]) if a["runs"] else 0,
+                    "llm": bool(m.get("permissions", {}).get("llm"))})
+    return out
+
+
+class Ask(BaseModel):
+    question: str = ""
+    input_json: str = ""
+
+
+@app.post("/api/bots/{name}/ask")
+def api_bot_ask(name: str, q: Ask):
+    from factory.orchestrator import ask_bot
+    if not registry.get(name):
+        raise HTTPException(404, "no such bot")
+    inp = None
+    if q.input_json.strip():
+        try:
+            inp = json.loads(q.input_json)
+        except json.JSONDecodeError as e:
+            raise HTTPException(400, f"input is not valid JSON: {e}")
+    elif not q.question.strip():
+        raise HTTPException(400, "ask a question or fill in the form")
+    return _background(f"ask {name}", lambda: ask_bot(name, q.question.strip(), inp))
+
+
 @app.post("/api/optimize")
 def api_optimize():
     from factory.compiler import optimize_all

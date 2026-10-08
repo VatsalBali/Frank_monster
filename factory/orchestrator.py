@@ -58,9 +58,47 @@ def judge(task: str, output, budget: gateway.Budget) -> Verdict:
     return v
 
 
-def solve(task: str) -> dict:
-    budget = gateway.Budget(scope=f"task:{task[:40]}", max_usd=config.MAX_USD_PER_TASK)
-    emit("task", text=task, msg=f"task: {task}")
+BOT_FRAME = ("Build a reusable bot for this purpose: {purpose}\n"
+             "There is no concrete question yet. Design the workflow input so a user can ask many different questions "
+             "of this kind, and choose a realistic example input to test it with (task_input_json).")
+
+EXTRACT = """Turn the user's question into the input of a workflow. Reply with one JSON object that matches the input
+schema exactly. Use only facts from the question; normalise obvious formats (lists, numbers, dates)."""
+
+
+def create_bot(purpose: str) -> dict:
+    """The scientist's job: build (or find) a bot for a purpose. Asking it questions is a separate, cheap step."""
+    return solve(BOT_FRAME.format(purpose=purpose), purpose=purpose)
+
+
+def ask_bot(name: str, question: str = "", inp: dict | None = None) -> dict:
+    """Ask an installed bot. A form input costs 0 tokens; a plain-language question costs one small extraction call
+    on the runtime model (shown separately). The run itself is the compiled workflow, with self-repair."""
+    wf = registry.get(name)
+    if not wf or wf["kind"] != "workflow":
+        raise KeyError(f"no active bot named {name}")
+    m = wf["manifest"]
+    ask_budget = gateway.Budget(scope=f"ask:{name}", max_usd=0.05)
+    if inp is None:
+        emit("stage", stage="understand", msg=f"reading the question for {name}")
+        inp = gateway.complete_json(
+            ask_budget, f"ask:{name}", model=config.RUNTIME_MODEL,
+            system=EXTRACT + "\nInput schema: " + str(m["signature"].get("in")) + "\nExample input: " + str(m.get("example_input")),
+            prompt=question)
+        emit("log", msg=f"question → input ({ask_budget.tokens} tok): {json.dumps(inp, ensure_ascii=False)[:200]}")
+    run_budget = gateway.Budget(scope=f"run:{name}", max_usd=0.5,
+                                max_tokens=m.get("budget", {}).get("max_tokens_per_run") or None)
+    out = run_with_heal(wf, inp, run_budget, gateway.Budget(scope=f"task:heal {name}", max_usd=config.MAX_USD_PER_TASK))
+    _record_replay(registry.get(name), inp, out)
+    emit("result", workflow=name, result=out, input=inp, question=question or None, ask_tokens=ask_budget.tokens,
+         run_tokens=run_budget.tokens, msg=f"{name} answered · {ask_budget.tokens} tok to read the question · "
+                                            f"{run_budget.tokens} tok to run")
+    return {"bot": name, "input": inp, "result": out, "ask_tokens": ask_budget.tokens, "run_tokens": run_budget.tokens}
+
+
+def solve(task: str, purpose: str = "") -> dict:
+    budget = gateway.Budget(scope=f"task:{(purpose or task)[:40]}", max_usd=config.MAX_USD_PER_TASK)
+    emit("task", text=purpose or task, mode="bot" if purpose else "task", msg=f"{'bot' if purpose else 'task'}: {purpose or task}")
     feedback = ""
     for attempt in range(config.MAX_REPLANS + 1):
         p = plan(task, budget, feedback)
@@ -86,7 +124,7 @@ def solve(task: str) -> dict:
                                 "state": "missing" if s.uses in gap_names else "ready"} for s in p.steps])
         try:
             build_on_real_data(p, task_input, budget)
-            wf, output = assemble(p)
+            wf, output = assemble(p, purpose)
         except StepFailed as e:
             emit("say", text=f"The parts don't fit together yet: {e.capability.replace('_', ' ')} failed. Back to the bench.")
             feedback = f"End-to-end run failed at step {e.step} ({e.capability}): {e.detail[-1200:]}"
@@ -157,7 +195,7 @@ def install_capability(g, budget: gateway.Budget) -> None:
     emit("monster_part", uses=g.name, state="ready")
 
 
-def assemble(p: Plan) -> tuple[dict, object]:
+def assemble(p: Plan, purpose: str = "") -> tuple[dict, object]:
     """Register the workflow as a candidate and test it end-to-end on the task input. Returns (wf, output)."""
     emit("stage", stage="assemble", msg=f"assembling workflow {p.workflow_name}")
     steps = [{"id": s.id, "uses": s.uses, "foreach": s.foreach, "inputs": [b.model_dump() for b in s.inputs]}
@@ -173,6 +211,7 @@ def assemble(p: Plan) -> tuple[dict, object]:
         "budget": {"max_tokens_per_run": llm_budget},
         "lineage": {"created_by": "factory", "uses": [f"{c['name']}@v{c['version']}" for c in caps]},
         "example_input": p.task_input_json,
+        "purpose": purpose or p.workflow_description,
     }
     version = registry.save_candidate(manifest, {})
     wf = registry.get(p.workflow_name, version)

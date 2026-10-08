@@ -13,19 +13,21 @@ Everything below is clicked in the lab UI. Keep it open at **http://localhost:87
 
 ## 1 · Build from nothing (≈5 min) — gap detection, learn, test, gate
 
-1. Click the **Company lookup** chip → **Bring it to life ⚡**.
+1. In the search bar describe a bot, e.g. *a bot that looks up Czech companies in the official ARES registry by ICO*
+   → **Create monster ⚡**.
 2. Watch: stage `plan` → `learn`. The monster appears with a **dashed** torso band (missing part); the scientist
    says *"I'm missing a capability…"*; coil sparks, lever pumps.
 3. If an amber **authority request** appears (e.g. `ares.gov.cz`): read the reason → **Grant access**.
    *(Optional: click Reject once on a later run to see the factory stop honestly.)*
 4. **Code on the bench** shows the `impl.py` the agent wrote; toggle **tests**. The notebook shows pytest output.
 5. **Install request** → read tests/network → **It's alive · install**. Then a second gate for the workflow.
-6. Expect: flash of light, monster's eyes open and it breathes; result shows name *Asseco Central Europe, a.s.*,
-   address, active = true. **Last run · 0 tokens**. A new tile on the wall.
+6. Expect: flash of light, monster's eyes open and it breathes; the new monster appears under **Your monsters**.
+7. **Ask it**: *"Who is ICO 27074358 and are they still active?"* → Output shows the question, ~300 tokens to read it,
+   **0 tokens** to run. Switch to **Fill the form** and run again → 0 + 0 tokens.
 
 ## 2 · Fresh session, different task (≈3 min) — reuse without rebuilding
 
-1. Click **Supplier check** chip → **Bring it to life**.
+1. Create a second monster: *a bot that checks a list of suppliers before payment and flags inactive ones*.
 2. Expect: the monster has a **green (ready) band 1** reused from step 1 and only the new part(s) get built.
    Notebook says `reusing: …`. Approve installs. Result lists 3 companies + inactive flags. Run = 0 tokens.
 

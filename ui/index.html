@@ -225,6 +225,33 @@ table.audit td.n{text-align:right;color:var(--mute)}
 #details{display:none;flex-direction:column;gap:16px}
 #details.open{display:flex;animation:fadein .25s}
 #details .pn{background:var(--panel)}
+#botsPanel .lb{margin-bottom:12px}
+#bots{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+#bots .empty{color:var(--mute);font-size:13px;padding:6px 2px}
+.bot{flex:0 0 230px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--soft);cursor:pointer;transition:border-color .15s,transform .15s,background .15s;animation:pop .3s ease-out;display:flex;gap:10px;align-items:flex-start}
+.bot:hover{transform:translateY(-2px);border-color:var(--line2)}
+.bot.sel{border-color:var(--green);background:#2F3A2C;box-shadow:0 0 0 3px rgba(141,176,119,.15)}
+.bot .face{flex:0 0 34px;height:38px}
+.bot b{display:block;font-weight:600;font-size:13px;line-height:1.3}
+.bot small{display:block;color:var(--ink2);font-size:12px;line-height:1.35;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bot .st{font-size:11px;color:var(--mute);margin-top:6px}
+#askBox{margin-top:14px;border-top:1px solid var(--line);padding-top:14px;animation:fadein .25s}
+#askHead{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+#askHead b{font:600 16px Fraunces,Georgia,serif}
+#askHead span{color:var(--mute);font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.seg button{border:0;border-radius:0;background:transparent;font-size:12px;padding:6px 12px;color:var(--ink2)}
+.seg button.on{background:var(--ink);color:#1A1A1C}
+.askRow{display:flex;gap:10px}
+#askQ{flex:1;min-width:0;background:var(--bg2);border:1px solid var(--line2);color:var(--ink);border-radius:12px;padding:11px 14px;font:inherit;outline:none}
+#askQ:focus{border-color:var(--green)}
+#askForm{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px}
+#askForm label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mute)}
+#askForm input,#askForm textarea{background:var(--bg2);border:1px solid var(--line2);color:var(--ink);border-radius:10px;padding:8px 10px;font:13px Inter,sans-serif;outline:none;resize:vertical}
+#askForm textarea{font-family:'JetBrains Mono',monospace;font-size:12px;min-height:60px}
+#askForm input:focus,#askForm textarea:focus{border-color:var(--green)}
+#askForm .chk{flex-direction:row;align-items:center;gap:8px}
+.hint{font-size:12px;color:var(--mute);margin-top:8px}
 </style>
 </head>
 <body>
@@ -243,8 +270,8 @@ table.audit td.n{text-align:right;color:var(--mute)}
 </header>
 <div class="taskbar">
   <div class="taskrow">
-    <input id="task" placeholder="Give the scientist a task… e.g. check a supplier in the Czech company registry" autocomplete="off">
-    <button id="go" class="primary">Bring it to life ⚡</button>
+    <input id="task" placeholder="Describe a monster to create… e.g. a bot that checks Czech suppliers before we pay them" autocomplete="off">
+    <button id="go" class="primary">Create monster ⚡</button>
   </div>
   <div id="examples" hidden></div>
 </div>
@@ -328,6 +355,18 @@ table.audit td.n{text-align:right;color:var(--mute)}
     <div id="parts"></div>
     <div id="gate"><div class="k" id="gateKind">approval needed</div><div class="t" id="gateTitle"></div><pre id="gateDetail"></pre>
       <button class="primary" id="approve">It's alive · install</button> <button class="no" id="reject">Reject</button></div>
+  </div>
+  <div class="pn" id="botsPanel">
+    <p class="lb"><b>Your monsters</b><span id="botCount">ask any of them a question</span></p>
+    <div id="bots"><div class="empty">No monsters yet. Describe one above and the scientist will build it.</div></div>
+    <div id="askBox" hidden>
+      <div id="askHead"><b id="askName"></b><span id="askPurpose"></span></div>
+      <div class="seg"><button id="segWords" class="on">Ask in words · small LLM call</button><button id="segForm">Fill the form · 0 tokens</button></div>
+      <div id="wordsPane"><div class="askRow"><input id="askQ" autocomplete="off"><button class="primary" id="askBtn">Ask</button></div>
+        <div class="hint">Claude Haiku turns your sentence into the bot's input (a few hundred tokens, shown in the output). The bot itself runs as code.</div></div>
+      <div id="formPane" hidden><div id="askForm"></div><button class="primary" id="formBtn">Run</button>
+        <div class="hint">Straight into the compiled workflow: no language model involved.</div></div>
+    </div>
   </div>
   <div class="pn" id="result">
     <p class="lb"><b>Output</b><span class="outbtns"><button id="bCopy">Copy JSON</button><button id="bCsv">Download CSV</button><button id="bRaw">Raw JSON</button></span></p>
@@ -450,7 +489,7 @@ function setBusy(b){$("status").classList.toggle("busy",b);$("statusTxt").textCo
 
 function handle(ev){
   const live=ev.ts>LOADED-1;const k=ev.kind;
-  if(k==="task"){lastTask=ev.text;monster=[];setAlive(false);drawMonster();log("▶ "+ev.text,"stage");if(live)setBusy(true)}
+  if(k==="task"){lastTask=ev.text;lastMode=ev.mode||"task";monster=[];setAlive(false);drawMonster();log("▶ "+ev.text,"stage");if(live)setBusy(true)}
   else if(k==="stage"){$("stage").textContent=ev.stage;log("— "+ev.msg,"stage");
     if(["learn","test","distill","heal"].includes(ev.stage))setScene(true);
     if(["accept","assemble","run","plan"].includes(ev.stage))setScene(false);
@@ -471,12 +510,12 @@ function handle(ev){
     if(ev.ok){lastRun={workflow:ev.workflow,tokens:ev.tokens,ms:ev.ms};runs.push({workflow:ev.workflow,tokens:ev.tokens});drawSpark();const rt=$("runTok");rt.textContent=ev.tokens.toLocaleString();rt.classList.remove("flashy");void rt.offsetWidth;rt.classList.add("flashy");
       $("runSub").textContent=`tokens · ${(ev.ms/1000).toFixed(1)} s · ${ev.workflow}`;
       if(monster.length){monster.forEach(p=>p.state="ready");drawMonster();setAlive(true,live)}else showWorkflow(ev.workflow)}}
-  else if(k==="result"){showOutput(ev,live);log("■ "+ev.msg,"pass");setAlive(true,live)}
+  else if(k==="result"){showOutput(ev,live);if(live)loadBots(lastMode==="bot"?ev.workflow:undefined);log("■ "+ev.msg,"pass");setAlive(true,live)}
   else if(k==="knock"){log("⌂ "+ev.msg,"gate");if(live){knock();say(ev.say||"Someone's at the door.",true);toast("External agent: "+ev.msg)}}
   else if(k==="flask"){log("⚗ "+ev.msg,"pass");if(live){freshTiles.add(ev.name);loadRegistry();toast("Distilled "+ev.name+" into code")}}
   else if(k==="error"){log("✗ "+ev.msg,"fail");setScene(false);monster.forEach(p=>{if(p.state==="building")p.state="failed"});drawMonster();if(live)toast(ev.msg.slice(0,140),"bad")}
-  else if(k==="idle"){if(live){setBusy(false);setScene(false);loadLedger()}}
-  else if(k==="reset"){monster=[];setAlive(false);drawMonster();$("log").innerHTML="";lastOut=null;lastTask="";$("outQ").textContent="No output yet";$("outMeta").innerHTML="";$("outBody").innerHTML=EMPTY_OUT;$("outRaw").textContent="";runs=[];drawSpark();lastCode=null;$("code").innerHTML='<span class="cm"># the code the agent writes appears here, attempt by attempt</span>';$("buildUsd").textContent="$0.00";$("runTok").textContent="–";freshTiles.clear();loadRegistry();if(live)toast("Lab reset · registry is empty")}
+  else if(k==="idle"){if(live){setBusy(false);setScene(false);loadLedger();loadBots()}}
+  else if(k==="reset"){monster=[];setAlive(false);drawMonster();$("log").innerHTML="";lastOut=null;lastTask="";$("outQ").textContent="No output yet";$("outMeta").innerHTML="";$("outBody").innerHTML=EMPTY_OUT;$("outRaw").textContent="";runs=[];drawSpark();lastCode=null;$("code").innerHTML='<span class="cm"># the code the agent writes appears here, attempt by attempt</span>';$("buildUsd").textContent="$0.00";$("runTok").textContent="–";freshTiles.clear();loadRegistry();selBot=null;loadBots();if(live)toast("Lab reset · registry is empty")}
 }
 // ---------- output renderer: plain code, so presenting an answer costs 0 tokens ----------
 let lastTask="", lastRun=null, lastOut=null;
@@ -518,10 +557,11 @@ function renderValue(v,depth=0){
 function firstRows(v){if(isRows(v))return v;if(isObj(v))for(const x of Object.values(v)){const r=firstRows(x);if(r)return r}return null}
 function showOutput(ev,live){
   lastOut=ev.result;
-  $("outQ").textContent=ev.via?`${ev.via} ran ${ev.workflow}`:(lastTask||ev.workflow||"Output");
+  $("outQ").textContent=ev.question?`“${ev.question}”`:ev.via?`${ev.via} ran ${title(ev.workflow)}`:(ev.ask_tokens!==undefined?`${title(ev.workflow)} · form input`:(lastTask||ev.workflow||"Output"));
   const tags=[`<span class="tag">${esc(ev.workflow||"")}</span>`];
+  if(ev.ask_tokens)tags.push(`<span class="tag">${ev.ask_tokens.toLocaleString()} tok to read the question</span>`);
   if(lastRun&&lastRun.workflow===ev.workflow)tags.push(`<span class="tag ${lastRun.tokens?"":"zero"}">${lastRun.tokens.toLocaleString()} tokens</span><span class="tag">${(lastRun.ms/1000).toFixed(1)} s</span>`);
-  if(ev.input&&ev.via)tags.push(`<span style="font-family:'JetBrains Mono',monospace">input ${esc(JSON.stringify(ev.input).slice(0,90))}</span>`);
+  if(ev.input&&(ev.via||ev.ask_tokens!==undefined))tags.push(`<span style="font-family:'JetBrains Mono',monospace">input ${esc(JSON.stringify(ev.input).slice(0,90))}</span>`);
   tags.push(`<span>${new Date(ev.ts*1000).toLocaleTimeString()}</span>`);
   $("outMeta").innerHTML=tags.join("");
   $("outBody").innerHTML=renderValue(ev.result);
@@ -572,7 +612,7 @@ async function loadLedger(){try{const L=await (await fetch("/api/ledger")).json(
 async function loadStatus(){try{const s=await (await fetch("/api/status")).json();setBusy(s.busy);
   $("modelTxt").textContent=`builds with ${s.build_model} · LLM steps with ${s.runtime_model} · via ElevenLabs`;
   $("caps").textContent=`caps in code: $${s.caps.usd_per_task}/task · ${s.caps.llm_calls} LLM calls · ${s.caps.iterations} build iterations · ${s.caps.repairs} repairs · ${s.caps.replans} replans · gate: ${s.gate_mode}`}catch(e){}}
-$("go").onclick=async()=>{const t=$("task").value.trim();if(!t){$("task").focus();return}const r=await fetch("/api/solve",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({task:t})});if(!r.ok)toast((await r.json()).detail,"bad");else setBusy(true)};
+$("go").onclick=async()=>{const t=$("task").value.trim();if(!t){$("task").focus();return}const r=await fetch("/api/bots/create",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({purpose:t})});if(!r.ok)toast((await r.json()).detail,"bad");else{setBusy(true);lastMode="bot";$("task").value=""}};
 $("task").addEventListener("keydown",e=>{if(e.key==="Enter")$("go").click()});
 $("optBtn").onclick=async()=>{$("menu").classList.remove("open");const r=await fetch("/api/optimize",{method:"POST"});if(!r.ok)toast((await r.json()).detail,"bad");else{setBusy(true);toast("Looking for LLM steps worth distilling…")}};
 $("resetBtn").onclick=async()=>{$("menu").classList.remove("open");if(!confirm("Reset the lab? This deletes every agent-built capability and workflow so the registry is empty."))return;const r=await fetch("/api/reset",{method:"POST"});if(!r.ok)toast((await r.json()).detail,"bad")};
@@ -584,8 +624,61 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")$("menu").classList.
 $("detailsBtn").onclick=()=>{const d=$("details");const o=!d.classList.contains("open");d.classList.toggle("open",o);$("detailsBtn").textContent=o?"Hide workshop":"Show workshop";$("menu").classList.remove("open");
   try{localStorage.setItem("lab.details",o?"1":"0")}catch(e){}if(o){$("log").scrollTop=$("log").scrollHeight;d.scrollIntoView({behavior:"smooth",block:"start"})}};
 try{if(localStorage.getItem("lab.details")==="1"){$("details").classList.add("open");$("detailsBtn").textContent="Hide workshop"}}catch(e){}
+
+// ---------- bots: create once (scientist), ask many times ----------
+let bots=[], selBot=null, lastMode="task";
+const FACE=`<svg class="face" viewBox="0 0 34 38"><rect x="3" y="6" width="28" height="30" rx="5" fill="#86A872" stroke="#3F5A33"/><path d="M2 12V4h30v8l-4-3-4 4-4-4-4 4-4-4-4 4-4-4z" fill="#151516"/><circle cx="12" cy="20" r="3" fill="#F2F0EB"/><circle cx="22" cy="20" r="3" fill="#F2F0EB"/><circle cx="12.5" cy="20.5" r="1.3" fill="#24331D"/><circle cx="22.5" cy="20.5" r="1.3" fill="#24331D"/><path d="M11 29h12M14 27v4M18 27v4M21 27v4" stroke="#24331D" stroke-width="1.2"/><rect x="0" y="24" width="4" height="4" fill="#8E8B85"/><rect x="30" y="24" width="4" height="4" fill="#8E8B85"/></svg>`;
+const title=n=>nice(String(n).replace(/_/g," "));
+function schemaOf(b){try{return typeof b.input_schema==="string"?JSON.parse(b.input_schema):(b.input_schema||{})}catch(e){return {}}}
+function exampleOf(b){try{return typeof b.example_input==="string"?JSON.parse(b.example_input):(b.example_input||{})}catch(e){return {}}}
+async function loadBots(selectName){
+  try{bots=await (await fetch("/api/bots")).json()}catch(e){return}
+  const B=$("bots");
+  if(!bots.length){B.innerHTML='<div class="empty">No monsters yet. Describe one above and the scientist will build it.</div>';$("askBox").hidden=true;selBot=null;return}
+  B.innerHTML="";
+  bots.forEach(b=>{const d=document.createElement("div");d.className="bot"+(selBot&&selBot.name===b.name?" sel":"");d.dataset.name=b.name;
+    d.innerHTML=`${FACE}<div><b>${esc(title(b.name))}</b><small>${esc(b.purpose||b.description)}</small><div class="st">${b.runs} answer${b.runs===1?"":"s"} · ${b.avg_tokens.toLocaleString()} tok/run${b.llm?" · uses LLM":""}</div></div>`;
+    d.onclick=()=>selectBot(b.name);B.appendChild(d)});
+  $("botCount").textContent=`${bots.length} monster${bots.length>1?"s":""} · ask any of them`;
+  const want=selectName||(selBot&&selBot.name);if(want&&bots.find(b=>b.name===want))selectBot(want,true);
+}
+function selectBot(name,quiet){
+  selBot=bots.find(b=>b.name===name);if(!selBot)return;
+  document.querySelectorAll(".bot").forEach(e=>e.classList.toggle("sel",e.dataset.name===name));
+  $("askBox").hidden=false;$("askName").textContent=title(name);$("askPurpose").textContent=selBot.purpose||selBot.description;
+  const ex=exampleOf(selBot);$("askQ").placeholder="e.g. "+exampleQuestion(selBot,ex);
+  buildForm(schemaOf(selBot),ex);
+  if(!quiet){showWorkflow(name);$("askQ").focus()}
+}
+function flat(v){return Array.isArray(v)?v.slice(0,3).map(flat).join(", "):(v&&typeof v==="object"?Object.values(v).filter(x=>typeof x!=="object").join(" "):String(v))}
+function exampleQuestion(b,ex){const vals=Object.values(ex).map(flat).filter(Boolean).join(" · ");
+  return (vals?vals.slice(0,90):"ask a question")}
+function buildForm(schema,ex){
+  const props=schema.properties||Object.fromEntries(Object.keys(ex).map(k=>[k,{}]));
+  const F=$("askForm");F.innerHTML="";
+  Object.entries(props).forEach(([k,s])=>{const v=ex[k];const t=s.type||(Array.isArray(v)?"array":typeof v);
+    const lab=document.createElement("label");lab.dataset.key=k;lab.dataset.type=t;lab.dataset.items=(s.items&&s.items.type)||(Array.isArray(v)&&v.length&&typeof v[0]==="object"?"object":"string");
+    const hint=s.description?` · ${esc(s.description).slice(0,60)}`:"";
+    if(t==="boolean"){lab.className="chk";lab.innerHTML=`<input type="checkbox" ${v?"checked":""}> ${esc(nice(k))}`}
+    else if(t==="array"&&lab.dataset.items!=="object"){lab.innerHTML=`${esc(nice(k))} <span style="color:var(--dim)">one per line${hint}</span><textarea>${esc((v||[]).join("\n"))}</textarea>`}
+    else if(t==="array"||t==="object"){lab.innerHTML=`${esc(nice(k))} <span style="color:var(--dim)">JSON${hint}</span><textarea>${esc(JSON.stringify(v??(t==="array"?[]:{}),null,1))}</textarea>`}
+    else lab.innerHTML=`${esc(nice(k))}<input type="${t==="number"||t==="integer"?"number":"text"}" value="${esc(v??"")}" placeholder="${esc(s.description||"")}">`;
+    F.appendChild(lab)});
+}
+function readForm(){const out={};for(const lab of $("askForm").children){const k=lab.dataset.key,t=lab.dataset.type;
+  if(t==="boolean")out[k]=lab.querySelector("input").checked;
+  else if(t==="array"&&lab.dataset.items!=="object"){const raw=lab.querySelector("textarea").value.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);out[k]=lab.dataset.items==="number"||lab.dataset.items==="integer"?raw.map(Number):raw}
+  else if(t==="array"||t==="object")out[k]=JSON.parse(lab.querySelector("textarea").value||"null");
+  else{const v=lab.querySelector("input").value;out[k]=t==="number"||t==="integer"?Number(v):v}}return out}
+async function ask(body){if(!selBot)return;const r=await fetch(`/api/bots/${selBot.name}/ask`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok)toast((await r.json()).detail,"bad");else{setBusy(true);lastMode="ask";showWorkflow(selBot.name)}}
+$("askBtn").onclick=()=>{const q=$("askQ").value.trim();if(!q){$("askQ").focus();return}ask({question:q})};
+$("askQ").addEventListener("keydown",e=>{if(e.key==="Enter")$("askBtn").click()});
+$("formBtn").onclick=()=>{let inp;try{inp=readForm()}catch(e){toast("A JSON field is not valid JSON","bad");return}ask({input_json:JSON.stringify(inp)})};
+$("segWords").onclick=()=>{$("segWords").classList.add("on");$("segForm").classList.remove("on");$("wordsPane").hidden=false;$("formPane").hidden=true};
+$("segForm").onclick=()=>{$("segForm").classList.add("on");$("segWords").classList.remove("on");$("wordsPane").hidden=true;$("formPane").hidden=false};
 const es=new EventSource("/events");es.onmessage=e=>{try{handle(JSON.parse(e.data))}catch(err){console.error(err)}};
-drawMonster();drawFlasks([]);loadRegistry();loadLedger();loadStatus();setInterval(loadLedger,15000);setInterval(loadStatus,10000);
+drawMonster();drawFlasks([]);loadRegistry();loadBots();loadLedger();loadStatus();setInterval(loadLedger,15000);setInterval(loadStatus,10000);
 </script>
 </body>
 </html>

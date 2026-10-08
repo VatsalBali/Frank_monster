@@ -6,6 +6,14 @@
 
 Topic: **Frankenstein** (Etnetera / prg.ai) — *build an agent that can build itself.*
 
+## How you use it
+
+1. **Create a monster.** Describe a purpose to the scientist ("a bot that checks Czech suppliers before we pay
+   them"). The factory builds the bot once — finding gaps, writing and testing capabilities, asking you to approve.
+2. **Ask it.** Pick the monster and ask in plain words (a small Claude Haiku call turns the sentence into the bot's
+   input; the token count is shown) or fill the auto-generated form (0 tokens). The bot itself runs as compiled
+   code. Pay once to build, ask as often as you like.
+
 ## What it does
 
 ```
