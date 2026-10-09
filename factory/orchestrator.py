@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from . import config, gate, gateway, governance, inbox, registry
+from . import config, gate, gateway, governance, inbox, monster_voice, registry
 from .builder import build_capability
 from .events import emit
 from .executor import StepFailed, resolve, run_capability, run_capability_batch, run_workflow
@@ -149,7 +149,8 @@ DESCRIBE = """You write the presentation layer of a bot, once, so every later an
 Given its purpose, input schema, an example input and its real output, reply with JSON:
 {"headline": "<one-sentence answer template with {placeholders}>", "examples": ["<question>", "<question>", "<question>"],
  "manual_minutes": <minutes a competent office worker needs to produce one such answer by hand; conservative>,
- "manual_basis": "<one short sentence: what that manual work consists of>"}
+ "manual_basis": "<one short sentence: what that manual work consists of>",
+ "voice": "<the monster's voice archetype, one of: VOICES>"}
 Placeholders are dotted paths into the OUTPUT (lists by index: {ranking.0.currency}) or into the input as
 {input.<field>}. Use only paths that exist in the example output, and prefer output fields over input fields
 (outputs are cleaned up; inputs may be messy). The sentence must read naturally for other inputs
@@ -162,11 +163,14 @@ def describe_bot(wf: dict, example_input, output, budget: gateway.Budget | None 
     b = budget or gateway.Budget(scope=f"describe:{wf['name']}", max_usd=0.05)
     m = wf["manifest"]
     try:
-        d = gateway.complete_json(b, "describe", model=config.INSTANT_MODEL, system=DESCRIBE,
+        d = gateway.complete_json(b, "describe", model=config.INSTANT_MODEL, system=DESCRIBE.replace("VOICES", "; ".join(
+                                      f"{k} ({v['fits']})" for k, v in monster_voice.ARCHETYPES.items())),
                                   prompt=f"Purpose: {m.get('purpose') or m.get('description')}\n"
                                          f"Input schema: {m['signature'].get('in')}\nExample input: {json.dumps(example_input, ensure_ascii=False)}\n"
                                          f"Output: {fit_json(output, 3000)}")
         patch = {"headline": str(d.get("headline") or "")[:300], "examples": [str(x)[:140] for x in (d.get("examples") or [])][:3]}
+        patch["voice"] = monster_voice.pick(wf["name"], d.get("voice"))
+        monster_voice.prepare(patch["voice"])
         try:
             patch["manual_minutes"] = max(1, round(float(d.get("manual_minutes")), 1))
             patch["manual_basis"] = str(d.get("manual_basis") or "")[:200]

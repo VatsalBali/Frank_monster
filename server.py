@@ -13,7 +13,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
-from factory import config, gate, gateway, governance, inbox, registry, sandbox, voice
+from factory import config, gate, gateway, governance, inbox, monster_voice, registry, sandbox, voice
 from factory.events import emit
 
 app = FastAPI()
@@ -268,7 +268,8 @@ def api_bots():
                     "example_input": m.get("example_input"), "steps": [s["uses"] for s in m.get("steps", [])],
                     "runs": a["runs"], "avg_tokens": round(a["tokens"] / a["runs"]) if a["runs"] else 0,
                     "llm": bool(m.get("permissions", {}).get("llm")),
-                    "headline": m.get("headline") or "", "examples": m.get("examples") or []})
+                    "headline": m.get("headline") or "", "examples": m.get("examples") or [],
+                    "voice": monster_voice.pick(a["name"], m.get("voice"))})
     return out
 
 
@@ -369,8 +370,14 @@ def api_ledger():
 
 
 @app.get("/api/voice")
-def api_voice(text: str):
-    audio = voice.speak(text)
+def api_voice(text: str, bot: str = ""):
+    vid = None
+    if bot:
+        a = registry.get(bot)
+        arch = monster_voice.pick(bot, a["manifest"].get("voice") if a else None)
+        vid = monster_voice.voice_id(arch)
+        monster_voice.prepare(arch)  # designed in the background; a stock voice speaks until then
+    audio = voice.speak(text, vid)
     if not audio:
         raise HTTPException(404)
     return Response(audio, media_type="audio/mpeg")

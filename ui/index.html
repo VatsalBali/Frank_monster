@@ -995,8 +995,10 @@ function answer(m,ev){
   const hasRest=isObj(rest)?Object.keys(rest).length>0:true;
   const und=ev.question&&isObj(ev.input)?`<div class="understood">Understood as ${Object.entries(ev.input).map(([k,v])=>`<b>${esc(nice(k))}: ${esc(Array.isArray(v)?v.map(x=>typeof x==="object"?flat(x):x).join(", "):typeof v==="object"?flat(v):v)}</b>`).join("")}</div>`:"";
   const details=hasRest?(hl.text?`<details class="more"${hl.long.length?"":" open"}><summary>Details</summary><div class="ans">${renderValue(rest)}</div></details>`:`<div class="ans">${renderValue(rest)}</div>`):"";
-  m.content.innerHTML=`${hl.text?`<div class="headline${hl.long.length?" long":""}">${hl.text}</div>`:""}${und}${details}<div class="meta">${tags.join("")}<span class="acts"><button class="mini cp">Copy</button>${firstRows(ev.result)?'<button class="mini csv">CSV</button>':""}<button class="mini raw">Raw</button></span></div>`;
+  m.content.innerHTML=`${hl.text?`<div class="headline${hl.long.length?" long":""}">${hl.text}</div>`:""}${und}${details}<div class="meta">${tags.join("")}<span class="acts"><button class="mini spk" title="Hear the monster say it">🔊</button><button class="mini cp">Copy</button>${firstRows(ev.result)?'<button class="mini csv">CSV</button>':""}<button class="mini raw">Raw</button></span></div>`;
   const A=m.content.querySelector(".ans")||document.createElement("div");let raw=false;
+  const spoken=speechFor(hl,ev);m.content.querySelector(".spk").onclick=()=>speakBot(ev.workflow,spoken,true);
+  if(ev.ts>LOADED&&voiceOn&&spoken)speakBot(ev.workflow,spoken);
   m.content.querySelector(".cp").onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(ev.result,null,2));toast("Copied as JSON")}catch(e){toast("Copy failed","bad")}};
   const c=m.content.querySelector(".csv");if(c)c.onclick=()=>downloadCsv(ev.result,ev.workflow);
   m.content.querySelector(".raw").onclick=e=>{raw=!raw;if(!A.isConnected){m.content.querySelector(".meta").before(A);A.className="ans"}
@@ -1004,6 +1006,16 @@ function answer(m,ev){
     const d=m.content.querySelector("details.more");if(d)d.open=true};
   if(m.th===thread)toBottom(true);
 }
+// ---------- monster voices: the headline, read in the bot's own voice (0 LLM tokens) ----------
+const VOICE_LABEL={brute:"Brute",gremlin:"Gremlin",ghoul:"Ghoul",golem:"Golem",witch:"Witch"};
+function speechFor(hl,ev){let t="";if(hl&&hl.text){const d=document.createElement("div");d.innerHTML=hl.text;t=d.textContent}
+  if(!t&&isObj(ev.result)){const s=Object.values(ev.result).find(v=>typeof v==="string"&&v.length>20);if(s)t=s}
+  return t.replace(/\s+/g," ").trim().slice(0,380)}
+let botAudio=null;
+function speakBot(bot,text,force){if(!text||(!voiceOn&&!force))return;try{if(botAudio)botAudio.pause()}catch(e){}
+  botAudio=new Audio(`/api/voice?bot=${encodeURIComponent(bot)}&text=${encodeURIComponent(text)}`);
+  $("lab").classList.add("talking");botAudio.onended=botAudio.onerror=()=>$("lab").classList.remove("talking");
+  botAudio.play().catch(()=>$("lab").classList.remove("talking"))}
 function getPath(obj,path){let o=obj;for(const k of path.split(".")){if(o==null)return undefined;o=Array.isArray(o)?o[+k]:o[k]}return o}
 function fmt(v){if(typeof v==="number")return v.toLocaleString(undefined,{maximumFractionDigits:Math.abs(v)<10?4:2});if(Array.isArray(v))return v.map(fmt).join(", ");if(isObj(v))return flat(v);return String(v)}
 function headlineFor(ev){
@@ -1153,7 +1165,7 @@ function renderSel(){
     bots.map(x=>`<button class="bm${b&&b.name===x.name?" on":""}" data-t="${esc(x.name)}">${FACE}<div><b>${esc(title(x.name))}</b><small>${esc(x.purpose||x.description||"")}</small><small>${x.runs} answer${x.runs===1?"":"s"} · ${x.llm?"uses an LLM step":"runs as code · 0 tok"}</small></div>${unread.has(x.name)?'<span class="dot"></span>':""}<span class="bmkill" role="button" tabindex="0" data-k="${esc(x.name)}" title="Kill this monster (its skills stay in the lab)">☠</span></button>`).join("");
   M.querySelectorAll(".bm").forEach(e=>e.onclick=ev=>{const k=ev.target.closest(".bmkill");closeSel();if(k){killBot(bots.find(x=>x.name===k.dataset.k));return}setThread(e.dataset.t)});
   const H=$("headInfo");
-  H.innerHTML=b?(b.llm?`<span class="tag warm">~${(b.avg_tokens||0).toLocaleString()} tok / answer</span>`:`<span class="tag zero">runs as code · 0 tok</span>`)+`<span class="tag" title="${esc((b.steps||[]).join(" → "))}">${(b.steps||[]).length} step${(b.steps||[]).length===1?"":"s"}</span>`
+  H.innerHTML=b?(b.llm?`<span class="tag warm">~${(b.avg_tokens||0).toLocaleString()} tok / answer</span>`:`<span class="tag zero">runs as code · 0 tok</span>`)+`<span class="tag" title="${esc((b.steps||[]).join(" → "))}">${(b.steps||[]).length} step${(b.steps||[]).length===1?"":"s"}</span>`+(b.voice?`<span class="tag" title="This monster's voice (ElevenLabs). Turn Voice on to hear every answer.">🗣 ${VOICE_LABEL[b.voice]||b.voice}</span>`:"")
     :"";
 }
 function closeSel(){$("botMenu").classList.remove("open");$("botSel").setAttribute("aria-expanded","false")}
