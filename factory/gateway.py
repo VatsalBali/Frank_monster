@@ -143,7 +143,11 @@ def complete_json(budget: Budget, purpose: str, *, system: str, prompt: str, sch
         except (ValueError, ValidationError, json.JSONDecodeError) as e:
             if attempt == retries:
                 raise RuntimeError(f"{purpose}: invalid JSON after {retries + 1} tries: {e}") from e
-            p = f"{prompt}\n\nYour previous reply was invalid ({str(e)[:400]}). Reply again with valid JSON only."
+            cut = isinstance(e, json.JSONDecodeError) and ("Unterminated" in e.msg or e.pos >= len(e.doc.rstrip()) - 2)
+            p = (f"{prompt}\n\nYour previous reply was cut off after {len(text)} characters, so the JSON never closed. "
+                 "Reply again with a much shorter JSON object: every string under 300 characters, lists of at most 5 "
+                 "items, no long quotes." if cut else
+                 f"{prompt}\n\nYour previous reply was invalid ({str(e)[:400]}). Reply again with valid JSON only.")
 
 
 def ledger_summary(scope_prefix: str = "") -> dict:

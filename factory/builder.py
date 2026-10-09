@@ -147,13 +147,14 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
 
 def build_llm_capability(gap: GapSpec, budget: gateway.Budget) -> dict | None:
     """Judgment steps: a prompt + output schema run on the small runtime model. Tested on the example for
-    schema-valid output. These are the steps the compiler later tries to distill into code."""
+    schema-valid output; a failed test goes back to the build model with the error, like code repairs do.
+    These are the steps the compiler later tries to distill into code."""
     emit("stage", stage="learn", capability=gap.name, msg=f"building LLM step {gap.name}")
-    prompt = gateway.complete(budget, f"build-llm:{gap.name}",
-                              system="Write a concise system prompt for a small model that performs this step. "
-                                     "It receives the input as JSON and must reply with one JSON object matching the "
-                                     "output schema. Output only the prompt text.",
-                              prompt=gap.model_dump_json()).strip()
+    system = ("Write a concise system prompt for a small model that performs this step. "
+              "It receives the input as JSON and must reply with one JSON object matching the output schema. "
+              "The reply must stay compact (well under 2,500 characters): short strings, short lists, no long quotes. "
+              "Output only the prompt text.")
+    prompt = gateway.complete(budget, f"build-llm:{gap.name}", system=system, prompt=gap.model_dump_json()).strip()
     manifest = {
         "name": gap.name, "kind": "capability", "impl": "llm", "description": gap.description,
         "signature": {"in": _short(gap.input_schema_json), "out": _short(gap.output_schema_json),
@@ -163,22 +164,30 @@ def build_llm_capability(gap: GapSpec, budget: gateway.Budget) -> dict | None:
         "lineage": {"created_by": "factory"},
         "example_input": gap.example_input_json,
     }
-    version = registry.save_candidate(manifest, {"prompt.txt": prompt})
     from .executor import run_capability
-    try:
-        cap = registry.get(gap.name, version)
-        out, _ = run_capability(cap, json.loads(gap.example_input_json), budget)
-        required = json.loads(gap.output_schema_json).get("required", [])
-        missing = [k for k in required if k not in out]
-        rep = {"passed": not missing, "summary": f"example → schema-valid output (missing fields: {missing or 'none'})",
-               "output": json.dumps(out)[:2000]}
-    except Exception as e:
-        rep = {"passed": False, "summary": f"example run failed: {e}", "output": ""}
-    emit("test", msg=rep["summary"], capability=gap.name)
-    if not rep["passed"]:
+    for attempt in range(1, config.MAX_REPAIR_ATTEMPTS + 1):
+        version = registry.save_candidate(manifest, {"prompt.txt": prompt})
+        try:
+            cap = registry.get(gap.name, version)
+            out, _ = run_capability(cap, json.loads(gap.example_input_json), budget)
+            required = json.loads(gap.output_schema_json).get("required", [])
+            missing = [k for k in required if k not in out]
+            rep = {"passed": not missing, "summary": f"example → schema-valid output (missing fields: {missing or 'none'})",
+                   "output": json.dumps(out)[:2000]}
+        except Exception as e:
+            rep = {"passed": False, "summary": f"example run failed: {str(e)[:300]}", "output": ""}
+        emit("test", msg=f"{rep['summary']} (attempt {attempt})", capability=gap.name)
+        if rep["passed"]:
+            return {"name": gap.name, "version": version, "test_report": rep}
         registry.set_status(gap.name, version, "archived")
-        return None
-    return {"name": gap.name, "version": version, "test_report": rep}
+        if attempt == config.MAX_REPAIR_ATTEMPTS:
+            break
+        emit("say", text="That step's answer didn't hold up. Rewriting its instructions.")
+        prompt = gateway.complete(
+            budget, f"build-llm:{gap.name}", system=system,
+            prompt=gap.model_dump_json() + "\n\nThe previous prompt failed its test on the example input:\n"
+                   + rep["summary"] + "\n\nPrevious prompt:\n" + prompt + "\n\nWrite a fixed prompt.").strip()
+    return None
 
 
 def _short(schema_json: str) -> str:
