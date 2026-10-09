@@ -49,6 +49,30 @@ def save(folder: str | None, uploads: list[dict]) -> str:
     return folder
 
 
+USED = INBOX / ".used.json"
+
+
+def mark_used(folders_: list[str]) -> None:
+    import json
+    try:
+        used = set(json.loads(USED.read_text()))
+    except (OSError, ValueError):
+        used = set()
+    USED.write_text(json.dumps(sorted(used | set(folders_))))
+
+
+def fresh_upload(max_age_s: float = 900) -> str | None:
+    """The newest folder uploaded in the last few minutes that no task has used yet (the user attached files and the
+    reference got lost on the way)."""
+    import json
+    try:
+        used = set(json.loads(USED.read_text()))
+    except (OSError, ValueError):
+        used = set()
+    cands = [p for p in INBOX.iterdir() if p.is_dir() and p.name not in used and time.time() - p.stat().st_mtime < max_age_s]
+    return max(cands, key=lambda p: p.stat().st_mtime).name if cands else None
+
+
 def load_sample(name: str) -> str:
     src = SAMPLES / _safe(name)
     if not src.is_dir():

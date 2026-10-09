@@ -87,7 +87,8 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
     net = list(gap.net_hosts)
     spec = (f"Capability to build: {gap.name}\nDescription: {gap.description}\nWhy it is missing: {gap.why_missing}\n"
             f"Input schema: {gap.input_schema_json}\nOutput schema: {gap.output_schema_json}\n"
-            f"Example input: {gap.example_input_json}\nGranted network hosts: {net or 'none'}")
+            f"Example input: {gap.example_input_json}\nGranted network hosts: {net or 'none'}\n"
+            f"Today's date: {time.strftime('%Y-%m-%d')}")
     try:
         user_files = inbox.refs(json.loads(gap.example_input_json))
     except (ValueError, TypeError):

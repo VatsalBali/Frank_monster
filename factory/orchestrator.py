@@ -59,7 +59,8 @@ class Verdict(BaseModel):
 
 def plan(task: str, budget: gateway.Budget, feedback: str = "") -> Plan:
     emit("stage", stage="plan", msg="planning" + (" (revised)" if feedback else ""))
-    prompt = f"Registry:\n{registry.catalog_text()}\n\nTask:\n{task}"
+    prompt = (f"Today's date: {time.strftime('%Y-%m-%d')} (use it as the as-of date for 'now', 'overdue', 'next month' "
+              f"unless the task names another date)\n\nRegistry:\n{registry.catalog_text()}\n\nTask:\n{task}")
     files = inbox.mentioned(task)
     if files:
         prompt += "\n\nUser files:\n" + "\n".join(inbox.describe(f) for f in files)
@@ -177,6 +178,12 @@ def describe_bot(wf: dict, example_input, output, budget: gateway.Budget | None 
 def create_bot(purpose: str) -> dict:
     """The scientist's job: build (or find) a bot for a purpose. A quick direct answer arrives in seconds while
     the bot is built; asking the finished bot later is a separate, cheap step."""
+    if not inbox.mentioned(purpose):
+        f = inbox.fresh_upload()
+        if f:
+            purpose += f"\n\nFiles: folder {f}"
+            emit("log", msg=f"using the files you uploaded a moment ago (folder {f})")
+    inbox.mark_used(inbox.mentioned(purpose))
     threading.Thread(target=_instant, args=(purpose,), daemon=True).start()
     return solve(BOT_FRAME.format(purpose=purpose), purpose=purpose)
 
@@ -229,9 +236,18 @@ def _solve(task: str, purpose: str = "") -> dict:
     budget = gateway.Budget(scope=f"task:{(purpose or task)[:40]}", max_usd=config.MAX_USD_PER_TASK)
     emit("task", text=purpose or task, mode="bot" if purpose else "task", msg=f"{'bot' if purpose else 'task'}: {purpose or task}")
     feedback = ""
+    rejections: list[str] = []  # every acceptance verdict so far: a replan must fix ALL of them, not just the last
     for attempt in range(config.MAX_REPLANS + 1):
         p = plan(task, budget, feedback)
         task_input = json.loads(p.task_input_json)
+        bad = [v for k, v in task_input.items() if k == "folder" and isinstance(v, str) and v not in inbox.folders()]
+        if bad:
+            have = inbox.mentioned(task)
+            if not have:
+                raise RuntimeError("this task needs your files, but none are attached: add them with 📎 Files and send it again")
+            emit("log", msg=f"plan used a folder that does not exist ({bad[0]}); using {have[0]}")
+            task_input["folder"] = have[0]
+            p.task_input_json = json.dumps(task_input, ensure_ascii=False)
 
         emit("stage", stage="discover", msg="checking the registry")
         if p.reuse_workflow and registry.get(p.reuse_workflow) and not feedback:
@@ -268,8 +284,10 @@ def _solve(task: str, purpose: str = "") -> dict:
             return install_workflow(wf, task_input, output, budget)
         registry.set_status(wf["name"], wf["version"], "archived")
         emit("say", text=f"Not good enough. It's missing {', '.join(verdict.missing[:3])}. Back to the bench.")
+        rejections.append(f"Attempt {attempt + 1}: missing {verdict.missing}")
         feedback = (f"Workflow {wf['name']} used {[s['uses'] for s in wf['manifest']['steps']]}.\n"
                     f"Missing: {verdict.missing}\nJudge notes: {verdict.notes}\n"
+                    + ("Earlier rejections (still must hold):\n" + "\n".join(rejections[:-1]) + "\n" if len(rejections) > 1 else "") +
                     f"Output was: {json.dumps(output, ensure_ascii=False, default=str)[:1500]}")
     raise RuntimeError(f"gave up after {config.MAX_REPLANS + 1} attempts (replan cap)")
 
