@@ -79,6 +79,8 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
     """Returns {'name','version','test_report'} for a tested candidate, or None if it couldn't be built."""
     if gap.kind == "llm":
         return build_llm_capability(gap, budget)
+    if gap.kind == "sokosumi":
+        return build_sokosumi_capability(gap)
     emit("stage", stage="learn", capability=gap.name,
          msg=f"building {gap.name} (network: {', '.join(gap.net_hosts) or 'none'}): {gap.why_missing}")
     emit("say", text=f"Rebuilding {gap.name.replace('_', ' ')}." if "FAILED in production" in gap.why_missing
@@ -216,6 +218,46 @@ def build_llm_capability(gap: GapSpec, budget: gateway.Budget) -> dict | None:
             prompt=gap.model_dump_json() + "\n\nThe previous prompt failed its test on the example input:\n"
                    + rep["summary"] + "\n\nPrevious prompt:\n" + prompt + "\n\nWrite a fixed prompt.").strip()
     return None
+
+
+def build_sokosumi_capability(gap: GapSpec) -> dict | None:
+    """A paid marketplace agent as a capability. Nothing is generated: the contract is the agent's own input schema.
+    The test is a contract test (the example input satisfies the schema); running it for real costs credits, so
+    that happens only when the workflow runs, behind the operator's spend approval."""
+    from . import sokosumi
+    if not sokosumi.available() or not gap.agent_id:
+        emit("log", msg=f"{gap.name}: Sokosumi is not configured (SOKOSUMI_API_KEY) or no agent was chosen")
+        return None
+    emit("stage", stage="learn", capability=gap.name, msg=f"reading Sokosumi agent {gap.agent_id}'s input schema")
+    ag = next((a for a in sokosumi.agents() if a["id"] == gap.agent_id), None)
+    if not ag:
+        emit("log", msg=f"{gap.name}: no Sokosumi agent {gap.agent_id}")
+        return None
+    raw = sokosumi.input_schema(gap.agent_id)
+    js = sokosumi.to_json_schema(raw)
+    try:
+        ex = json.loads(gap.example_input_json or "{}")
+    except ValueError:
+        ex = {}
+    missing = [k for k in js["required"] if ex.get(k) in (None, "")]
+    rep = {"passed": not missing, "summary": f"contract test: example input fits the agent's schema "
+                                             f"({len(js['properties'])} fields; missing required: {missing or 'none'})",
+           "output": json.dumps(js)[:2000]}
+    emit("test", capability=gap.name, msg=rep["summary"])
+    if missing:
+        return None
+    manifest = {
+        "name": gap.name, "kind": "capability", "impl": "sokosumi", "description": f"{ag['name']} (Sokosumi): {ag['summary']}"[:300],
+        "signature": {"in": _short(json.dumps(js)), "out": "{result, job_id, credits}",
+                      "in_schema": json.dumps(js), "out_schema": json.dumps({"type": "object", "properties": {
+                          "result": {"type": "string"}, "job_id": {"type": "string"}, "credits": {"type": "number"}}})},
+        "permissions": {"net": ["api.sokosumi.com"], "fs": "none", "llm": False, "credits": ag["credits"]},
+        "sokosumi": {"agent_id": gap.agent_id, "agent_name": ag["name"], "credits": ag["credits"], "input_schema": raw},
+        "budget": {"max_tokens_per_run": 0, "max_credits_per_run": ag["credits"]},
+        "lineage": {"created_by": "factory"}, "example_input": gap.example_input_json,
+    }
+    version = registry.save_candidate(manifest, {"agent.json": json.dumps(raw, indent=1)})
+    return {"name": gap.name, "version": version, "test_report": rep}
 
 
 def _short(schema_json: str) -> str:

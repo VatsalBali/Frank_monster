@@ -65,6 +65,11 @@ def plan(task: str, budget: gateway.Budget, feedback: str = "") -> Plan:
     emit("stage", stage="plan", msg="planning" + (" (revised)" if feedback else ""))
     prompt = (f"Today's date: {time.strftime('%Y-%m-%d')} (use it as the as-of date for 'now', 'overdue', 'next month' "
               f"unless the task names another date)\n\nRegistry:\n{registry.catalog_text()}\n\nTask:\n{task}")
+    from . import sokosumi
+    if sokosumi.available():
+        prompt += ("\n\nSokosumi agents (paid marketplace agents: cost credits, take minutes, need the operator's "
+                   "approval for every job). Use one ONLY when no free source or own code can do the job, as a gap with "
+                   "kind=sokosumi, agent_id set, and input fields named exactly like the agent's:\n" + sokosumi.catalog_text())
     files = inbox.mentioned(task)
     if files:
         prompt += "\n\nUser files:\n" + "\n".join(inbox.describe(f) for f in files)
@@ -378,7 +383,9 @@ def install_capability(g, budget: gateway.Budget) -> None:
                                f"Keep its output fields and types, or use a NEW capability name for the new behaviour.")
         emit("test", capability=g.name, msg=f"regression gate: PASSED on {rep['checked']} recorded inputs")
         detail["regression"] = f"{rep['checked']} recorded inputs still work"
-    if not gate.ask("install", title, detail):
+    if perms.get("credits"):  # a paid agent is new authority: it can spend money, so a human decides
+        detail["credits per run"] = perms["credits"]
+    if not gate.ask("authority" if perms.get("credits") else "install", title, detail):
         registry.set_status(g.name, built["version"], "archived")
         raise RuntimeError(f"operator rejected {g.name}")
     registry.install(g.name, built["version"], built["test_report"])

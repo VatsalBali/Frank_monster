@@ -54,6 +54,10 @@ def run_capability(cap: dict, inp: dict, budget: gateway.Budget) -> tuple[dict, 
     """Returns (output, tokens_used)."""
     if cap["manifest"].get("impl") == "llm":
         out, tok = _run_llm(cap, inp, budget)
+    elif cap["manifest"].get("impl") == "sokosumi":
+        from . import sokosumi
+        s = cap["manifest"]["sokosumi"]
+        out, tok = sokosumi.hire(cap["name"], s["agent_id"], s["input_schema"], inp, float(s["credits"] or 0)), 0
     else:
         out, tok = _sandbox_call(cap, inp), 0
         if out == FALLBACK:

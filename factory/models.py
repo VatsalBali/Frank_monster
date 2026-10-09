@@ -22,7 +22,9 @@ class GapSpec(BaseModel):
     name: str = Field(description="snake_case capability name, generic and reusable (not task-specific)")
     description: str
     why_missing: str = Field(description="what in the registry falls short")
-    kind: Literal["code", "llm"] = Field(description="code unless the step truly needs language judgment")
+    kind: Literal["code", "llm", "sokosumi"] = Field(description="code unless the step truly needs language judgment; "
+                                                     "sokosumi = hire a paid marketplace agent (listed under Sokosumi agents)")
+    agent_id: Optional[str] = Field(default=None, description="kind=sokosumi only: the marketplace agent's id")
     input_schema_json: str = Field(description="JSON Schema (object) of the input dict, as a JSON string")
     output_schema_json: str = Field(description="JSON Schema (object) of the output dict, as a JSON string")
     net_hosts: list[str] = Field(description="hostnames the code must reach; [] if none")

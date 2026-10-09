@@ -26,7 +26,7 @@ def ask(kind: str, title: str, detail: dict, timeout: float = 1800) -> bool:
              msg=f"installed automatically (tests passed): {title}")
         return True
     emit("gate", id=gid, gate=kind, title=title, detail=detail, msg=f"approval needed: {title}")
-    if MODE == "auto":
+    if MODE == "auto" and kind != "spend":  # spending money is never auto-approved, not even in dev runs
         ok, by = True, "auto-mode"
     elif MODE == "cli":
         ok, by = input(f"\n[GATE] {title}\n  approve? [y/N] ").strip().lower() in ("y", "yes"), "operator"

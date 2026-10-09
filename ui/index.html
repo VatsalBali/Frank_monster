@@ -1042,7 +1042,7 @@ function built(m,ev){
 function gateCard(m,ev,live){
   const box=document.createElement("div");box.className="gatecard";
   const d=ev.detail||{};
-  box.innerHTML=`<div class="k">${ev.gate==="authority"?"authority request · your decision":"approval needed"}</div><b>${esc(ev.title)}</b><pre>${esc(Object.entries(d).map(([k,v])=>`${k}: ${typeof v==="object"?JSON.stringify(v):v}`).join("\n"))}</pre><div class="gb"><button class="primary">${ev.gate==="authority"?"Grant access":"Approve"}</button> <button class="no">Deny</button></div>`;
+  box.innerHTML=`<div class="k">${ev.gate==="authority"?"authority request · your decision":ev.gate==="spend"?"💰 paid job · Sokosumi credits · your decision":"approval needed"}</div><b>${esc(ev.title)}</b><pre>${esc(Object.entries(d).map(([k,v])=>`${k}: ${typeof v==="object"?JSON.stringify(v):v}`).join("\n"))}</pre><div class="gb"><button class="primary">${ev.gate==="authority"?"Grant access":ev.gate==="spend"?"Spend the credits":"Approve"}</button> <button class="no">Deny</button></div>`;
   const [ok,no]=box.querySelectorAll("button");
   const go=async a=>{ok.disabled=no.disabled=true;await fetch("/api/gate/"+ev.id,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({approved:a})})};
   ok.onclick=()=>go(true);no.onclick=()=>go(false);
