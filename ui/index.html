@@ -193,6 +193,8 @@ svg text{font-family:'JetBrains Mono',monospace}
 .bm b{display:block;font-weight:600;font-size:13px}
 .bm small{display:block;font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bm.new b{color:var(--green2)}
+.bmkill{margin-left:auto;flex-shrink:0;opacity:.45;font-size:14px;padding:4px 7px;border-radius:6px;color:oklch(78% .14 28)}
+.bm:hover .bmkill{opacity:.9}.bmkill:hover{opacity:1;background:oklch(30% .06 28)}
 .bmsep{height:1px;background:var(--line);margin:5px 4px}
 .bmlab{font-size:11px;color:var(--mute);padding:4px 8px;text-transform:uppercase;letter-spacing:.6px}
 #headInfo{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
@@ -1072,8 +1074,8 @@ function renderSel(){
   const M=$("botMenu");
   M.innerHTML=`<button class="bm new${!b?" on":""}" data-t="lab">${SCI}<div><b>＋ New monster</b><small>describe a purpose; the scientist builds and tests it</small></div>${unread.has("lab")?'<span class="dot"></span>':""}</button>`+
     (bots.length?`<div class="bmsep"></div><div class="bmlab">Your monsters · ${bots.length}</div>`:"")+
-    bots.map(x=>`<button class="bm${b&&b.name===x.name?" on":""}" data-t="${esc(x.name)}">${FACE}<div><b>${esc(title(x.name))}</b><small>${esc(x.purpose||x.description||"")}</small><small>${x.runs} answer${x.runs===1?"":"s"} · ${x.llm?"uses an LLM step":"runs as code · 0 tok"}</small></div>${unread.has(x.name)?'<span class="dot"></span>':""}</button>`).join("");
-  M.querySelectorAll(".bm").forEach(e=>e.onclick=()=>{closeSel();setThread(e.dataset.t)});
+    bots.map(x=>`<button class="bm${b&&b.name===x.name?" on":""}" data-t="${esc(x.name)}">${FACE}<div><b>${esc(title(x.name))}</b><small>${esc(x.purpose||x.description||"")}</small><small>${x.runs} answer${x.runs===1?"":"s"} · ${x.llm?"uses an LLM step":"runs as code · 0 tok"}</small></div>${unread.has(x.name)?'<span class="dot"></span>':""}<span class="bmkill" role="button" tabindex="0" data-k="${esc(x.name)}" title="Kill this monster (its skills stay in the lab)">☠</span></button>`).join("");
+  M.querySelectorAll(".bm").forEach(e=>e.onclick=ev=>{const k=ev.target.closest(".bmkill");closeSel();if(k){killBot(bots.find(x=>x.name===k.dataset.k));return}setThread(e.dataset.t)});
   const H=$("headInfo");
   H.innerHTML=b?(b.llm?`<span class="tag warm">~${(b.avg_tokens||0).toLocaleString()} tok / answer</span>`:`<span class="tag zero">runs as code · 0 tok</span>`)+`<span class="tag" title="${esc((b.steps||[]).join(" → "))}">${(b.steps||[]).length} step${(b.steps||[]).length===1?"":"s"}</span>`
     :"";
@@ -1155,10 +1157,11 @@ async function send(){
   if(ok){$("input").value="";grow()}else if(!busy)lights(false)
 }
 $("sendBtn").onclick=send;
-$("killBtn").onclick=async()=>{const b=curBot();if(!b||busy)return;
+$("killBtn").onclick=()=>killBot(curBot());
+async function killBot(b){if(!b)return;if(busy){toast("The scientist is busy. Try again in a moment.","bad");return}
   const n=(b.steps||[]).length;
   if(!confirm(`Kill ${title(b.name)}?\n\nThe bot and its chat go away. Its ${n} skill${n===1?"":"s"} (${(b.steps||[]).join(", ")}) stay in the lab, so future monsters can reuse them.`))return;
-  const r=await fetch(`/api/bots/${b.name}/kill`,{method:"POST"});if(!r.ok){let d="";try{d=(await r.json()).detail}catch(e){}toast(d||"could not kill it","bad")}};
+  const r=await fetch(`/api/bots/${b.name}/kill`,{method:"POST"});if(!r.ok){let d="";try{d=(await r.json()).detail}catch(e){}toast(d||"could not kill it","bad")}}
 $("igorBtn").onclick=async()=>{const b=curBot();if(!b||busy)return;lights(true);if(!await post(`/api/bots/${b.name}/sabotage`,{})&&!busy)lights(false)};
 function grow(){const i=$("input");i.style.height="36px";i.style.height=Math.min(180,i.scrollHeight)+"px"}
 $("input").addEventListener("input",()=>{grow();renderChips()});
