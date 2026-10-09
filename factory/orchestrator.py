@@ -201,6 +201,29 @@ def create_bot(purpose: str) -> dict:
     return solve(BOT_FRAME.format(purpose=purpose), purpose=purpose)
 
 
+def _attach_files(m: dict, inp: dict, question: str) -> dict:
+    """Files attached to a question reach the bot even if it was built for pasted text: a bot with a folder input gets
+    the folder name; otherwise the files' text (PDF and Word extracted) goes into its text field."""
+    fs = inbox.mentioned(question)
+    if not fs or not isinstance(inp, dict):
+        return inp
+    try:
+        props = (json.loads(m["signature"]["in"]) if isinstance(m["signature"]["in"], str) else m["signature"]["in"]).get("properties", {})
+    except (ValueError, AttributeError, KeyError, TypeError):
+        props = {}
+    if "folder" in props:
+        return {**inp, "folder": fs[0]}
+    strs = [k for k, s in props.items() if (s or {}).get("type", "string") == "string"] or [k for k, v in inp.items() if isinstance(v, str)]
+    hit = (next((k for k in strs if fs[0] in str(inp.get(k, ""))), None)
+           or next((k for k in strs if any(w in k.lower() for w in ("text", "cv", "resume", "document", "content", "file"))), None)
+           or next((k for k in strs if not str(inp.get(k, "")).strip()), None))
+    if not hit:
+        return inp
+    text = inbox.texts(fs[0], 20000)
+    emit("log", msg=f"put the text of your files ({fs[0]}, {len(text)} characters) into {hit}")
+    return {**inp, hit: text}
+
+
 def ask_bot(name: str, question: str = "", inp: dict | None = None) -> dict:
     """Ask an installed bot. A form input costs 0 tokens; a plain-language question costs one small extraction call
     on the runtime model (shown separately). The run itself is the compiled workflow, with self-repair."""
@@ -215,8 +238,8 @@ def ask_bot(name: str, question: str = "", inp: dict | None = None) -> dict:
         system = EXTRACT + "\nInput schema: " + str(m["signature"].get("in")) + "\nExample input: " + str(m.get("example_input"))
         prompt = question
         for _ in range(2):
-            inp, problems = check_input(m["signature"].get("in"), gateway.complete_json(
-                ask_budget, f"ask:{name}", model=config.RUNTIME_MODEL, system=system, prompt=prompt))
+            inp, problems = check_input(m["signature"].get("in"), _attach_files(m, gateway.complete_json(
+                ask_budget, f"ask:{name}", model=config.RUNTIME_MODEL, system=system, prompt=prompt), question))
             if not problems:
                 break
             emit("log", msg=f"input did not fit the bot ({'; '.join(problems)}), asking again")

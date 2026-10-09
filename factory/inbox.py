@@ -149,14 +149,30 @@ def describe(folder: str, head: int = 4) -> str:
     return "\n".join(lines)
 
 
+def read_text(p: Path) -> str:
+    """A file's text: plain text as is, PDF and Word documents extracted; other binaries by name only."""
+    ext = p.suffix.lower()
+    if ext in TEXT_EXT:
+        return p.read_text(encoding="utf-8")
+    if ext == ".pdf":
+        from pypdf import PdfReader
+        t = "\n".join((pg.extract_text() or "") for pg in PdfReader(str(p)).pages).strip()
+        return t or "(PDF without a text layer: scanned image)"
+    if ext == ".docx":
+        import re as _re, zipfile
+        x = zipfile.ZipFile(p).read("word/document.xml").decode("utf-8", "ignore")
+        return _re.sub(r"<[^>]+>", "", _re.sub(r"</w:p>", "\n", x)).strip()
+    return f"(binary file, {p.stat().st_size} bytes)"
+
+
 def texts(folder: str, limit: int = 30000) -> str:
     """The text content of a folder, for LLM steps (binary files are listed by name only)."""
     root, parts, n = INBOX / folder, [], 0
     for p in files(folder):
         rel = p.relative_to(root).as_posix()
         try:
-            t = p.read_text(encoding="utf-8") if p.suffix.lower() in TEXT_EXT else f"(binary file, {p.stat().st_size} bytes)"
-        except UnicodeDecodeError:
+            t = read_text(p)
+        except Exception:
             t = "(binary file)"
         chunk = f"=== {rel} ===\n{t}\n"
         if n + len(chunk) > limit:
