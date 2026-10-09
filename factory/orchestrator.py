@@ -48,7 +48,11 @@ satisfied=false ONLY for blocking problems: the question is not answered at all,
 implausible, or a source is invented. Wishes for more detail, more breakdowns, more citations or tighter ranges are
 NOT blocking: set satisfied=true and put them in notes. List in `missing` only the blocking problems.
 When the user's files are shown, claim a figure is wrong or a finding is missing only if you can point to the exact
-lines in those files that prove it (quote them in `missing`); otherwise it is not blocking."""
+lines in those files that prove it (quote them in `missing`); otherwise it is not blocking.
+Estimates, forecasts and recommendations are judgment calls: a chosen horizon or method, a risk weighting, a scenario
+or any other assumption is NOT blocking as long as the output labels it as an assumption or estimate. For these,
+block only on: a figure that contradicts the data, an item the data clearly contains that is silently omitted or
+counted twice, or totals that do not add up. Put better-method suggestions in notes."""
 
 
 class Verdict(BaseModel):

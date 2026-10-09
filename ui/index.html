@@ -1162,7 +1162,7 @@ document.addEventListener("click",e=>{if(!e.target.closest(".sel"))closeSel();if
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSel();$("menu").classList.remove("open")}});
 function clearLab(all){
   // The New monster view has no history: it shows the welcome screen, or only the build that is happening now.
-  [...$("msgs").querySelectorAll(".msg")].forEach(e=>{if(e.dataset.th==="lab"&&(all||!(e.classList.contains("keep")||(active&&active.el===e&&!active.done))))e.remove()});
+  [...$("msgs").querySelectorAll(".msg")].forEach(e=>{if(e.dataset.th==="lab"&&!e.querySelector(".banner.session")&&(all||!(e.classList.contains("keep")||(active&&active.el===e&&!active.done))))e.remove()});
   if(thread==="lab")renderIntro()}
 function setThread(t){if(t==="lab"&&!(active&&active.th==="lab"&&!active.done))clearLab(false);
   thread=t;unread.delete(t);try{localStorage.setItem("lab.thread",t)}catch(e){}

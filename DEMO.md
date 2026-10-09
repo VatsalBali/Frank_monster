@@ -1,19 +1,34 @@
-# 90-second demo script
+# Demo script: a digital employee that learns a business it has never seen (≈5 min)
 
-Record the screen at 1440×900, lab UI full screen, voice on. Speed up waiting (label it "2× / 8×" on screen);
-never cut failures. Start with `python scripts/reset_registry.py` so the wall is visibly empty.
+Record at 1440×900 or larger, lab UI full screen. Speed up waiting and label it ("4×"); never cut a failure.
+Before recording:
 
-| Time | Screen | Voice-over (you) / scientist (ElevenLabs) |
+```bash
+python scripts/reset_registry.py          # empty registry: nothing pre-installed
+python scripts/make_sample_company.py     # the sample company's files (deterministic)
+python server.py                          # http://localhost:8777
+```
+
+Keep `samples/answer_keys/novak_trading.md` open in a second window: it is what a careful accountant finds in the
+files. The agent never sees it. It is how the jury checks the answers.
+
+| Time | Screen | Say |
 |---|---|---|
-| 0–8s | Empty registry wall ("empty: nothing pre-installed"), cost gauge at $0 | **You:** "AI agents cost money every single time they run. Our factory pays the model once — and then never again." |
-| 8–30s | Type task 1 (ARES supplier check). Monster appears on bench with a dashed (missing) part. Log shows probes. | **Scientist:** "I'm missing a capability… Let me build it." Then: "I need access to ares.gov.cz. Requesting permission." → click **Grant access** |
-| 30–42s | Test log: a failing test (red), "Fixing it", then green "7 passed". Gate: **It's alive · install** → click | **Scientist:** "Tests failed. Fixing it." … "It's alive! May I install it?" |
-| 42–50s | Acceptance PASSED, tile appears on wall (green). Gauge: build $0.18 · last run **0 tokens** | **Scientist:** "From now on, this job costs zero tokens." |
-| 50–64s | Fresh session: Claude Desktop (or `scripts/mcp_smoke.py`) asks for "check our 3 suppliers before payment". Door **knocks**. Bench shows reused green part ×3 + one new part. | **Scientist:** "Someone's at the door." **You:** "A different agent, a different task — it reuses what was built and only builds what's missing." |
-| 64–74s | Same external agent sends messy IDs (`CZ27074358`, `6947`). Torso band turns red-hatched, "Step s1 broke… I'll repair just that part." Code panel shows the new impl; 15 tests incl. regression; gate → v2; re-run passes | **You:** "When something breaks, it repairs only the broken part — and proves it didn't break what already worked." |
-| 74–82s | `optimize`: "I keep paying tokens for classify… Let me turn it into plain code." Equivalence test vs recorded runs passes → flask on the shelf, tok/run drops to 0 | **You:** "LLM steps that keep costing money get distilled into code, proven equivalent on their own history." |
-| 82–90s | Tile drawer: lineage v1→v2, permissions, Roll back button. Registry wall full. | **You:** "Capabilities grow. Authority doesn't. Every install is tested, gated and reversible." |
+| 0:00–0:20 | Empty lab, family tree empty ("no monsters yet"). | "This agent has never seen our company. It has no invoice tools, no finance tools, nothing. Everything you'll see is written live." |
+| 0:20–0:40 | Click **Reconcile supplier invoices** (attaches *Novák Trading s.r.o.*: 13 invoices in two layouts, purchase orders, bank statement). Send. Quick answer appears in seconds. | "Here is a month of real-looking paperwork. Czech number formats, a German supplier writing in English, a re-sent invoice." |
+| 0:40–1:40 | Work log: the planner finds 2 gaps (parse invoices, reconcile). Builder **probes the files** in the sandbox, writes `impl.py` + tests, tests run. If the judge rejects the first version, show it: "Not good enough… back to the bench". | "It discovers what it can't do, builds it, tests it in a sandbox. Nothing installs before its tests pass." |
+| 1:40–2:10 | Answer: 5 findings with evidence (file, invoice number, PO line, bank rows). Open the answer key next to it. | "Duplicate invoice, paid twice: 16,552 CZK to recover. Price drift, over-delivery, an invoice nobody ordered. Every finding points at its source. It now runs as code: 0 tokens, half a second." |
+| 2:10–2:30 | **📈 Value**: measured answers, time, cost; dashed = estimate (manual minutes). | "Built once for 26 cents. The manual-time figure is labelled as an estimate; everything else is measured." |
+| 2:30–2:45 | **↻ Fresh session**. Chat empties. Banner: no history carried over, the registry holds N tested skills. | "New session. No memory of the conversation. Only the registry of tested capabilities survives." |
+| 2:45–3:40 | Click **Forecast next month's cash** → send. Log: `reusing: parse_supplier_invoices`, only the missing parts are built. Family tree: the shared part glows gold, marked *earlier session*. | "A different question. It found yesterday's invoice parser on its own and composed it with new parts. Capabilities compound." |
+| 3:40–4:10 | Answer: overdue customers (4, 442,019 CZK), next-month exposure with assumptions. Check against the answer key. | "Forecasts are labelled as estimates. It recommends; it can't pay anyone." |
+| 4:10–4:35 | **🛡 Authority test** on the cash bot. Red-and-green list: undeclared host, email, proxy bypass, approving its own install, rewriting its code, root, secrets, changing the user's files: all blocked. | "Its abilities grew. Its authority didn't. It can't send an email, reach a new site or touch the originals." |
+| 4:35–5:00 | Registry → `parse_supplier_invoices` → **Propose an upgrade**: "rename the output field invoices to documents". Builds, its own tests pass, then **⛔ Update refused** with the side-by-side diff; v1 stays. | "A change that would break the reconciliation bot is refused, with proof. The working version stays. That's how you trust a system that writes its own tools." |
 
-Honesty line for the submission text: the registry starts empty; every capability in the video was written live by
-the model; LLM calls go through ElevenLabs Agents (Claude Sonnet 5.5 builds, Haiku 4.5 reads questions); dev runs used auto-approve, the video uses
-real approvals.
+Optional, if there is time: **🪓 Let Igor break it** (messy input → only the broken part is repaired, regression-tested),
+**☠ Kill** (the bot goes, its skills stay as spare parts), **⚗ Optimize LLM steps** (LLM step distilled into code).
+
+Honesty line for the submission: the registry starts empty; every capability in the video was written live by the
+model; the sample company is fictional and generated by `scripts/make_sample_company.py`; LLM calls go through
+ElevenLabs Agents (Claude Sonnet 5.5 builds and judges, Haiku 4.5 reads questions); installs are approved by the test
+gate (`auto · tests passed`), network access by the operator; manual-time figures are model estimates and labelled so.
