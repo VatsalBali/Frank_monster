@@ -141,6 +141,25 @@ def solve(task: str, purpose: str = "") -> dict:
     raise RuntimeError(f"gave up after {config.MAX_REPLANS + 1} attempts (replan cap)")
 
 
+def fit_json(obj, limit: int) -> str:
+    """A JSON sample of `obj` no longer than `limit` chars that is still valid JSON with the same shape:
+    long strings and lists are shortened instead of cutting the text mid-string."""
+    def shrink(v, s, n):
+        if isinstance(v, str):
+            return v if len(v) <= s else v[:s] + "…"
+        if isinstance(v, list):
+            return [shrink(x, s, n) for x in v[:n]]
+        if isinstance(v, dict):
+            return {k: shrink(x, s, n) for k, x in v.items()}
+        return v
+    text = json.dumps(obj, ensure_ascii=False, default=str)
+    s, n = 2000, 50
+    while len(text) > limit and (s > 20 or n > 1):
+        s, n = max(20, s // 2), max(1, n // 2)
+        text = json.dumps(shrink(json.loads(json.dumps(obj, default=str)), s, n), ensure_ascii=False)
+    return text
+
+
 def build_on_real_data(p: Plan, task_input: dict, budget: gateway.Budget) -> None:
     """Build gaps in step order. Each missing capability is built and tested against the REAL output of the
     steps before it (not an imagined example), so the parts are guaranteed to fit together."""
@@ -159,7 +178,7 @@ def build_on_real_data(p: Plan, task_input: dict, budget: gateway.Budget) -> Non
                              f"{json.dumps(outputs, ensure_ascii=False, default=str)[:800]}")
         if s.uses in gaps and s.uses not in built:
             g = gaps[s.uses].model_copy()
-            g.example_input_json = json.dumps(inp, ensure_ascii=False, default=str)[:6000]
+            g.example_input_json = fit_json(inp, 6000)
             if outputs:
                 g.why_missing += " (Example input is REAL output of the previous steps — handle exactly this shape.)"
             install_capability(g, budget)
