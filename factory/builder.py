@@ -170,6 +170,7 @@ def build_llm_capability(gap: GapSpec, budget: gateway.Budget) -> dict | None:
         "signature": {"in": _short(gap.input_schema_json), "out": _short(gap.output_schema_json),
                       "in_schema": gap.input_schema_json, "out_schema": gap.output_schema_json},
         "permissions": {"net": [], "fs": "none", "llm": True},
+        "model": config.KNOWLEDGE_MODEL if gap.knowledge else config.RUNTIME_MODEL,
         "budget": {"max_tokens_per_run": 6000},
         "lineage": {"created_by": "factory"},
         "example_input": gap.example_input_json,

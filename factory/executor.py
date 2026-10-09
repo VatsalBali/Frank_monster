@@ -79,7 +79,7 @@ def _run_llm(cap: dict, inp: dict, budget: gateway.Budget) -> tuple[dict, int]:
     m = cap["manifest"]
     prompt = Path(cap["path"], "prompt.txt").read_text(encoding="utf-8")
     before = budget.tokens
-    out = gateway.complete_json(budget, f"llm-step:{cap['name']}", model=config.RUNTIME_MODEL,
+    out = gateway.complete_json(budget, f"llm-step:{cap['name']}", model=m.get("model") or config.RUNTIME_MODEL,
                                 system=prompt + "\nOutput JSON schema: " + m["signature"]["out_schema"],
                                 prompt=json.dumps(inp, ensure_ascii=False))
     return out, budget.tokens - before

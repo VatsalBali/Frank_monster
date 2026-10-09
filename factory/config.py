@@ -17,6 +17,7 @@ DB_PATH = DATA / "factory.db"
 BUILD_MODEL = os.getenv("FACTORY_BUILD_MODEL", "claude-sonnet-5-5")  # Sonnet: roughly half the build time of Opus
 INSTANT_MODEL = os.getenv("FACTORY_INSTANT_MODEL", "claude-sonnet-5-5")  # the quick first answer while a bot builds
 RUNTIME_MODEL = os.getenv("FACTORY_RUNTIME_MODEL", "claude-haiku-4-5")  # served via ElevenLabs Agents
+KNOWLEDGE_MODEL = os.getenv("FACTORY_KNOWLEDGE_MODEL", "claude-sonnet-5-5")  # LLM steps that answer from world knowledge
 
 # Hard caps (brief: "self-iterations and spend per run are capped in code").
 MAX_FACTORY_ITERATIONS = int(os.getenv("MAX_FACTORY_ITERATIONS", "12"))

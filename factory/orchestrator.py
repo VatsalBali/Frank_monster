@@ -24,7 +24,7 @@ Prefer kind=code. Use kind=llm only for steps that need real language judgment; 
 Prefer official structured APIs (JSON/REST/CSV) over scraping HTML pages.
 Only use a data source you are sure exists at a real URL; never invent or use placeholder URLs or datasets.
 If no reliable structured source exists for the facts asked (general-knowledge or research questions), do not force
-a data pipeline: make it ONE kind=llm step that answers from published knowledge, states its sources and uncertainty,
+a data pipeline: make it ONE kind=llm step with knowledge=true that answers from published knowledge, states its sources and uncertainty,
 and takes the question's variable parts (region, measure, unit) as input. Use foreach only on real lists.
 To apply a single-item capability to a list, use `foreach` — do not build batch duplicates of existing capabilities.
 Never add trivial adapter/glue capabilities (format conversion, renaming fields). If two capabilities don't fit,
@@ -34,8 +34,13 @@ Bindings: '$input.<field>', '$steps.<id>.<field>', '$steps.<id>', or a JSON lite
 Be brief, it saves time: reasoning in at most 2 sentences, one-line descriptions, minimal schemas (only the needed
 properties, no long descriptions). Prefer hosts the factory already knows (listed with the capabilities) when they fit."""
 
-JUDGE = """You check whether a workflow's output actually answers the task it was built for.
-Be strict about requested facts being present and plausible; ignore formatting and extra fields."""
+JUDGE = """You check whether a workflow's output actually answers the question it was given.
+Be strict about facts being correct and plausible; ignore formatting and extra fields.
+Judge only the answer to the given input, not the workflow's design. If the output honestly says that some requested
+detail does not exist in published sources, accept that.
+satisfied=false ONLY for blocking problems: the question is not answered at all, a key figure is clearly wrong or
+implausible, or a source is invented. Wishes for more detail, more breakdowns, more citations or tighter ranges are
+NOT blocking: set satisfied=true and put them in notes. List in `missing` only the blocking problems."""
 
 
 class Verdict(BaseModel):
@@ -56,11 +61,13 @@ def plan(task: str, budget: gateway.Budget, feedback: str = "") -> Plan:
     return p
 
 
-def judge(task: str, output, budget: gateway.Budget) -> Verdict:
+def judge(task: str, output, budget: gateway.Budget, purpose: str = "", task_input=None) -> Verdict:
     emit("stage", stage="accept", msg="acceptance check: does the output answer the task?")
     out = json.dumps(output, ensure_ascii=False, default=str)[:6000]
+    ask = (f"A bot built for: {purpose}\nIt was given this input:\n{json.dumps(task_input, ensure_ascii=False)}"
+           if purpose else f"Task:\n{task}")
     v: Verdict = gateway.complete_json(budget, "accept", system=JUDGE, schema=Verdict,
-                                       prompt=f"Task:\n{task}\n\nOutput:\n{out}")
+                                       prompt=f"{ask}\n\nOutput:\n{out}")
     emit("test", capability="acceptance",
          msg="acceptance: PASSED" if v.satisfied else f"acceptance: FAILED, missing {', '.join(v.missing)}")
     return v
@@ -170,7 +177,7 @@ def _solve(task: str, purpose: str = "") -> dict:
             emit("say", text=f"The parts don't fit together yet: {e.capability.replace('_', ' ')} failed. Back to the bench.")
             feedback = f"End-to-end run failed at step {e.step} ({e.capability}): {e.detail[-1200:]}"
             continue
-        verdict = judge(task, output, budget)
+        verdict = judge(task, output, budget, purpose, task_input)
         if verdict.satisfied:
             return install_workflow(wf, task_input, output, budget)
         registry.set_status(wf["name"], wf["version"], "archived")

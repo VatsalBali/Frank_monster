@@ -27,6 +27,9 @@ class GapSpec(BaseModel):
     output_schema_json: str = Field(description="JSON Schema (object) of the output dict, as a JSON string")
     net_hosts: list[str] = Field(description="hostnames the code must reach; [] if none")
     example_input_json: str = Field(description="a realistic example input, as a JSON string")
+    knowledge: bool = Field(default=False, description="kind=llm only: true if the step must answer from world "
+                            "knowledge (facts, research figures) rather than judge data it is given; it then runs on "
+                            "a larger, more accurate model")
 
 
 class Plan(BaseModel):
