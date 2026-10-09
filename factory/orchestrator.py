@@ -22,6 +22,10 @@ cheaply and deterministically after it is built. Given a task and the registry, 
    `fetch_acme_record`), with JSON schemas, a realistic example input, and the minimal network hosts it needs.
 Prefer kind=code. Use kind=llm only for steps that need real language judgment; they cost tokens on every run.
 Prefer official structured APIs (JSON/REST/CSV) over scraping HTML pages.
+Only use a data source you are sure exists at a real URL; never invent or use placeholder URLs or datasets.
+If no reliable structured source exists for the facts asked (general-knowledge or research questions), do not force
+a data pipeline: make it ONE kind=llm step that answers from published knowledge, states its sources and uncertainty,
+and takes the question's variable parts (region, measure, unit) as input. Use foreach only on real lists.
 To apply a single-item capability to a list, use `foreach` — do not build batch duplicates of existing capabilities.
 Never add trivial adapter/glue capabilities (format conversion, renaming fields). If two capabilities don't fit,
 re-declare the consuming capability as a gap with the SAME name so an improved version is built.
