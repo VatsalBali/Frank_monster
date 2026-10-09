@@ -816,6 +816,7 @@ main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
 <script>
 const $=id=>document.getElementById(id);
 const LOADED=Date.now()/1000;
+const SHOWALL=new URLSearchParams(location.search).has("all");  // ?all: keep every session's chats on screen
 let voiceOn=false, monster=[], freshTiles=new Set(), alive=false, codeView="impl", lastCode=null, busy=false;
 const M={skin:"#86A872",shade:"#6C8F5A",dark:"#3F5A33",stitch:"#24331D",hair:"#151516",pants:"#3C3C41",boot:"#121213",light:"#A9C795"};
 const FACE=`<svg class="face" viewBox="0 0 34 38"><rect x="3" y="6" width="28" height="30" rx="5" fill="#86A872" stroke="#3F5A33"/><path d="M2 12V4h30v8l-4-3-4 4-4-4-4 4-4-4-4 4-4-4z" fill="#151516"/><path d="M6 15l6-1" stroke="#24331D" stroke-width="1"/><circle cx="12" cy="20" r="3" fill="#F2F0EB"/><circle cx="22" cy="20" r="3" fill="#F2F0EB"/><circle cx="12.5" cy="20.5" r="1.3" fill="#24331D"/><circle cx="22.5" cy="20.5" r="1.3" fill="#24331D"/><path d="M11 29h12M14 27v4M18 27v4M21 27v4" stroke="#24331D" stroke-width="1.2"/><rect x="0" y="24" width="4" height="4" fill="#8E8B85"/><rect x="30" y="24" width="4" height="4" fill="#8E8B85"/></svg>`;
@@ -1153,9 +1154,9 @@ function handle(ev){
       if(thread===th)setTimeout(()=>setThread("lab"),1400);loadBots();loadRegistry();if(treeOpen)openTree()}}
   else if(k==="files"){log("📎 "+ev.msg,"dim",ev.ts)}
   else if(k==="session"){log("↻ "+ev.msg,"stage",ev.ts);sessStart=ev.ts;
-    [...$("msgs").querySelectorAll(".msg")].forEach(e=>e.remove());Object.keys(pending).forEach(b=>delete pending[b]);active=null;unread.clear();
+    if(!SHOWALL){[...$("msgs").querySelectorAll(".msg")].forEach(e=>e.remove());unread.clear()}Object.keys(pending).forEach(b=>delete pending[b]);active=null;
     const d=addMsg("lab","sys",live);d.className="msg keep";
-    d.innerHTML=`<div class="banner session">↻ Fresh session #${ev.n} <span>no chat history carried over · the registry holds ${ev.capabilities.length} tested skill${ev.capabilities.length===1?"":"s"} and ${ev.bots.length} monster${ev.bots.length===1?"":"s"}, which this session has to discover and reuse on its own</span></div>`;
+    d.innerHTML=`<div class="banner session">↻ Fresh session #${ev.n} <span>no chat history carried over · the registry holds ${ev.capabilities.length} tested skill${ev.capabilities.length===1?"":"s"} and ${ev.bots.length} monster${ev.bots.length===1?"":"s"}, which this session has to discover and reuse on its own · <a href="${SHOWALL?"/":"/?all"}" style="color:inherit;text-decoration:underline">${SHOWALL?"hide earlier sessions":"show earlier sessions"}</a></span></div>`;
     if(live){toast(`Fresh session #${ev.n}: only the registry carries over`);setThread("lab");if(treeOpen)openTree()}}
   else if(k==="drill"){const th=ev.bot;
     if(ev.phase==="start"){log("🛡 "+ev.msg,"stage",ev.ts);finish(active,ev.ts);const m=aiMsg(th,"sci","Scientist",live);m.kind="drill";m.t0=ev.ts;active=m;
@@ -1478,7 +1479,7 @@ $("menuBtn").onclick=e=>{e.stopPropagation();const m=$("menu");const o=!m.classL
 
 drawMonster();drawFlasks([]);renderSel();renderIntro();updateComposer();
 loadBots().then(()=>{loadRegistry();
-  const es=new EventSource("/events");es.onmessage=e=>{try{handle(JSON.parse(e.data))}catch(err){console.error(err)}};
+  const es=new EventSource(SHOWALL?"/events?replay=100000":"/events");es.onmessage=e=>{try{handle(JSON.parse(e.data))}catch(err){console.error(err)}};
   setTimeout(()=>{setThread(thread)},400)});
 loadLedger();loadStatus();setInterval(loadLedger,15000);setInterval(loadStatus,10000);
 </script>
