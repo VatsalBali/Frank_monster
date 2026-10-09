@@ -15,5 +15,5 @@ never cut failures. Start with `python scripts/reset_registry.py` so the wall is
 | 82–90s | Tile drawer: lineage v1→v2, permissions, Roll back button. Registry wall full. | **You:** "Capabilities grow. Authority doesn't. Every install is tested, gated and reversible." |
 
 Honesty line for the submission text: the registry starts empty; every capability in the video was written live by
-the model; LLM calls go through ElevenLabs Agents (Claude Opus 5.5); dev runs used auto-approve, the video uses
+the model; LLM calls go through ElevenLabs Agents (Claude Sonnet 5.5 builds, Haiku 4.5 reads questions); dev runs used auto-approve, the video uses
 real approvals.

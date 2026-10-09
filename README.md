@@ -44,6 +44,10 @@ Task ──► PLAN ─► DISCOVER ─► GAP? ──► LEARN (probe real APIs
   factory rebuilds only the failing capability, from the input it failed on, and the harness adds a regression test
   generated from that capability's own successful history. v2 installs once its tests pass; if the re-run still fails, the
   factory rolls back automatically.
+* **Fast where it matters.** A quick answer from Claude arrives in ~6 s while the monster is built in the background
+  (labelled as untested). Measured on a currency bot: build 94 s from an empty registry; asking the finished bot
+  8.9 s in words, 3.4 s with the form (0 tokens). Sandbox steps start in ~1.5 s (a long-lived WSL helper and a clean
+  PATH; the WSL-appended Windows PATH had made every docker command take ~1.7 s).
 * **It keeps what it learned, not how it got there.** When a capability passes, the builder saves its working code,
   its prompt (LLM steps) and short notes on the APIs it touched (endpoints, fields, quirks). After every build the
   registry is pruned: failed attempts, parts no monster uses, sandbox scratch and stale traces are deleted; notes of
@@ -116,7 +120,7 @@ MCP (Claude Desktop): see the config snippet at the top of `mcp_server.py`.
 * Token and dollar figures come from the provider's billing data for each call (reconciled a few seconds after the call).
 
 **Simulated / caveats**
-* The LLM is Claude (Opus 5.5 to build, Haiku 4.5 for runtime LLM steps) **served through ElevenLabs Agents in
+* The LLM is Claude (Sonnet 5.5 to build and for the quick first answer, Haiku 4.5 for runtime LLM steps; earlier runs built with Opus 5.5) **served through ElevenLabs Agents in
   text-only mode** — ElevenLabs has no plain completions endpoint, so each call is a short text conversation. We
   read the raw stream because ElevenLabs' final message is normalised for speech (it strips `*`).
 * **Model substitution (found and fixed during the hackathon).** ElevenLabs agents silently cascade to a backup

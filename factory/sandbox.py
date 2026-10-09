@@ -7,6 +7,7 @@ artifact declared in its manifest.
 import json
 import shutil
 import subprocess
+import threading
 import time
 import uuid
 from dataclasses import dataclass
@@ -29,8 +30,41 @@ def wsl_path(p: Path) -> str:
     return f"/mnt/{drive}{rest}"
 
 
+# WSL appends the whole Windows PATH, and the docker CLI scans it (over /mnt/c) on every call: ~1.7 s per command.
+# A clean Linux PATH, and --exec instead of a login shell, bring a sandbox start down to well under a second.
+_LINUX_PATH = "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+
+_bridge: subprocess.Popen | None = None
+_bridge_lock = threading.Lock()
+
+
+def _via_bridge(args, timeout, input) -> subprocess.CompletedProcess:
+    """Send one docker command to the long-lived WSL helper (sandbox/bridge.py), starting it if needed."""
+    global _bridge
+    with _bridge_lock:
+        if _bridge is None or _bridge.poll() is not None:
+            _bridge = subprocess.Popen(
+                ["wsl", "-d", config.WSL_DISTRO, "--exec", "python3", wsl_path(config.ROOT / "sandbox" / "bridge.py")],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                text=True, encoding="utf-8", errors="replace", bufsize=1)
+        _bridge.stdin.write(json.dumps({"args": list(args), "timeout": timeout, "input": input}) + "\n")
+        _bridge.stdin.flush()
+        line = _bridge.stdout.readline()
+    if not line:
+        raise OSError("sandbox bridge closed")
+    resp = json.loads(line)
+    if resp.get("timeout"):
+        raise subprocess.TimeoutExpired(["docker", *args], timeout)
+    return subprocess.CompletedProcess(["docker", *args], resp["code"], resp["out"], resp["err"])
+
+
 def docker(*args: str, timeout: float | None = None, input: str | None = None) -> subprocess.CompletedProcess:
-    return subprocess.run(["wsl", "-d", config.WSL_DISTRO, "--", "docker", *args],
+    try:
+        return _via_bridge(args, timeout, input)
+    except (OSError, ValueError):
+        pass  # bridge unavailable: fall back to one wsl.exe call per command
+    return subprocess.run(["wsl", "-d", config.WSL_DISTRO, "--exec", "env", _LINUX_PATH, "docker", *args],
                           capture_output=True, text=True, encoding="utf-8", errors="replace",
                           timeout=timeout, input=input)
 

@@ -224,6 +224,10 @@ svg text{font-family:'JetBrains Mono',monospace}
 .foldbtn{border:0;background:transparent;padding:0;font-size:12px;color:var(--mute);margin-bottom:6px}
 .foldbtn:hover{background:transparent;color:var(--ink2)}
 .content:empty{display:none}
+.quick:empty{display:none}
+.quick{margin:2px 0 10px;animation:fadein .3s}
+.quick .qa{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:12px;padding:10px 13px;line-height:1.55;white-space:pre-wrap}
+.quick .qa b{font-weight:600}
 .content{margin-top:6px}
 .typing{display:inline-flex;gap:4px;padding:10px 2px}
 .typing i{width:7px;height:7px;border-radius:50%;background:var(--mute);animation:dots 1.2s infinite}
@@ -707,8 +711,8 @@ function userMsg(th,text,form,live){const d=addMsg(th,"user",live);d.innerHTML=`
 function sysMsg(th,text,live){const d=addMsg(th,"sys",live);d.innerHTML=`<span title="${esc(text)}">${esc(text)}</span>`;return d}
 function formHtml(inp){if(!isObj(inp))return esc(JSON.stringify(inp));return "☰ "+Object.entries(inp).map(([k,v])=>`<span class="k">${esc(nice(k))}:</span> ${esc(Array.isArray(v)?v.map(x=>typeof x==="object"?JSON.stringify(x):x).join(", "):typeof v==="object"?JSON.stringify(v):v)}`).join("  ")}
 function aiMsg(th,kind,who,live){const d=addMsg(th,"ai",live);
-  d.innerHTML=`<div class="av">${kind==="sci"?SCI:FACE}</div><div class="bd"><div class="who"><b>${esc(who)}</b><span class="wsub"></span></div><button class="foldbtn" hidden></button><div class="steps"></div><div class="content"></div></div>`;
-  return {el:d,th,kind,steps:d.querySelector(".steps"),content:d.querySelector(".content"),sub:d.querySelector(".wsub"),fold:d.querySelector(".foldbtn"),n:0,done:false}}
+  d.innerHTML=`<div class="av">${kind==="sci"?SCI:FACE}</div><div class="bd"><div class="who"><b>${esc(who)}</b><span class="wsub"></span></div><div class="quick"></div><button class="foldbtn" hidden></button><div class="steps"></div><div class="content"></div></div>`;
+  return {el:d,th,kind,quick:d.querySelector(".quick"),steps:d.querySelector(".steps"),content:d.querySelector(".content"),sub:d.querySelector(".wsub"),fold:d.querySelector(".foldbtn"),n:0,done:false}}
 function step(m,text,cls=""){if(!m||m.done)return;const stick=nearBottom();
   if(cls!=="say")m.steps.querySelectorAll(".st.run").forEach(e=>e.classList.remove("run"));
   const s=document.createElement("div");s.className="st "+cls;s.textContent=text;m.steps.appendChild(s);if(cls!=="say")m.n++;if(stick)toBottom(true);return s}
@@ -794,6 +798,10 @@ function handle(ev){
     else if(active&&active.kind==="task"){answer(active,ev);finish(active,ev.ts)}
     else{const m=aiMsg(wf,"bot",title(wf),live);answer(m,ev);finish(m,ev.ts)}
     setAlive(true,live);if(live)loadBots()}
+  else if(k==="instant"){log("⚡ "+ev.msg,"pass",ev.ts);const m=active&&active.kind==="build"?active:null;
+    if(m){const secs=m.t0?Math.max(0,ev.ts-m.t0):0;
+      m.quick.innerHTML=`<div class="qa">${esc(ev.text).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")}</div><div class="meta"><span class="tag warm">quick answer${secs?` · ${secs.toFixed(1)} s`:""}</span><span class="tag">${(ev.tokens||0).toLocaleString()} tok · ${esc(ev.model||"")}</span><span>straight from the model, not yet a tested monster. The monster is being built below.</span></div>`;
+      if(m.th===thread)toBottom(true)}}
   else if(k==="knock"){log("⌂ "+ev.msg,"gate",ev.ts);if(live){knock();say(ev.say||"Someone's at the door.",true);toast("External agent: "+ev.msg)}}
   else if(k==="flask"){log("⚗ "+ev.msg,"pass",ev.ts);if(active)step(active,ev.msg,"inst");if(live){freshTiles.add(ev.name);loadRegistry();toast("Distilled "+ev.name+" into code")}}
   else if(k==="error"){log("✗ "+ev.msg,"fail",ev.ts);setScene(false);monster.forEach(p=>{if(p.state==="building")p.state="failed"});drawMonster();

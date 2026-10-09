@@ -14,7 +14,8 @@ RUNS_DIR = DATA / "runs"
 DB_PATH = DATA / "factory.db"
 
 # Models: big model builds, small model runs LLM steps inside workflows.
-BUILD_MODEL = os.getenv("FACTORY_BUILD_MODEL", "claude-opus-5-5")
+BUILD_MODEL = os.getenv("FACTORY_BUILD_MODEL", "claude-sonnet-5-5")  # Sonnet: roughly half the build time of Opus
+INSTANT_MODEL = os.getenv("FACTORY_INSTANT_MODEL", "claude-sonnet-5-5")  # the quick first answer while a bot builds
 RUNTIME_MODEL = os.getenv("FACTORY_RUNTIME_MODEL", "claude-haiku-4-5")  # served via ElevenLabs Agents
 
 # Hard caps (brief: "self-iterations and spend per run are capped in code").

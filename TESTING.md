@@ -6,7 +6,7 @@ Everything below is clicked in the lab UI. Keep it open at **http://localhost:87
 
 1. Docker in WSL must be running: `wsl -d Ubuntu-24.04 -- sudo service docker start`
 2. Start the lab: `.venv\Scripts\python server.py` → open http://localhost:8777
-3. Header shows **idle** and `builds with claude-opus-5-5 … via ElevenLabs`.
+3. Header shows **idle** and `builds with claude-sonnet-5-5 … via ElevenLabs`.
 4. Click **Voice: off** once → it says "I'm listening" (browsers need a click before audio).
 5. **⋯ → Reset lab** → confirm. Check: Work log → Registry says *empty · nothing pre-installed*, the monster is *dormant*.
    Layout: **lab** (left) · **chat** (middle, bot selector on top) · **work log** (right: Log / Code / Registry / Ledger).

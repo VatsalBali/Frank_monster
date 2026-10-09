@@ -2,6 +2,7 @@
 PLAN → DISCOVER → GAP? → BUILD (learn+test) → GATE → INSTALL → ASSEMBLE → E2E TEST → ACCEPT? → GATE → INSTALL → RUN.
 A failed acceptance check is itself a detected gap: the factory replans with the judge's feedback (capped)."""
 import json
+import threading
 import time
 from pathlib import Path
 
@@ -69,8 +70,27 @@ EXTRACT = """Turn the user's question into the input of a workflow. Reply with o
 schema exactly. Use only facts from the question; normalise obvious formats (lists, numbers, dates)."""
 
 
+INSTANT = """You are the scientist in a lab that builds reusable, tested bots. The user just described a bot they
+want; it is being built now. If their message contains a concrete question, answer it right away, directly and
+concisely (at most 120 words). If it only describes a purpose, say in 1-2 sentences what the bot will do and give one
+example question. Plain text; short bullet lines starting with '- ' are fine. No headings."""
+
+
+def _instant(purpose: str) -> None:
+    """A quick, direct answer so nobody waits for the build. It is one plain model call: not a tested bot."""
+    b = gateway.Budget(scope=f"instant:{purpose[:40]}", max_usd=0.05)
+    try:
+        text = gateway.complete(b, "instant", model=config.INSTANT_MODEL, system=INSTANT, prompt=purpose)
+        emit("instant", text=text.strip(), tokens=b.tokens, model=config.INSTANT_MODEL,
+             msg=f"quick answer ({b.tokens} tok, {config.INSTANT_MODEL}) while the monster is built")
+    except Exception as e:
+        emit("log", msg=f"quick answer skipped: {e}")
+
+
 def create_bot(purpose: str) -> dict:
-    """The scientist's job: build (or find) a bot for a purpose. Asking it questions is a separate, cheap step."""
+    """The scientist's job: build (or find) a bot for a purpose. A quick direct answer arrives in seconds while
+    the bot is built; asking the finished bot later is a separate, cheap step."""
+    threading.Thread(target=_instant, args=(purpose,), daemon=True).start()
     return solve(BOT_FRAME.format(purpose=purpose), purpose=purpose)
 
 
