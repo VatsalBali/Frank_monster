@@ -7,6 +7,7 @@
 > code at ~0 tokens.
 
 Topic: **Frankenstein** (Etnetera / prg.ai) — *build an agent that can build itself.*
+Pitch, video script and how it maps to the brief and the judging criteria: [PITCH.md](PITCH.md).
 
 ## How you use it
 
@@ -56,6 +57,12 @@ see the files' text.
   approvals are never automatic, not even in dev auto-mode.
 
 ## Voices and look
+
+* **Talk to it.** 🎙 records your question; ElevenLabs **Scribe** turns it into text (≈1 s) and it goes the same way
+  a typed message does. The answer comes back spoken: the scientist reads the quick first answer, the monster reads its
+  result in its own voice. Recording stops by itself after a pause.
+* The header shows the registry live: tested skills, bots, skills shared by more than one bot, and the network hosts
+  any skill may reach (each approved by the operator), the "skills grow, authority doesn't" line in numbers.
 
 * Every monster has a voice of its own: five archetypes (Brute, Gremlin, Ghoul, Golem, Witch) designed once with
   ElevenLabs Voice Design and saved to the account. The archetype is picked when the bot is built. With 🔊 Voice on,
@@ -185,7 +192,7 @@ MCP (Claude Desktop): see the config snippet at the top of `mcp_server.py`.
 * Token and dollar figures come from the provider's billing data for each call (reconciled a few seconds after the call).
 
 **Simulated / caveats**
-* The LLM is Claude (Sonnet 5.5 to build and for the quick first answer, Haiku 4.5 for runtime LLM steps; earlier runs built with Opus 5.5) **served through ElevenLabs Agents in
+* The LLM is Claude (Sonnet 5.5 to build and judge, Haiku 4.5 for the quick first answer, reading questions and runtime LLM steps; earlier runs built with Opus 5.5) **served through ElevenLabs Agents in
   text-only mode** — ElevenLabs has no plain completions endpoint, so each call is a short text conversation. We
   read the raw stream because ElevenLabs' final message is normalised for speech (it strips `*`).
 * **Model substitution (found and fixed during the hackathon).** ElevenLabs agents silently cascade to a backup
