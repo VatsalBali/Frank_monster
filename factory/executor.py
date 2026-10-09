@@ -100,6 +100,28 @@ def resolve(source: str, wf_input: dict, outputs: dict, item=None):
         return source
 
 
+_MISSING = object()
+
+
+def bind(inputs: list[dict], wf_input: dict, outputs: dict, item=None) -> dict:
+    """Step input from its bindings. An optional field the user left out ($input/$item path not present) is
+    omitted, so the capability's own default applies, instead of crashing the whole run."""
+    out = {}
+    for b in inputs:
+        src = b["source"]
+        if src.startswith(("$input", "$item")):
+            try:
+                v = resolve(src, wf_input, outputs, item)
+            except (KeyError, IndexError, TypeError):
+                v = _MISSING
+            if v is _MISSING:
+                continue
+        else:
+            v = resolve(src, wf_input, outputs, item)
+        out[b["param"]] = v
+    return out
+
+
 def _dig(obj, path: str):
     for part in [p for p in path.split(".") if p]:
         obj = obj[int(part)] if isinstance(obj, list) else obj[part]
@@ -127,10 +149,10 @@ def run_workflow(wf: dict, wf_input: dict, *, budget: gateway.Budget | None = No
             try:
                 if items is not None:
                     before = budget.tokens
-                    batch = [{b["param"]: resolve(b["source"], wf_input, outputs, it) for b in step["inputs"]} for it in items]
+                    batch = [bind(step["inputs"], wf_input, outputs, it) for it in items]
                     out, tok = {"items": run_capability_batch(cap, batch, budget)}, budget.tokens - before
                 else:
-                    inp = {b["param"]: resolve(b["source"], wf_input, outputs) for b in step["inputs"]}
+                    inp = bind(step["inputs"], wf_input, outputs)
                     out, tok = run_capability(cap, inp, budget)
             except Exception as e:
                 registry.record_run(cap["name"], cap["version"], False, 0, int((time.time() - ts) * 1000))

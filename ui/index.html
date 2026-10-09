@@ -299,6 +299,40 @@ table.out tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--fail)}
 .num{font-variant-numeric:tabular-nums}
 .sub-h{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.6px;margin:10px 0 6px}
 .empty{color:var(--mute);font-size:13px;padding:10px 2px}
+/* ---------- Igor ---------- */
+#igorFig{opacity:0;transform:translateX(-46px);transition:opacity .5s,transform .7s cubic-bezier(.3,1.4,.5,1)}
+#lab.igor #igorFig{opacity:1;transform:none}
+#lab.igor #igorArm{transform-origin:58px 612px;animation:whack .5s ease-in-out infinite}
+@keyframes whack{0%,100%{transform:rotate(0)}50%{transform:rotate(-38deg)}}
+#lab.igor #igorEye{animation:glare 1.4s steps(2) infinite}
+@keyframes glare{50%{fill:#D9B87A}}
+.msg.igor .ub2{background:#2E2A24;border:1px solid #5A4E3A;border-radius:16px 16px 16px 5px;padding:9px 14px}
+.msg.igor .ub2 code{display:block;margin-top:6px;font:12px/1.5 'JetBrains Mono',monospace;color:var(--amber);white-space:pre-wrap;word-break:break-word}
+.banner{display:flex;gap:10px;align-items:center;border-radius:14px;padding:10px 14px;font-weight:500;animation:pop .35s ease-out}
+.banner.healed{background:rgba(141,176,119,.12);border:1px solid var(--green);color:var(--green2)}
+.banner.survived{background:var(--panel2);border:1px solid var(--line2);color:var(--ink)}
+.banner.won{background:rgba(217,147,131,.1);border:1px solid var(--fail);color:var(--fail)}
+.banner span{font-weight:400;color:var(--ink2);font-size:12.5px}
+#igorBtn{font-size:12px;padding:5px 11px;border-radius:10px;background:#2E2A24;border-color:#5A4E3A;color:var(--amber);white-space:nowrap}
+#igorBtn:hover{background:#3A3428}
+/* ---------- family tree ---------- */
+#treeModal{position:fixed;inset:0;z-index:60;background:rgba(10,10,12,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;animation:fadein .2s}
+#treeBox{background:var(--panel);border:1px solid var(--line2);border-radius:20px;width:min(1200px,96vw);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+#treeHead{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+#treeHead h2{font:600 19px Fraunces,Georgia,serif;margin:0}
+#treeStats{display:flex;gap:6px;flex-wrap:wrap}
+#treeBody{overflow:auto;padding:10px 18px 18px;min-height:260px}
+#treeSvg{display:block;margin:0 auto}
+#treeSvg .edge{fill:none;stroke:#4D4D54;stroke-width:2;transition:stroke .2s,stroke-width .2s,opacity .2s}
+#treeSvg .edge.shared{stroke:#D9B87A;stroke-dasharray:6 4;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-20}}
+#treeSvg .node{cursor:pointer}
+#treeSvg .node:hover .card{stroke:#ECEAE5}
+#treeSvg.focus .edge{opacity:.12}#treeSvg.focus .edge.on{opacity:1;stroke:#A9CF8F;stroke-width:3}
+#treeSvg.focus .node{opacity:.35}#treeSvg.focus .node.on{opacity:1}
+#treeLegend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;font-size:12px;color:var(--mute);margin-top:8px}
+#treeLegend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+#treeEmpty{color:var(--mute);text-align:center;padding:60px 10px}
 /* ---------- work log (right) ---------- */
 #side .tabs{display:flex;gap:2px;padding:0 10px 8px;flex:0 0 auto}
 #side .tabs button{border:0;background:transparent;padding:4px 10px;font-size:12px;color:var(--mute);border-radius:8px}
@@ -365,6 +399,7 @@ table.audit td.n{text-align:right;color:var(--mute)}
   <span id="status" title="Lab status"><i></i><span id="statusTxt">idle</span></span>
   <span id="modelTxt"></span>
   <span class="spacer"></span>
+  <button id="treeBtn" class="ghost" title="Every monster and the parts it is stitched from">🧬 Family tree</button>
   <button id="voiceBtn" class="ghost" title="Browsers need a click before audio can play">🔈 Voice: off</button>
   <div class="menu"><button id="menuBtn" class="ghost" aria-haspopup="true" aria-expanded="false" title="More">⋯</button>
     <div id="menu" role="menu">
@@ -481,6 +516,21 @@ table.audit td.n{text-align:right;color:var(--mute)}
         <rect x="0" y="646" width="360" height="22" fill="url(#floorG)"/>
         <line x1="0" y1="646" x2="360" y2="646" stroke="#4D4D54"/>
         <g id="dust"></g>
+        <g id="igorFig">
+          <ellipse cx="44" cy="646" rx="30" ry="3" fill="#000" opacity=".35"/>
+          <rect x="28" y="632" width="9" height="14" fill="#2B2B2F"/><rect x="45" y="632" width="9" height="14" fill="#2B2B2F"/>
+          <path d="M16 640 Q14 600 34 588 Q52 580 62 600 Q68 620 64 640 Z" fill="#4A4038" stroke="#2B2520" stroke-width="1.5"/>
+          <path d="M22 606 Q30 586 44 588" fill="none" stroke="#5E5248" stroke-width="3"/>
+          <circle cx="58" cy="598" r="12" fill="#B8B09A" stroke="#6E6656" stroke-width="1.4"/>
+          <path d="M48 590 Q56 582 68 590" fill="none" stroke="#2B2520" stroke-width="3"/>
+          <circle cx="62" cy="597" r="4.2" fill="#F2F0EB" stroke="#2B2520"/><circle id="igorEye" cx="63" cy="597.5" r="1.8" fill="#24331D"/>
+          <circle cx="53" cy="599" r="2" fill="#2B2520"/>
+          <path d="M55 606 q4 2 8 -1" fill="none" stroke="#2B2520" stroke-width="1.4"/><path d="M58 606 v2" stroke="#F2F0EB" stroke-width="1.2"/>
+          <g id="igorArm"><path d="M58 612 L74 600" stroke="#4A4038" stroke-width="6" stroke-linecap="round"/>
+            <path d="M72 602 L84 586" stroke="#8E8B85" stroke-width="3" stroke-linecap="round"/>
+            <path d="M80 582 l6 -2 l2 6 l-4 1 l-1 -3 l-3 1z" fill="#8E8B85" stroke="#6E6C67"/></g>
+          <text x="44" y="574" text-anchor="middle" font-size="9" fill="#D9B87A">Igor</text>
+        </g>
         <g transform="translate(-300,328)">
           <g id="coil">
             <rect x="592" y="294" width="40" height="24" rx="3" fill="#3B3B40" stroke="#6E6C67"/>
@@ -527,6 +577,7 @@ table.audit td.n{text-align:right;color:var(--mute)}
         <div id="botMenu" role="listbox"></div>
       </div>
       <div id="headInfo"></div>
+      <button id="igorBtn" hidden title="Igor sends this bot messy but legitimate input. If a part breaks, the scientist repairs just that part.">🪓 Let Igor break it</button>
     </div>
     <div id="msgs" aria-live="polite"><div id="intro"></div></div>
     <div class="composer"><div class="inner">
@@ -575,6 +626,7 @@ let voiceOn=false, monster=[], freshTiles=new Set(), alive=false, codeView="impl
 const M={skin:"#86A872",shade:"#6C8F5A",dark:"#3F5A33",stitch:"#24331D",hair:"#151516",pants:"#3C3C41",boot:"#121213",light:"#A9C795"};
 const FACE=`<svg class="face" viewBox="0 0 34 38"><rect x="3" y="6" width="28" height="30" rx="5" fill="#86A872" stroke="#3F5A33"/><path d="M2 12V4h30v8l-4-3-4 4-4-4-4 4-4-4-4 4-4-4z" fill="#151516"/><path d="M6 15l6-1" stroke="#24331D" stroke-width="1"/><circle cx="12" cy="20" r="3" fill="#F2F0EB"/><circle cx="22" cy="20" r="3" fill="#F2F0EB"/><circle cx="12.5" cy="20.5" r="1.3" fill="#24331D"/><circle cx="22.5" cy="20.5" r="1.3" fill="#24331D"/><path d="M11 29h12M14 27v4M18 27v4M21 27v4" stroke="#24331D" stroke-width="1.2"/><rect x="0" y="24" width="4" height="4" fill="#8E8B85"/><rect x="30" y="24" width="4" height="4" fill="#8E8B85"/></svg>`;
 const SCI=`<svg class="face" viewBox="0 0 34 38"><path d="M4 18 L0 9 L7 11 L4 2 L11 7 L13 0 L17 6 L21 0 L23 7 L30 2 L27 11 L34 9 L30 18Z" fill="#F2F0EB" stroke="#9C9993"/><circle cx="17" cy="23" r="12" fill="#C9C6C0" stroke="#7A7771"/><line x1="5" y1="21" x2="29" y2="21" stroke="#2B2B2E" stroke-width="1.5"/><circle cx="12" cy="21" r="4" fill="#6E6C67" stroke="#1C1C1E" stroke-width="1.5"/><circle cx="22" cy="21" r="4" fill="#6E6C67" stroke="#1C1C1E" stroke-width="1.5"/><circle cx="13" cy="20" r="1.2" fill="#ECEAE5"/><circle cx="23" cy="20" r="1.2" fill="#ECEAE5"/><path d="M13 29 q4 3 8 0" fill="none" stroke="#4A4A50" stroke-width="1.4" stroke-linecap="round"/><path d="M23 26 l4 4" stroke="#6E6C67"/></svg>`;
+const IGOR=`<svg class="face" viewBox="0 0 34 38"><path d="M2 38 Q2 22 14 20 Q28 18 32 30 L32 38Z" fill="#4A4038"/><circle cx="19" cy="17" r="11" fill="#B8B09A" stroke="#6E6656"/><path d="M9 10 Q18 3 29 10" fill="none" stroke="#2B2520" stroke-width="3"/><circle cx="23" cy="16" r="4" fill="#F2F0EB" stroke="#2B2520"/><circle cx="23.5" cy="16.5" r="1.8" fill="#24331D"/><circle cx="14" cy="17" r="1.8" fill="#2B2520"/><path d="M15 24 q4 2 8 -1" fill="none" stroke="#2B2520" stroke-width="1.4"/></svg>`;
 const SUGG=["a bot that checks Czech suppliers in the official ARES registry before we pay them",
   "a bot that converts amounts in any currency to CZK at today's official ČNB rate",
   "a bot that sorts supplier invoice lines into accounting categories"];
@@ -756,6 +808,8 @@ function gateCard(m,ev,live){
   (m?m.steps:addMsg("lab","ai",live)).appendChild(box);gateCards[ev.id]=box;toBottom(true);
   if(live){say(ev.gate==="authority"?"I need more power. May I?":"May I?",true);toast("Your decision needed: "+ev.title,"warn")}
 }
+const igorMsg={};
+function igorOff(){$("lab").classList.remove("igor")}
 function threadOf(name){return bots.find(b=>b.name===name)?name:name}
 
 function handle(ev){
@@ -785,7 +839,7 @@ function handle(ev){
   else if(k==="gate_result"){log((ev.approved?"✓ ":"✗ ")+ev.msg,"gate",ev.ts);
     const c=gateCards[ev.id];if(c){c.classList.add("done");c.querySelector(".gb").innerHTML=`<span class="${ev.approved?"yes":"nope"}">${ev.approved?"✓ granted":"✗ denied"}</span> <span style="color:var(--mute)">by ${esc(ev.by)}</span>`;delete gateCards[ev.id]}
     if(active){const t=(ev.title||ev.msg||"").replace(/^install /,"");step(active,ev.approved?(ev.gate==="authority"?"access granted: ":"installed: ")+t+(/auto/.test(ev.by||"")?" · tests passed":""):"rejected: "+t,ev.approved?"inst":"fail")}}
-  else if(k==="tile"){log("◆ "+ev.msg,"pass",ev.ts);if(live){freshTiles.add(ev.name);loadRegistry()}}
+  else if(k==="tile"){log("◆ "+ev.msg,"pass",ev.ts);if(live){freshTiles.add(ev.name);loadRegistry();if(treeOpen)openTree()}}
   else if(k==="run"){log((ev.ok?"✓ ":"✗ ")+ev.msg,ev.ok?"pass":"fail",ev.ts);setScene(false);runInfo[ev.workflow]={tokens:ev.tokens,ms:ev.ms};
     if(ev.ok){const rt=$("runTok");rt.textContent=ev.tokens.toLocaleString();
       if(monster.length){monster.forEach(p=>p.state="ready");drawMonster();setAlive(true,live)}else if(live)showWorkflow(ev.workflow)}}
@@ -793,6 +847,7 @@ function handle(ev){
     if(ev.question!==undefined||ev.ask_tokens!==undefined){let m=pending[wf];
       if(!m){userMsg(wf,ev.question||ev.input,!ev.question,live);m=aiMsg(wf,"bot",title(wf),live)}
       answer(m,ev);finish(m,ev.ts);delete pending[wf];if(active===m)active=null}
+    else if(ev.via&&pending[wf]){const m=pending[wf];answer(m,ev);finish(m,ev.ts);delete pending[wf];if(active===m)active=null}
     else if(ev.via){sysMsg(wf,`${ev.via} sent: ${JSON.stringify(ev.input)}`,live);const m=aiMsg(wf,"bot",title(wf),live);answer(m,ev);finish(m,ev.ts)}
     else if(active&&active.kind==="build"){built(active,ev);finish(active,ev.ts)}
     else if(active&&active.kind==="task"){answer(active,ev);finish(active,ev.ts)}
@@ -802,6 +857,22 @@ function handle(ev){
     if(m){const secs=m.t0?Math.max(0,ev.ts-m.t0):0;
       m.quick.innerHTML=`<div class="qa">${esc(ev.text).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")}</div><div class="meta"><span class="tag warm">quick answer${secs?` · ${secs.toFixed(1)} s`:""}</span><span class="tag">${(ev.tokens||0).toLocaleString()} tok · ${esc(ev.model||"")}</span><span>straight from the model, not yet a tested monster. The monster is being built below.</span></div>`;
       if(m.th===thread)toBottom(true)}}
+  else if(k==="igor"){const th=ev.bot;log("🪓 "+ev.msg,"gate",ev.ts);
+    if(ev.phase==="plot"){finish(active,ev.ts);const d=addMsg(th,"igor",live);d.className="msg ai igor";
+      d.innerHTML=`<div class="av">${IGOR}</div><div class="bd"><div class="who"><b>Igor</b><span> · lab assistant, professional saboteur</span></div><div class="ub2"><span class="typing"><i></i><i></i><i></i></span></div></div>`;
+      igorMsg[th]=d;if(live){$("lab").classList.add("igor");clearTimeout(igorOff.t);if(thread!==th)setThread(th)}}
+    else if(ev.phase==="attack"){let d=igorMsg[th];
+      if(!d){d=addMsg(th,"igor",live);d.className="msg ai igor";d.innerHTML=`<div class="av">${IGOR}</div><div class="bd"><div class="who"><b>Igor</b><span> · try ${ev.attempt||1}</span></div><div class="ub2"></div></div>`}
+      d.querySelector(".ub2").innerHTML=`${ev.attempt>1?"Fine. Nastier then. ":"Heh heh. "}${esc(ev.trick)}<code>${esc(JSON.stringify(ev.input,null,1))}</code>`;
+      igorMsg[th]=null;const m=aiMsg(th,"bot",title(th),live);m.kind="ask";m.t0=ev.ts;typing(m);pending[th]=m;active=m}
+    else if(ev.phase==="dodge"){const m=pending[th];if(m){answer(m,{workflow:th,result:ev.result});
+      m.content.insertAdjacentHTML("afterbegin",'<div class="banner survived" style="margin-bottom:8px">💪 Handled it <span>Igor will try something nastier</span></div>');finish(m,ev.ts);delete pending[th];if(active===m)active=null}}
+    else if(ev.phase==="hit"){const m=pending[th];if(m){m.content.innerHTML="";step(m,`Igor broke step ${ev.step} (${ev.capability}). Repairing only that part…`,"fail")}}
+    else{const d=addMsg(th,"sys",live);d.className="msg";
+      d.innerHTML=ev.phase==="healed"?`<div class="banner healed">🩹 Repaired and back on its feet <span>${esc((ev.healed||[]).join(", "))} · Igor's input is now a regression test${(ev.also_fixed||[]).length?` · the same repaired part also fixes ${esc(ev.also_fixed.map(title).join(", "))}`:""}</span></div>`
+        :ev.phase==="survived"?`<div class="banner survived">💪 Survived all of Igor's tries <span>the code already handled his mess</span></div>`
+        :`<div class="banner won">🪓 Igor won this round <span>${esc(ev.msg)}</span></div>`;
+      delete igorMsg[th];if(live){igorOff.t=setTimeout(igorOff,5000);if(treeOpen)openTree()}}}
   else if(k==="knock"){log("⌂ "+ev.msg,"gate",ev.ts);if(live){knock();say(ev.say||"Someone's at the door.",true);toast("External agent: "+ev.msg)}}
   else if(k==="flask"){log("⚗ "+ev.msg,"pass",ev.ts);if(active)step(active,ev.msg,"inst");if(live){freshTiles.add(ev.name);loadRegistry();toast("Distilled "+ev.name+" into code")}}
   else if(k==="error"){log("✗ "+ev.msg,"fail",ev.ts);setScene(false);monster.forEach(p=>{if(p.state==="building")p.state="failed"});drawMonster();
@@ -860,7 +931,7 @@ function exampleOf(b){try{return typeof b.example_input==="string"?JSON.parse(b.
 function flat(v){return Array.isArray(v)?v.slice(0,3).map(flat).join(", "):(v&&typeof v==="object"?Object.values(v).filter(x=>typeof x!=="object").join(" "):String(v))}
 function updateComposer(){
   const b=curBot();
-  $("formBtn").hidden=!b;if(!b)toggleForm(false);else buildForm(schemaOf(b),exampleOf(b));
+  $("formBtn").hidden=!b;$("igorBtn").hidden=!b;if(!b)toggleForm(false);else buildForm(schemaOf(b),exampleOf(b));
   $("input").placeholder=b?`Ask ${title(b.name)}…  e.g. ${Object.values(exampleOf(b)).map(flat).filter(Boolean).join(" · ").slice(0,34)}…`:"What should the scientist make?  e.g. a bot that checks suppliers before we pay them";
   $("hint").innerHTML=b?`Enter to send · reading your question costs a few hundred tokens on Claude Haiku · the form costs 0`:`The scientist builds and tests it once (paid once). Asking it later is nearly free. Installs are automatic once tests pass.`;
   setBusy(busy);
@@ -894,17 +965,69 @@ async function send(){
   if(ok){$("input").value="";grow()}else if(!busy)lights(false)
 }
 $("sendBtn").onclick=send;
+$("igorBtn").onclick=async()=>{const b=curBot();if(!b||busy)return;lights(true);if(!await post(`/api/bots/${b.name}/sabotage`,{})&&!busy)lights(false)};
 function grow(){const i=$("input");i.style.height="36px";i.style.height=Math.min(180,i.scrollHeight)+"px"}
 $("input").addEventListener("input",grow);
 $("input").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
 $("formRun").onclick=()=>{let inp;try{inp=readForm()}catch(e){toast("A JSON field is not valid JSON","bad");return}ask({input_json:JSON.stringify(inp)})};
-function setBusy(b){busy=b;if(b)lights(true);$("status").classList.toggle("busy",b);$("statusTxt").textContent=b?"working":"idle";$("sendBtn").disabled=b;$("formRun").disabled=b;$("optBtn").disabled=b;$("resetBtn").disabled=b;
+function setBusy(b){busy=b;if(b)lights(true);$("igorBtn").disabled=b;$("status").classList.toggle("busy",b);$("statusTxt").textContent=b?"working":"idle";$("sendBtn").disabled=b;$("formRun").disabled=b;$("optBtn").disabled=b;$("resetBtn").disabled=b;
   $("sendBtn").title=b?"The scientist is busy":"Send (Enter)"}
 async function loadBots(){
   try{bots=await (await fetch("/api/bots")).json()}catch(e){return}
   if(thread!=="lab"&&!bots.find(b=>b.name===thread)&&!$("msgs").querySelector(`.msg[data-th="${CSS.escape(thread)}"]`)){thread="lab"}
   renderSel();renderIntro();updateComposer();
 }
+// ---------- family tree: every monster and the parts it is stitched from ----------
+let treeOpen=false;
+function closeTree(){treeOpen=false;const m=$("treeModal");if(m)m.remove()}
+async function openTree(){
+  const rows=await (await fetch("/api/registry")).json();
+  const act=rows.filter(r=>r.status==="active");
+  const wfs=act.filter(r=>r.kind==="workflow"), caps=Object.fromEntries(act.filter(r=>r.kind==="capability").map(r=>[r.name,r]));
+  const allv={};rows.forEach(r=>{(allv[r.name]=allv[r.name]||[]).push(r)});
+  const order=[],users={};
+  wfs.forEach(w=>(w.manifest.steps||[]).forEach(s=>{if(!order.includes(s.uses))order.push(s.uses);(users[s.uses]=users[s.uses]||new Set()).add(w.name)}));
+  const shared=order.filter(c=>users[c].size>1);
+  const reuses=order.reduce((n,c)=>n+users[c].size-1,0);
+  let M=$("treeModal");if(!M){M=document.createElement("div");M.id="treeModal";M.onclick=e=>{if(e.target===M)closeTree()};document.body.appendChild(M)}
+  treeOpen=true;
+  const head=`<div id="treeHead"><h2>🧬 Family tree</h2><div id="treeStats"><span class="tag">${wfs.length} monster${wfs.length===1?"":"s"}</span><span class="tag">${order.length} part${order.length===1?"":"s"}</span><span class="tag ${shared.length?"warm":""}">${shared.length} shared</span><span class="tag ${reuses?"zero":""}">${reuses} part${reuses===1?"":"s"} reused instead of rebuilt</span></div><span class="spacer"></span><button class="ghost" id="treeX">✕</button></div>`;
+  if(!wfs.length){M.innerHTML=`<div id="treeBox">${head}<div id="treeEmpty">No monsters yet. Build one, then build a second for a related job and watch it borrow parts.</div></div>`;$("treeX").onclick=closeTree;return}
+  const colW=170, W=Math.max(wfs.length,order.length)*colW+40, H=380;
+  const mx=i=>20+colW/2+i*(W-40-colW)/Math.max(1,wfs.length-1)*(wfs.length>1?1:0)+(wfs.length===1?(W-40-colW)/2:0);
+  const px=i=>20+colW/2+i*(W-40-colW)/Math.max(1,order.length-1)*(order.length>1?1:0)+(order.length===1?(W-40-colW)/2:0);
+  let svg=`<svg id="treeSvg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  wfs.forEach((w,i)=>(w.manifest.steps||[]).forEach(s=>{const j=order.indexOf(s.uses),x1=mx(i),x2=px(j);
+    svg+=`<path class="edge${users[s.uses].size>1?" shared":""}" data-w="${esc(w.name)}" data-c="${esc(s.uses)}" d="M${x1} 120 C${x1} 190 ${x2} 200 ${x2} 262"/>`}));
+  wfs.forEach((w,i)=>{const x=mx(i),t=title(w.name),llm=(w.manifest.permissions||{}).llm,tok=w.runs?Math.round(w.tokens/w.runs):0;
+    svg+=`<g class="node mon" data-w="${esc(w.name)}" transform="translate(${x-70},14)"><rect class="card" width="140" height="106" rx="14" fill="#2F3A2C" stroke="#6C8F5A" stroke-width="1.5"/>
+      <g transform="translate(53,8) scale(1)">${FACE.replace('<svg class="face"','<svg width="34" height="38"')}</g>
+      <text x="70" y="64" text-anchor="middle" font-size="11" font-weight="600" fill="#ECEAE5" font-family="Inter">${esc(t.length>20?t.slice(0,19)+"…":t)}</text>
+      <text x="70" y="80" text-anchor="middle" font-size="10" fill="#8E8B85" font-family="Inter">${w.runs} answer${w.runs===1?"":"s"} · v${w.version}</text>
+      <text x="70" y="96" text-anchor="middle" font-size="10" fill="${llm?"#D9B87A":"#A9CF8F"}" font-family="Inter">${llm?`~${tok.toLocaleString()} tok/answer`:"0 tok · plain code"}</text></g>`});
+  order.forEach((c,j)=>{const x=px(j),r=caps[c]||{manifest:{},version:"?"},m=r.manifest,kind=(m.lineage||{}).created_by==="distillation"?"distilled":m.impl==="llm"?"llm":"code";
+    const col={code:"#86A872",llm:"#9C8FC4",distilled:"#D9B87A"}[kind],icon={code:"⚙",llm:"🧠",distilled:"⚗"}[kind];
+    const vs=(allv[c]||[]).length,healed=(allv[c]||[]).some(v=>v.version>1);const sh=users[c].size;const nm=c.length>22?c.slice(0,21)+"…":c;
+    svg+=`<g class="node part" data-c="${esc(c)}" transform="translate(${x-76},262)"><title>${esc(c)} · ${esc(m.description||"")}</title><rect class="card" width="152" height="96" rx="12" fill="#26262A" stroke="${sh>1?"#D9B87A":col}" stroke-width="${sh>1?2.5:1.5}"/>
+      <rect x="0" y="0" width="152" height="6" rx="3" fill="${col}"/>
+      <text x="12" y="30" font-size="15">${icon}</text><text x="34" y="29" font-size="10.5" fill="#ECEAE5" font-family="'JetBrains Mono',monospace">${esc(nm)}</text>
+      <text x="12" y="50" font-size="10" fill="#8E8B85" font-family="Inter">${kind==="code"?"Python, tested in sandbox":kind==="llm"?"LLM prompt":"distilled from LLM to code"}</text>
+      <text x="12" y="66" font-size="10" fill="#8E8B85" font-family="Inter">v${r.version}${healed?" · 🩹 repaired":""} · ${r.runs||0} runs</text>
+      ${(m.permissions||{}).net&&m.permissions.net.length?`<text x="12" y="82" font-size="9.5" fill="#6E6C67" font-family="'JetBrains Mono',monospace">${esc(m.permissions.net.join(", ").slice(0,24))}</text>`:""}
+      ${sh>1?`<g transform="translate(96,72)"><rect width="50" height="17" rx="8.5" fill="#D9B87A"/><text x="25" y="12" text-anchor="middle" font-size="9.5" font-weight="600" fill="#1A1A1C" font-family="Inter">shared ×${sh}</text></g>`:""}</g>`});
+  svg+=`</svg>`;
+  M.innerHTML=`<div id="treeBox">${head}<div id="treeBody">${svg}<div id="treeLegend"><span><i style="background:#86A872"></i>Python part, tested in the sandbox · 0 tokens</span><span><i style="background:#9C8FC4"></i>LLM part · tokens per use</span><span><i style="background:#D9B87A"></i>shared: built once, reused by several monsters</span><span>Click a monster to talk to it</span></div></div></div>`;
+  $("treeX").onclick=closeTree;
+  const S=$("treeSvg");
+  const focus=(w,c)=>{S.classList.add("focus");S.querySelectorAll(".edge").forEach(e=>e.classList.toggle("on",(w&&e.dataset.w===w)||(c&&e.dataset.c===c)));
+    const ws=new Set(),cs=new Set();S.querySelectorAll(".edge.on").forEach(e=>{ws.add(e.dataset.w);cs.add(e.dataset.c)});
+    S.querySelectorAll(".mon").forEach(n=>n.classList.toggle("on",ws.has(n.dataset.w)));S.querySelectorAll(".part").forEach(n=>n.classList.toggle("on",cs.has(n.dataset.c)))};
+  S.querySelectorAll(".mon").forEach(n=>{n.onmouseenter=()=>focus(n.dataset.w);n.onmouseleave=()=>S.classList.remove("focus");n.onclick=()=>{closeTree();setThread(n.dataset.w)}});
+  S.querySelectorAll(".part").forEach(n=>{n.onmouseenter=()=>focus(null,n.dataset.c);n.onmouseleave=()=>S.classList.remove("focus")});
+}
+$("treeBtn").onclick=openTree;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&treeOpen)closeTree()});
+
 // ---------- registry, ledger, status ----------
 async function loadRegistry(){
   const rows=await (await fetch("/api/registry")).json();

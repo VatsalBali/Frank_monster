@@ -388,6 +388,77 @@ def run_with_heal(wf: dict, task_input: dict, run_budget: gateway.Budget, heal_b
         raise
 
 
+IGOR = """You are Igor, the lab assistant whose job is to break bots before customers do. You get a bot's input
+schema, an example input that works, and your earlier attempts that it survived. Write ONE new input a real user
+could plausibly send (from a web form, a spreadsheet or another program) that means something valid but is messy in
+form: numbers as strings in local format ("1 200,50", "1.200,50 Kč"), currency or country names instead of codes
+("euros", "Czech"), symbols ("€"), stray whitespace, prefixes (country codes on ids), different case, short forms,
+duplicates, an empty extra item. Keep the schema's field names; values may be sloppy in type. Each attempt must try a
+DIFFERENT trick, nastier than the last. It must stay answerable by a careful human. Reply with JSON:
+{"input": {...}, "trick": "<one short sentence, in Igor's voice, saying what you messed up>"}"""
+
+IGOR_TRIES = 3
+
+
+def sabotage(name: str) -> dict:
+    """Igor attacks a bot with messy-but-legitimate input, escalating up to IGOR_TRIES times. When a step breaks,
+    the factory repairs only that part (regression-tested against its history) and the bot answers anyway.
+    Every outcome is reported as it happened."""
+    wf = registry.get(name)
+    if not wf or wf["kind"] != "workflow":
+        raise KeyError(f"no active bot named {name}")
+    m = wf["manifest"]
+    before = {s["uses"]: registry.get(s["uses"])["version"] for s in m["steps"] if registry.get(s["uses"])}
+    emit("igor", bot=name, phase="plot", msg=f"Igor is looking for a way to break {name}")
+    b = gateway.Budget(scope=f"igor:{name}", max_usd=0.20)
+    tried: list[str] = []
+    broke = None
+    for n in range(1, IGOR_TRIES + 1):
+        attack = gateway.complete_json(
+            b, "igor", model=config.INSTANT_MODEL, system=IGOR,
+            prompt=f"Input schema: {m['signature'].get('in')}\nWorking example: {m.get('example_input')}\n"
+                   f"Attempts it survived: {json.dumps(tried, ensure_ascii=False) if tried else 'none yet'}")
+        inp, trick = attack.get("input") or {}, attack.get("trick") or "I messed up the input."
+        emit("igor", bot=name, phase="attack", attempt=n, input=inp, trick=trick, msg=f"Igor (try {n}): {trick}")
+        if n == 1:
+            emit("say", text="Igor! What are you doing to my monster?")
+        try:
+            out = run_workflow(wf, inp, budget=gateway.Budget(scope=f"run:{name}", max_usd=0.5))
+        except StepFailed as e:
+            broke = (inp, e)
+            emit("igor", bot=name, phase="hit", attempt=n, step=e.step, capability=e.capability,
+                 msg=f"Igor broke step {e.step} ({e.capability})")
+            break
+        _record_replay(registry.get(name), inp, out)
+        tried.append(trick)
+        emit("igor", bot=name, phase="dodge", attempt=n, result=out, msg=f"{name} handled try {n}")
+    if not broke:
+        emit("igor", bot=name, phase="survived", msg=f"{name} survived all {IGOR_TRIES} of Igor's tries")
+        emit("say", text="Nice try, Igor. Not a scratch.")
+        return {"bot": name, "healed": [], "tries": tried}
+    inp, _ = broke
+    run_budget = gateway.Budget(scope=f"run:{name}", max_usd=0.5, max_tokens=m.get("budget", {}).get("max_tokens_per_run") or None)
+    try:
+        out = run_with_heal(wf, inp, run_budget, gateway.Budget(scope=f"task:heal {name}", max_usd=config.MAX_USD_PER_TASK))
+    except Exception as e:
+        emit("igor", bot=name, phase="won", msg=f"the repair did not hold, so the old version stays: {str(e)[:160]}")
+        emit("say", text="He got me. The old version stays in place, nothing was made worse.")
+        raise
+    healed = [f"{c} v{v} → v{registry.get(c)['version']}" for c, v in before.items()
+              if registry.get(c) and registry.get(c)["version"] != v]
+    _record_replay(registry.get(name), inp, out)
+    emit("result", workflow=name, result=out, input=inp, via="Igor (sabotage)", run_tokens=run_budget.tokens,
+         msg=f"{name} answered Igor after repairing {', '.join(healed) or 'nothing'}")
+    fixed = {c.split(" v")[0] for c in healed}
+    also = sorted({w["name"] for w in registry.list_artifacts("workflow") if w["name"] != name
+                   and fixed & {s["uses"] for s in w["manifest"].get("steps", [])}})
+    emit("igor", bot=name, phase="healed", healed=healed, also_fixed=also,
+         msg=f"repaired {', '.join(healed)}: Igor's input is now a regression test"
+             + (f"; the shared part also fixes {', '.join(also)}" if also else ""))
+    emit("say", text="Ha! Repaired, and stronger than before.")
+    return {"bot": name, "input": inp, "healed": healed, "result": out}
+
+
 def _finish(wf: dict, task_input: dict, budget: gateway.Budget) -> dict:
     run_budget = gateway.Budget(scope=f"run:{wf['name']}", max_usd=0.50,
                                 max_tokens=wf["manifest"].get("budget", {}).get("max_tokens_per_run") or None)

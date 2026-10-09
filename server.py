@@ -34,9 +34,12 @@ async def events(replay: int = 1500):
         EVENTS.touch()
         with EVENTS.open("r", encoding="utf-8") as f:
             lines = f.readlines()
-            for line in lines[-replay:]:
-                yield f"data: {line.strip()}\n\n"
             buf = ""
+            if lines and not lines[-1].endswith("\n"):  # a writer is mid-line: finish it in the tail loop
+                buf = lines.pop()
+            for line in lines[-replay:]:
+                if line.strip():
+                    yield f"data: {line.strip()}\n\n"
             while True:
                 chunk = f.readline()
                 if chunk:
@@ -155,6 +158,14 @@ def api_bots():
 class Ask(BaseModel):
     question: str = ""
     input_json: str = ""
+
+
+@app.post("/api/bots/{name}/sabotage")
+def api_bot_sabotage(name: str):
+    from factory.orchestrator import sabotage
+    if not registry.get(name):
+        raise HTTPException(404, "no such bot")
+    return _background(f"Igor vs {name}", lambda: sabotage(name))
 
 
 @app.post("/api/bots/{name}/ask")

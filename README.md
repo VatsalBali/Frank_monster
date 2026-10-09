@@ -48,6 +48,12 @@ Task ──► PLAN ─► DISCOVER ─► GAP? ──► LEARN (probe real APIs
   (labelled as untested). Measured on a currency bot: build 94 s from an empty registry; asking the finished bot
   8.9 s in words, 3.4 s with the form (0 tokens). Sandbox steps start in ~1.5 s (a long-lived WSL helper and a clean
   PATH; the WSL-appended Windows PATH had made every docker command take ~1.7 s).
+* **Igor tries to break it.** "🪓 Let Igor break it" sends a bot messy but legitimate input (`"  1 250,50 "`,
+  `"euros"`), escalating up to 3 tries. When a step breaks, the scientist rebuilds only that part with Igor's input as
+  a regression test, installs it once tests pass, and the bot answers. Measured: currency bot broken on try 1, repaired
+  (11 tests) and answering in 44 s. The repaired part is shared, so the comparison bot was fixed too.
+* **Family tree.** 🧬 shows every monster and the parts it is stitched from: Python parts (0 tokens), LLM parts, and
+  shared parts built once and reused (gold). Repaired parts show their new version.
 * **It keeps what it learned, not how it got there.** When a capability passes, the builder saves its working code,
   its prompt (LLM steps) and short notes on the APIs it touched (endpoints, fields, quirks). After every build the
   registry is pruned: failed attempts, parts no monster uses, sandbox scratch and stale traces are deleted; notes of
