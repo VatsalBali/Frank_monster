@@ -1,0 +1,1 @@
+{"capability": "find_overdue_customer_invoices", "used_by": ["customer_late_payment_reminders"]}

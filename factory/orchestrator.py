@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from . import config, gate, gateway, governance, inbox, monster_voice, registry
 from .builder import build_capability
 from .events import emit
-from .executor import StepFailed, resolve, run_capability, run_capability_batch, run_workflow
+from .executor import StepFailed, bind, resolve, run_capability, run_capability_batch, run_workflow
 from .models import GapSpec, Plan
 
 PLANNER = """You are the planner of a workflow factory. A workflow is a pipeline of reusable capabilities that runs
@@ -21,6 +21,11 @@ cheaply and deterministically after it is built. Given a task and the registry, 
    For anything missing, declare a gap: a GENERIC, reusable capability (e.g. `fetch_company_record`, not
    `fetch_acme_record`), with JSON schemas, a realistic example input, and the minimal network hosts it needs.
 Prefer kind=code. Use kind=llm only for steps that need real language judgment; they cost tokens on every run.
+Language models miscount: counts, totals, sums, averages, rankings and "top N" are ALWAYS computed by a kind=code step.
+An llm step may only label or word things (e.g. give each record a category, write a reminder); a code step after it
+counts and ranks those labels, and a final llm step (if needed) only words the advice from those exact numbers.
+An llm step that labels records takes the WHOLE list in ONE call and returns a list of {id, label}: never put an llm
+step in a foreach over rows (one model call per row is slow and hits the call cap).
 Prefer official structured APIs (JSON/REST/CSV) over scraping HTML pages.
 Only use a data source you are sure exists at a real URL; never invent or use placeholder URLs or datasets.
 If no reliable structured source exists for the facts asked (general-knowledge or research questions), do not force
@@ -52,7 +57,10 @@ lines in those files that prove it (quote them in `missing`); otherwise it is no
 Estimates, forecasts and recommendations are judgment calls: a chosen horizon or method, a risk weighting, a scenario
 or any other assumption is NOT blocking as long as the output labels it as an assumption or estimate. For these,
 block only on: a figure that contradicts the data, an item the data clearly contains that is silently omitted or
-counted twice, or totals that do not add up. Put better-method suggestions in notes."""
+counted twice, or totals that do not add up. Put better-method suggestions in notes.
+Counts and totals computed by code are usually right and your own recount of a long list is error-prone: before you
+call a number wrong, list the exact rows you counted; if your list matches the output's number, it is NOT a problem.
+Never put an item in `missing` that your own check found to be correct."""
 
 
 class Verdict(BaseModel):
@@ -90,6 +98,12 @@ def judge(task: str, output, budget: gateway.Budget, purpose: str = "", task_inp
     look = "".join(f"\n\nThe user's files ({f}):\n{inbox.texts(f, 40000)}" for f in inbox.refs(task_input))
     v: Verdict = gateway.complete_json(budget, "accept", system=JUDGE, schema=Verdict,
                                        prompt=f"{ask}{look}\n\nOutput:\n{out}")
+    # the judge sometimes lists an objection and then confirms it itself ("... so the count is correct"): drop those
+    ok_again = ("is correct", "are correct", "count is right", "matches the output", "no problem", "not a problem")
+    kept = [m for m in v.missing if not any(s in m.lower()[-160:] for s in ok_again)]
+    if not v.satisfied and v.missing and not kept:
+        v.satisfied, v.notes = True, (v.notes + " | objections withdrawn by the judge's own check").strip(" |")
+    v.missing = kept if not v.satisfied else v.missing
     emit("test", capability="acceptance",
          msg="acceptance: PASSED" if v.satisfied else f"acceptance: FAILED, missing {', '.join(v.missing)}")
     return v
@@ -224,6 +238,79 @@ def _attach_files(m: dict, inp: dict, question: str) -> dict:
     return {**inp, hit: text}
 
 
+ASK_CACHE = config.DATA / "ask_cache.json"
+
+
+def _cache_key(name: str, question: str) -> str:
+    q = question
+    for f in inbox.mentioned(question):
+        q = q.replace(f, "<files>")
+    return name + "|" + " ".join(q.lower().split())
+
+
+def _cached(name: str, question: str):
+    try:
+        return json.loads(ASK_CACHE.read_text(encoding="utf-8")).get(_cache_key(name, question))
+    except (OSError, ValueError):
+        return None
+
+
+def _remember(name: str, question: str, inp: dict) -> None:
+    try:
+        d = json.loads(ASK_CACHE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        d = {}
+    # file text is not cached: it is put back from the attached files on every ask
+    d[_cache_key(name, question)] = {k: v for k, v in inp.items() if not (isinstance(v, str) and v.startswith("=== "))}
+    ASK_CACHE.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+
+
+def _direct_fill(m: dict, question: str) -> dict | None:
+    """0-token path: when every required field is either the attached files or the question itself, no model is
+    needed to read the question."""
+    try:
+        s = json.loads(m["signature"]["in"]) if isinstance(m["signature"]["in"], str) else m["signature"]["in"]
+        props, req = s.get("properties") or {}, s.get("required") or list((s.get("properties") or {}))
+    except (ValueError, AttributeError, KeyError, TypeError):
+        return None
+    words = question
+    for f in inbox.mentioned(question):
+        words = words.replace(f"Files: folder {f}", "").replace(f, "")
+    words = words.strip()
+    inp = _attach_files(m, {}, question)
+    asky = ("question", "query", "prompt", "request", "message", "ask")
+    for k in req:
+        if k in inp:
+            continue
+        if any(w in k.lower() for w in asky) and (props.get(k) or {}).get("type", "string") == "string" and words:
+            inp[k] = words
+        else:
+            return None
+    return inp
+
+
+def compact_schema(schema) -> str:
+    """The input schema in as few tokens as possible: names, types, enums, required, short descriptions."""
+    try:
+        s = json.loads(schema) if isinstance(schema, str) else (schema or {})
+    except ValueError:
+        return str(schema)[:600]
+    req = set(s.get("required") or [])
+    parts = []
+    for k, p in (s.get("properties") or {}).items():
+        p = p or {}
+        t = p.get("type", "string")
+        if t == "array":
+            t = f"[{(p.get('items') or {}).get('type', 'any')}]"
+        d = f"{k}{'' if k in req else '?'}: {t}"
+        if p.get("enum"):
+            d += " one of " + "|".join(map(str, p["enum"]))
+        if p.get("description"):
+            d += " — " + p["description"][:70]
+        parts.append(d)
+    return "\n".join(parts) or str(schema)[:600]
+
+
 def ask_bot(name: str, question: str = "", inp: dict | None = None) -> dict:
     """Ask an installed bot. A form input costs 0 tokens; a plain-language question costs one small extraction call
     on the runtime model (shown separately). The run itself is the compiled workflow, with self-repair."""
@@ -233,9 +320,18 @@ def ask_bot(name: str, question: str = "", inp: dict | None = None) -> dict:
     m = wf["manifest"]
     ask_budget = gateway.Budget(scope=f"ask:{name}", max_usd=0.05)
     emit("ask", bot=name, question=question or None, input=inp, msg=f"asked {name}: {question or json.dumps(inp, ensure_ascii=False)[:120]}")
+    hit = _cached(name, question) if inp is None and question else None
+    if hit is not None:
+        inp = _attach_files(m, dict(hit), question)
+        emit("log", msg=f"asked this before: input reused (0 tok): {fit_json(inp, 200)}")
+    if inp is None and question:
+        inp = _direct_fill(m, question)
+        if inp is not None:
+            emit("log", msg=f"no reading needed: your words and files go straight in (0 tok): {fit_json(inp, 200)}")
     if inp is None:
         emit("stage", stage="understand", msg=f"reading the question for {name}")
-        system = EXTRACT + "\nInput schema: " + str(m["signature"].get("in")) + "\nExample input: " + str(m.get("example_input"))
+        system = (EXTRACT + "\nInput fields (? = optional):\n" + compact_schema(m["signature"].get("in"))
+                  + "\nExample: " + fit_json(m.get("example_input"), 300))
         prompt = question
         for _ in range(2):
             inp, problems = check_input(m["signature"].get("in"), _attach_files(m, gateway.complete_json(
@@ -244,7 +340,9 @@ def ask_bot(name: str, question: str = "", inp: dict | None = None) -> dict:
                 break
             emit("log", msg=f"input did not fit the bot ({'; '.join(problems)}), asking again")
             prompt = f"{question}\n\nYour previous reading had problems: {'; '.join(problems)}. Fix them."
-        emit("log", msg=f"question → input ({ask_budget.tokens} tok): {json.dumps(inp, ensure_ascii=False)[:200]}")
+        emit("log", msg=f"question → input ({ask_budget.tokens} tok): {fit_json(inp, 200)}")
+        if not problems:
+            _remember(name, question, inp)
     run_budget = gateway.Budget(scope=f"run:{name}", max_usd=0.5,
                                 max_tokens=m.get("budget", {}).get("max_tokens_per_run") or None)
     out = run_with_heal(wf, inp, run_budget, gateway.Budget(scope=f"task:heal {name}", max_usd=config.MAX_USD_PER_TASK))
@@ -306,14 +404,14 @@ def _solve(task: str, purpose: str = "") -> dict:
         try:
             build_on_real_data(p, task_input, budget)
             wf, output = assemble(p, purpose)
+        except StepFailed as e:  # before RuntimeError: StepFailed is one, and it must lead to a replan
+            emit("say", text=f"The parts don't fit together yet: {e.capability.replace('_', ' ')} failed. Back to the bench.")
+            feedback = f"End-to-end run failed at step {e.step} ({e.capability}): {e.detail[-1200:]}"
+            continue
         except RuntimeError as e:
             if "regression gate refused" not in str(e):
                 raise
             feedback = str(e)
-            continue
-        except StepFailed as e:
-            emit("say", text=f"The parts don't fit together yet: {e.capability.replace('_', ' ')} failed. Back to the bench.")
-            feedback = f"End-to-end run failed at step {e.step} ({e.capability}): {e.detail[-1200:]}"
             continue
         verdict = judge(task, output, budget, purpose, task_input)
         if verdict.satisfied:
@@ -359,7 +457,8 @@ def build_on_real_data(p: Plan, task_input: dict, budget: gateway.Budget) -> Non
             if items is not None and not isinstance(items, list):
                 raise TypeError(f"foreach source {s.foreach} is not a list")
             sample = items[0] if items else None
-            inp = {b.param: resolve(b.source, task_input, outputs, sample) for b in s.inputs}
+            ins = [b.model_dump() for b in s.inputs]
+            inp = bind(ins, task_input, outputs, sample)  # optional fields the task leaves out are omitted
         except (KeyError, IndexError, TypeError) as e:
             raise StepFailed(s.id, s.uses, f"input binding failed: {e!r}; upstream outputs: "
                              f"{json.dumps(outputs, ensure_ascii=False, default=str)[:800]}")
@@ -373,7 +472,7 @@ def build_on_real_data(p: Plan, task_input: dict, budget: gateway.Budget) -> Non
         cap = registry.get(s.uses)
         try:
             if items is not None:
-                batch = [{b.param: resolve(b.source, task_input, outputs, it) for b in s.inputs} for it in items]
+                batch = [bind(ins, task_input, outputs, it) for it in items]
                 outputs[s.id] = {"items": run_capability_batch(cap, batch, budget)}
             else:
                 outputs[s.id], _ = run_capability(cap, inp, budget)

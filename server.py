@@ -103,6 +103,29 @@ def api_revoke(name: str):
     return {"revoked": a["version"]}
 
 
+@app.get("/api/voices")
+def api_voices():
+    return [{"id": k, "label": v["label"], "fits": v["fits"]} for k, v in monster_voice.ARCHETYPES.items()]
+
+
+class VoiceReq(BaseModel):
+    voice: str
+
+
+@app.post("/api/bots/{name}/voice")
+def api_bot_voice(name: str, req: VoiceReq):
+    """Give a monster a different voice. Presentation only: the bot's code and tests are untouched."""
+    a = registry.get(name)
+    if not a or a["kind"] != "workflow":
+        raise HTTPException(404, "no such bot")
+    if req.voice not in monster_voice.ARCHETYPES:
+        raise HTTPException(400, "unknown voice")
+    registry.update_manifest(name, a["version"], {"voice": req.voice})
+    monster_voice.prepare(req.voice)
+    emit("log", msg=f"{name} now speaks as the {monster_voice.ARCHETYPES[req.voice]['label']}")
+    return {"voice": req.voice}
+
+
 @app.post("/api/bots/{name}/kill")
 def api_bot_kill(name: str):
     """Kill a monster: the bot (workflow) is retired, every skill it was stitched from stays installed for reuse."""

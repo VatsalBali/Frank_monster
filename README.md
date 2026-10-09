@@ -167,6 +167,23 @@ Task ──► PLAN ─► DISCOVER ─► GAP? ──► LEARN (probe real APIs
 | Authority can't grow by itself | Permissions are written into the manifest by the harness, not the agent; new hosts need the operator; the authority test demonstrates it on demand; updates that break dependants are refused by the regression gate. |
 | Self-iterations and spend capped in code | `config.py`: `MAX_FACTORY_ITERATIONS`, `MAX_REPAIR_ATTEMPTS`, `MAX_REPLANS`, `MAX_USD_PER_TASK`, `MAX_LLM_CALLS_PER_TASK`; per-workflow token budget enforced by `gateway.Budget`. |
 
+## Recorded demo on GitHub Pages
+
+GitHub Pages hosts static files only, so it cannot run the factory (Python, the Docker sandbox, the model keys).
+`docs/` is a **replay**: the same lab UI, fed from a snapshot of real runs. The bots, registry, code, tests, value
+cards, cost ledger and the full work log are what the agent actually produced. Asking a monster replays an answer
+it really gave (marked *recorded* in the log). Building a new monster, uploading files, voice in and spoken answers
+need the live lab. Bots built on uploaded files are left out, and e-mail addresses and phone numbers are scrubbed.
+
+```bash
+python server.py                     # live lab running
+python scripts/build_pages.py        # writes docs/
+```
+GitHub → Settings → Pages → Deploy from a branch → `main` / `/docs`.
+
+End-to-end check (fresh session, three bot-building prompts on the sample company, then each bot is asked a
+question): `python scripts/e2e_three_bots.py` → `data/e2e_report.json`.
+
 ## Run it
 
 ```bash

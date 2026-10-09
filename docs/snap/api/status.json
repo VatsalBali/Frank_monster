@@ -1,0 +1,1 @@
+{"busy": false, "gate_mode": "console", "install_mode": "auto", "build_model": "claude-sonnet-5-5", "runtime_model": "claude-haiku-4-5", "caps": {"usd_per_task": 2.0, "iterations": 12, "repairs": 3, "replans": 2, "llm_calls": 40}, "replay": true}

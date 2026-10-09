@@ -53,7 +53,7 @@ def next_version(name: str) -> int:
 def save_candidate(manifest: dict, files: dict[str, str]) -> int:
     """Write a candidate version to disk. It is NOT usable until install() passes the gate."""
     name = manifest["name"]
-    if not re.fullmatch(r"[a-z][a-z0-9_]{1,48}", name):
+    if not re.fullmatch(r"[a-z][a-z0-9_]{1,63}", name):
         raise ValueError(f"bad artifact name: {name!r}")
     if manifest.get("kind") not in KINDS:
         raise ValueError(f"bad kind: {manifest.get('kind')!r}")
