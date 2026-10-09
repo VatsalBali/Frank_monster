@@ -50,6 +50,18 @@ see the files' text.
   side, and keeps the working version. Operators can propose upgrades from the registry drawer; the planner's own
   upgrades go through the same gate.
 * **☠ Kill** retires a bot; its parts stay installed as spare parts for future bots.
+* **💰 Sokosumi agents.** With `SOKOSUMI_API_KEY` set, the planner can hire paid marketplace agents for jobs no free
+  source or own code can do. A paid agent is new authority: installing one needs the operator, every job asks before
+  spending (`SOKOSUMI_CONFIRM_ABOVE`, default: always), a daily cap is enforced (`SOKOSUMI_DAILY_CAP`), and spend
+  approvals are never automatic, not even in dev auto-mode.
+
+## Voices and look
+
+* Every monster has a voice of its own: five archetypes (Brute, Gremlin, Ghoul, Golem, Witch) designed once with
+  ElevenLabs Voice Design and saved to the account. The archetype is picked when the bot is built. With 🔊 Voice on,
+  each answer's headline (written by code, 0 LLM tokens) is spoken in that voice; 🔊 on any answer replays it.
+* The scientist, the monster (one torso band per workflow step) and Igor are 8-bit pixel sprites with choppy,
+  game-like motion.
 
 ## What it does
 
