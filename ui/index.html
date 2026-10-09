@@ -8,9 +8,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#1E1E20; --bg2:#19191B; --panel:#262629; --panel2:#2B2B2F; --soft:#313135; --soft2:#3A3A3F; --line:#36363B; --line2:#4A4A51;
-  --ink:#ECEAE5; --ink2:#C6C3BD; --mute:#8E8B85; --dim:#5F5D59;
-  --green:#8DB077; --green2:#A9CF8F; --fail:#D99383; --amber:#D9B87A;
+  --bg:oklch(20.8% .004 285); --bg2:oklch(18.6% .004 285); --panel:oklch(22.6% .004 285); --panel2:oklch(25.3% .004 285);
+  --soft:oklch(28.7% .006 285); --soft2:oklch(32% .006 285); --line:oklch(32% .006 285); --line2:oklch(38% .007 285);
+  --ink:oklch(92.3% .012 90); --ink2:oklch(80% .01 90); --mute:oklch(62% .008 90); --dim:oklch(44% .008 90);
+  --green:oklch(78% .099 133); --green2:oklch(85% .1 133); --greenbg:oklch(32.5% .011 133); --fail:oklch(72% .11 32); --amber:oklch(79% .095 82);
+  --grid:oklch(80% 0 0/.028);
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -399,14 +401,122 @@ table.audit td.n{text-align:right;color:var(--mute)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:1180px){main{grid-template-columns:minmax(240px,300px) minmax(0,1fr);grid-template-rows:minmax(0,1fr) 210px}#side{grid-column:1 / -1}#modelTxt{display:none}}
 @media(max-width:760px){body{height:auto}main{grid-template-columns:1fr;grid-template-rows:none;padding:10px}#side{height:320px}#scene{height:420px}#chat{height:80vh}header{padding:10px 12px}#botSel{max-width:70vw}}
+/* ===== Lovable design layer ===== */
+body{font-size:13px;background:var(--bg)}
+header{height:56px;padding:0 20px;gap:14px;background:var(--bg);border-bottom:1px solid var(--line);backdrop-filter:none}
+header h1{font:500 21px/1 Fraunces,Georgia,serif;gap:12px;letter-spacing:-.2px}
+header h1 svg{width:20px;height:20px}
+header h1 span{color:var(--green)}
+.tagline{font-size:12px;color:var(--mute);padding-left:14px;border-left:1px solid var(--line);white-space:nowrap}
+#status{border:0;padding:0;font-size:11px;color:var(--mute);gap:6px}
+#status i{width:6px;height:6px}
+#modelTxt{display:none}
+header button.ghost{font-size:12px;color:var(--mute);padding:6px 9px}
+header button.ghost:hover{color:var(--ink);background:var(--soft)}
+main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
+.pn{border:0;border-radius:0;box-shadow:none;background:var(--panel)}
+#scene{border-right:1px solid var(--line);background:var(--panel)}
+#side{border-left:1px solid var(--line);background:var(--panel)}
+#chat{background:linear-gradient(var(--grid) 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/32px 32px,var(--bg)}
+.ph{height:46px;padding:0 16px;font:500 13px Inter,sans-serif;border-bottom:1px solid var(--line);gap:9px}
+.ph .ic{width:15px;height:15px;color:var(--mute);flex:0 0 15px}
+.ph small{font:10px 'JetBrains Mono',monospace;color:var(--dim)}
+#stage{font:10px 'JetBrains Mono',monospace;text-transform:uppercase;color:var(--mute);background:var(--soft);border-radius:4px;padding:3px 7px}
+#stage.hot{background:var(--green);color:oklch(22% .035 133)}
+.seam{display:none}
+.eyebrow{font:10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.6px;color:var(--dim)}
+.eyebrow.g{color:var(--green)}
+.labtop{display:flex;align-items:center;gap:7px;padding:12px 16px 0}
+.labtop i{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.labcap{font:10px 'JetBrains Mono',monospace;color:var(--mute);text-align:center;padding:6px 14px 10px;min-height:28px}
+.bench{border-top:1px solid var(--line);padding:11px 16px 13px}
+.bench .row{display:flex;align-items:center;gap:8px;margin-top:5px}
+.bench .row b{font-weight:500;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.bench .row small{font:10px 'JetBrains Mono',monospace;color:var(--dim);white-space:nowrap}
+#wfname{display:none}
+#parts{justify-content:flex-start;padding:8px 0 0;min-height:0}
+.chathead{height:46px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--bg)}
+#botSel{background:transparent;border-color:transparent;padding:4px 9px 4px 5px;border-radius:6px}
+#botSel:hover{background:var(--soft)}
+#botSel .face{width:22px;height:25px;flex:0 0 22px}
+#botSel .nm b{font:500 13px Inter,sans-serif}
+#botSel .nm small{font-size:10.5px}
+#headInfo .tag{font:10px 'JetBrains Mono',monospace;border-radius:4px;padding:2px 7px}
+.motto{font:10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);white-space:nowrap}
+#igorBtn{border-radius:6px;font-size:11.5px;padding:4px 10px}
+#botMenu{border-radius:8px}
+.bm{border-radius:6px}
+/* welcome */
+#intro{max-width:560px;padding:28px 8px}
+#intro .ring{width:64px;height:64px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);box-shadow:0 0 0 6px oklch(22.6% .004 285/.5),0 0 40px oklch(78% .099 133/.08)}
+#intro .ring svg{width:38px;height:43px;animation:bob 3.2s ease-in-out infinite}
+#intro .eyebrow{display:block;margin-bottom:10px}
+#intro h2{font:500 37px/1.2 Fraunces,Georgia,serif;margin:0 0 12px;background:linear-gradient(160deg,var(--ink) 55%,var(--green2));-webkit-background-clip:text;background-clip:text;color:transparent}
+#intro p{font-size:13px;line-height:1.75;color:var(--mute);margin:0 auto 26px}
+#intro .eyebrow.c{margin:0 0 10px}
+.ideas{display:flex;flex-direction:column;gap:8px;text-align:left}
+.ideas button{display:flex;align-items:center;gap:14px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:13px 16px;color:var(--ink);text-align:left;white-space:normal}
+.ideas button:hover{background:var(--greenbg);border-color:oklch(45% .05 133)}
+.ideas .ii{width:16px;height:16px;color:var(--green);flex:0 0 16px}
+.ideas .tx{flex:1;min-width:0}
+.ideas .tx b{display:block;font-weight:500;font-size:12px}
+.ideas .tx small{display:block;font-size:11px;color:var(--mute);margin-top:2px}
+.ideas .ar{color:var(--dim);font-size:13px}
+.ideas button:hover .ar{color:var(--green)}
+.howto{display:none}
+/* messages */
+.msg.user .ub{border-radius:8px 8px 2px 8px;background:var(--soft);font-size:13px}
+.ans{border-radius:6px;background:var(--panel)}
+.gatecard,.banner,.quick .qa{border-radius:6px}
+.tag{border-radius:4px}
+/* composer */
+.composer{padding:10px 24px 12px;background:transparent}
+.box{flex-direction:column;align-items:stretch;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 12px 10px 14px}
+.box:focus-within{border-color:oklch(45% .05 133);box-shadow:0 0 0 3px oklch(78% .099 133/.08)}
+#input{font-size:13px;padding:0;height:22px}
+.boxbar{display:flex;align-items:center;gap:8px}
+.mode{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:5px;padding:3px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+.mode svg{width:12px;height:12px;flex:0 0 12px}
+#formBtn{border-radius:5px;font-size:11px;padding:3px 9px;border:1px solid var(--line)}
+#sendBtn{width:30px;height:30px;border-radius:6px;margin-left:auto}
+#sendBtn svg{width:15px;height:15px}
+#hint{font-size:10.5px;color:var(--dim);margin-top:8px}
+#chips button{border-radius:6px;font-size:11.5px;background:var(--panel)}
+/* work log: timeline */
+#side .tabs{padding:0 16px;gap:16px;border-bottom:1px solid var(--line);height:38px;align-items:stretch}
+#side .tabs button{border-radius:0;padding:0;background:transparent;font-size:11.5px;color:var(--mute);border-bottom:2px solid transparent}
+#side .tabs button.on{background:transparent;color:var(--ink);border-bottom-color:var(--green)}
+.tabpane{padding:14px 16px}
+#log{font:inherit;white-space:normal}
+#log .le{position:relative;padding:0 0 14px 22px;border:0;animation:fadein .25s ease-out}
+#log .le::before{content:"";position:absolute;left:5px;top:16px;bottom:0;width:1px;background:var(--line)}
+#log .le:last-child::before{display:none}
+#log .le .ic{position:absolute;left:0;top:2px;width:11px;height:11px;border-radius:50%;border:1.5px solid var(--dim);display:grid;place-items:center;font-size:8px}
+#log .le.ok .ic{border:0;color:var(--green)}
+#log .le.ok .ic::after{content:"✓";font-size:12px;font-weight:600}
+#log .le.bad .ic{border-color:var(--fail);background:var(--fail)}
+#log .le.run .ic{border-color:var(--amber);border-top-color:transparent;animation:spin .9s linear infinite}
+#log .le .tt{font-size:11.5px;color:var(--ink);line-height:1.45}
+#log .le .sub{margin-top:3px;display:flex;flex-direction:column;gap:2px}
+#log .le .ln{font:10.5px/1.5 'JetBrains Mono',monospace;color:var(--mute);word-break:break-word;white-space:pre-wrap}
+#log .le .ln.pass{color:var(--green)}#log .le .ln.fail{color:var(--fail)}#log .le .ln.gate{color:var(--amber)}
+#log .le .st{font:9px 'JetBrains Mono',monospace;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+#log .le .more{font:10px 'JetBrains Mono',monospace;color:var(--dim);cursor:pointer}
+#log .wait{font:10.5px 'JetBrains Mono',monospace;color:var(--dim);padding-left:22px;position:relative}
+#log .wait::before{content:"";position:absolute;left:4px;top:2px;width:3px;height:11px;background:var(--green);animation:blinkc 1s steps(2) infinite}
+@keyframes blinkc{50%{opacity:0}}
+.sidefoot{border-top:1px solid var(--line);padding:10px 16px 12px;display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:11px;color:var(--mute)}
+.sidefoot b{font:400 11px 'JetBrains Mono',monospace;color:var(--ink);text-align:right}
+@media(max-width:1180px){main{grid-template-columns:260px minmax(0,1fr)}#side{border-left:0;border-top:1px solid var(--line)}.tagline,.motto{display:none}}
 </style>
 </head>
 <body>
 <header>
-  <h1><svg viewBox="0 0 24 24"><path d="M13 2 L4 14 h7 l-2 8 9-12 h-7z" fill="#8DB077" stroke="#3F5A33" stroke-linejoin="round"/></svg>Frankenstein <span>Lab</span></h1>
-  <span id="status" title="Lab status"><i></i><span id="statusTxt">idle</span></span>
-  <span id="modelTxt"></span>
+  <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" style="color:var(--green)"><path d="M13 2 4 14h7l-2 8 9-12h-7z"/></svg>Frankenstein <span>Lab</span></h1>
+  <span class="tagline">A workshop for useful monsters.</span>
   <span class="spacer"></span>
+  <span id="modelTxt"></span>
+  <span id="status" title="Lab status"><i></i><span id="statusTxt">idle</span></span>
   <button id="treeBtn" class="ghost" title="Every monster and the parts it is stitched from">🧬 Family tree</button>
   <button id="voiceBtn" class="ghost" title="Browsers need a click before audio can play">🔈 Voice: off</button>
   <div class="menu"><button id="menuBtn" class="ghost" aria-haspopup="true" aria-expanded="false" title="More">⋯</button>
@@ -418,7 +528,8 @@ table.audit td.n{text-align:right;color:var(--mute)}
 <main>
   <!-- ============ LAB ============ -->
   <section class="pn" id="scene" aria-label="The lab">
-    <div class="ph">⚗ The lab <span id="stage">idle</span></div>
+    <div class="ph"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg>The laboratory <span style="margin-left:auto"></span><span id="stage">idle</span></div>
+    <div class="labtop"><i></i><span class="eyebrow" id="expNo">Experiment no. 001</span></div>
     <div class="seam"></div>
     <div class="labwrap">
       <div id="bubble"></div>
@@ -573,8 +684,11 @@ table.audit td.n{text-align:right;color:var(--mute)}
         <rect id="flash" x="0" y="0" width="360" height="668" fill="#F2F7EC"/>
       </svg>
     </div>
+    <div class="labcap" id="labCap">Every great monster starts with an idea.</div>
     <div id="wfname"></div>
-    <div id="parts"></div>
+    <div class="bench"><span class="eyebrow">On the workbench</span>
+      <div class="row"><b id="benchName">No monster assembled</b><small id="benchParts">0 parts</small></div>
+      <div id="parts"></div></div>
   </section>
 
   <!-- ============ CHAT ============ -->
@@ -585,6 +699,7 @@ table.audit td.n{text-align:right;color:var(--mute)}
         <div id="botMenu" role="listbox"></div>
       </div>
       <div id="headInfo"></div>
+      <span class="motto" id="motto">Build once. Bring it to life.</span>
       <button id="igorBtn" hidden title="Igor sends this bot messy but legitimate input. If a part breaks, the scientist repairs just that part.">🪓 Let Igor break it</button>
     </div>
     <div id="msgs" aria-live="polite"><div id="intro"></div></div>
@@ -597,8 +712,11 @@ table.audit td.n{text-align:right;color:var(--mute)}
       <div id="chips"></div>
       <div class="box">
         <textarea id="input" rows="1" autocomplete="off"></textarea>
-        <button id="formBtn" title="Fill the bot's input fields yourself: no language model, 0 tokens" hidden>☰ Form</button>
-        <button id="sendBtn" title="Send (Enter)"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="boxbar">
+          <span class="mode" id="mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><span id="modeTxt">New experiment</span></span>
+          <button id="formBtn" title="Fill the bot's input fields yourself: no language model, 0 tokens" hidden>☰ Form · 0 tok</button>
+          <button id="sendBtn" title="Send (Enter)"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
       </div>
       <div id="hint"></div>
     </div></div>
@@ -606,10 +724,10 @@ table.audit td.n{text-align:right;color:var(--mute)}
 
   <!-- ============ WORK LOG ============ -->
   <section class="pn" id="side" aria-label="Work log">
-    <div class="ph">📓 Work log <small id="logCount"></small></div>
+    <div class="ph"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 17 6-6-6-6M12 19h8"/></svg>Work log <small id="logCount" style="margin-left:auto">0 entries</small></div>
     <div class="tabs"><button data-tab="log" class="on">Log</button><button data-tab="code">Code</button><button data-tab="reg">Registry</button><button data-tab="ledger">Ledger</button></div>
     <div class="seam"></div>
-    <div class="tabpane" id="tab-log"><div id="log"></div></div>
+    <div class="tabpane" id="tab-log"><div class="eyebrow" style="margin-bottom:12px">This session</div><div id="log"></div><div class="wait" id="logWait">Awaiting an experiment…</div></div>
     <div class="tabpane" id="tab-code" hidden>
       <div class="codebar"><b id="codeTitle">Code on the bench</b><span class="spacer" style="flex:1"></span><button id="tImpl" class="on">impl.py</button><button id="tTests">tests</button></div>
       <div id="code"><span class="cm"># the code the agent writes appears here, attempt by attempt</span></div>
@@ -625,6 +743,7 @@ table.audit td.n{text-align:right;color:var(--mute)}
       <table class="audit" id="audit"></table>
       <div id="caps"></div>
     </div>
+    <div class="sidefoot"><span>Session cost</span><b id="sessUsd">$0.00</b><span>Tokens used</span><b id="sessTok">0 tok</b></div>
   </section>
 </main>
 <div id="toasts"></div>
@@ -636,17 +755,33 @@ const M={skin:"#86A872",shade:"#6C8F5A",dark:"#3F5A33",stitch:"#24331D",hair:"#1
 const FACE=`<svg class="face" viewBox="0 0 34 38"><rect x="3" y="6" width="28" height="30" rx="5" fill="#86A872" stroke="#3F5A33"/><path d="M2 12V4h30v8l-4-3-4 4-4-4-4 4-4-4-4 4-4-4z" fill="#151516"/><path d="M6 15l6-1" stroke="#24331D" stroke-width="1"/><circle cx="12" cy="20" r="3" fill="#F2F0EB"/><circle cx="22" cy="20" r="3" fill="#F2F0EB"/><circle cx="12.5" cy="20.5" r="1.3" fill="#24331D"/><circle cx="22.5" cy="20.5" r="1.3" fill="#24331D"/><path d="M11 29h12M14 27v4M18 27v4M21 27v4" stroke="#24331D" stroke-width="1.2"/><rect x="0" y="24" width="4" height="4" fill="#8E8B85"/><rect x="30" y="24" width="4" height="4" fill="#8E8B85"/></svg>`;
 const SCI=`<svg class="face" viewBox="0 0 34 38"><path d="M4 18 L0 9 L7 11 L4 2 L11 7 L13 0 L17 6 L21 0 L23 7 L30 2 L27 11 L34 9 L30 18Z" fill="#F2F0EB" stroke="#9C9993"/><circle cx="17" cy="23" r="12" fill="#C9C6C0" stroke="#7A7771"/><line x1="5" y1="21" x2="29" y2="21" stroke="#2B2B2E" stroke-width="1.5"/><circle cx="12" cy="21" r="4" fill="#6E6C67" stroke="#1C1C1E" stroke-width="1.5"/><circle cx="22" cy="21" r="4" fill="#6E6C67" stroke="#1C1C1E" stroke-width="1.5"/><circle cx="13" cy="20" r="1.2" fill="#ECEAE5"/><circle cx="23" cy="20" r="1.2" fill="#ECEAE5"/><path d="M13 29 q4 3 8 0" fill="none" stroke="#4A4A50" stroke-width="1.4" stroke-linecap="round"/><path d="M23 26 l4 4" stroke="#6E6C67"/></svg>`;
 const IGOR=`<svg class="face" viewBox="0 0 34 38"><path d="M2 38 Q2 22 14 20 Q28 18 32 30 L32 38Z" fill="#4A4038"/><circle cx="19" cy="17" r="11" fill="#B8B09A" stroke="#6E6656"/><path d="M9 10 Q18 3 29 10" fill="none" stroke="#2B2520" stroke-width="3"/><circle cx="23" cy="16" r="4" fill="#F2F0EB" stroke="#2B2520"/><circle cx="23.5" cy="16.5" r="1.8" fill="#24331D"/><circle cx="14" cy="17" r="1.8" fill="#2B2520"/><path d="M15 24 q4 2 8 -1" fill="none" stroke="#2B2520" stroke-width="1.4"/></svg>`;
+const ICONS={"shield": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z\"/><path d=\"m9 12 2 2 4-4\"/></svg>", "wallet": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 12V8H6a2 2 0 0 1 0-4h12v4\"/><path d=\"M4 6v12a2 2 0 0 0 2 2h14v-4\"/><path d=\"M18 12a2 2 0 0 0 0 4h4v-4z\"/></svg>", "folder": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v1H8a2 2 0 0 0-1.9 1.4L3 19z\"/><path d=\"m3 19 3-8h16l-3 8z\"/></svg>", "chat": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>", "play": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"><path d=\"M6 4v16l14-8z\"/></svg>", "form": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"><path d=\"M4 6h16M4 12h16M4 18h10\"/></svg>"};
+const IDEAS=[["shield","A little due diligence","Check Czech suppliers in the official ARES registry.","a bot that checks Czech suppliers in the official ARES registry before we pay them"],
+  ["wallet","Make currencies make sense","Convert any currency to CZK at the official ČNB rate.","a bot that converts amounts in any currency to CZK at today's official ČNB rate"],
+  ["folder","Bring order to your invoices","Sort supplier invoice lines into accounting categories.","a bot that sorts supplier invoice lines into accounting categories"]];
+function idea(icon,t,d,attr){return `<button ${attr}>${ICONS[icon]}<span class="tx"><b>${esc(t)}</b><small>${esc(d)}</small></span><span class="ar">↗</span></button>`}
 const SUGG=["a bot that checks Czech suppliers in the official ARES registry before we pay them",
   "a bot that converts amounts in any currency to CZK at today's official ČNB rate",
   "a bot that sorts supplier invoice lines into accounting categories"];
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function toast(t,kind=""){const d=document.createElement("div");d.className="toast "+kind;d.textContent=t;$("toasts").appendChild(d);setTimeout(()=>d.remove(),4200)}
 let logN=0;
-function log(text,cls="",ts){const d=document.createElement("div");if(cls)d.className=cls;
+let lastLe=null;
+function log(text,cls="",ts){
+  const L=$("log"),P=$("tab-log"),stick=P.scrollHeight-P.scrollTop-P.clientHeight<160;
   const t=ts?new Date(ts*1000).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"}):"";
-  d.innerHTML=(t?`<span class="ts">${t}</span>`:"")+esc(text);const L=$("log");L.appendChild(d);while(L.children.length>500)L.firstChild.remove();
-  logN++;$("logCount").textContent=logN+" entries";const P=$("tab-log");if(P.scrollHeight-P.scrollTop-P.clientHeight<160)P.scrollTop=P.scrollHeight}
-function say(text,live){if(!live)return;$("bubble").textContent=text;$("bubble").classList.add("on");clearTimeout(say.t);say.t=setTimeout(()=>$("bubble").classList.remove("on"),6500);
+  const head=cls==="stage"||!lastLe;
+  if(head){if(lastLe&&lastLe.classList.contains("run")){lastLe.classList.remove("run");lastLe.classList.add("ok")}
+    const d=document.createElement("div");d.className="le run";
+    d.innerHTML=`<span class="ic"></span><div class="tt"></div><div class="sub"></div><div class="st"></div>`;
+    d.querySelector(".tt").textContent=text.replace(/^[—▶?] /,"");d.querySelector(".st").textContent=t;L.appendChild(d);lastLe=d;
+    while(L.children.length>160)L.firstChild.remove()}
+  else{const sub=lastLe.querySelector(".sub");const n=document.createElement("div");n.className="ln "+cls;n.textContent=text;sub.appendChild(n);
+    if(cls==="fail"){lastLe.classList.remove("run","ok");lastLe.classList.add("bad")}
+    if(/^[■✓◆⚗]/.test(text)&&cls==="pass"&&!lastLe.classList.contains("bad")){lastLe.classList.remove("run");lastLe.classList.add("ok")}
+    while(sub.children.length>14)sub.firstChild.remove();lastLe.querySelector(".st").textContent=t}
+  logN++;$("logCount").textContent=logN+" entries";$("logWait").hidden=busy?false:true;if(stick)P.scrollTop=P.scrollHeight}
+function say(text,live){if(text&&$("labCap"))$("labCap").textContent=text;if(!live)return;$("bubble").textContent=text;$("bubble").classList.add("on");clearTimeout(say.t);say.t=setTimeout(()=>$("bubble").classList.remove("on"),6500);
   if(voiceOn){const a=new Audio("/api/voice?text="+encodeURIComponent(text));a.play().catch(()=>{})}}
 function lights(on){clearTimeout(lights.t);const L=$("lab");
   if(on){if(!L.classList.contains("lit")){L.classList.add("lit");if(voiceOn)say("Lights!",true)}L.classList.add("working")}
@@ -685,10 +820,12 @@ function drawMonster(){
   if(n===1&&!dorm)h+=stitches(tx+14,ty+20,tx+30,ty+60,3);
   if(dorm)h+=`<text x="420" y="${ty+th/2+4}" text-anchor="middle" font-size="11" fill="#86A872">dormant</text>`;
   g.innerHTML=h+`</g>`;
+  $("benchName").textContent=monster.length?($("wfname").textContent.split(" · ")[0]||"A monster in progress").replace(/_/g," "):"No monster assembled";
+  $("benchParts").textContent=`${monster.length} part${monster.length===1?"":"s"}`;
   $("parts").innerHTML=monster.map((p,i)=>`<span class="part ${p.state}" title="${esc(p.uses)} · ${p.state}"><i>${i+1}</i>${esc(p.uses)}</span>`).join("");
 }
 async function showWorkflow(name){try{const vs=await (await fetch("/api/artifact/"+name)).json();const a=vs.find(v=>v.status==="active")||vs[vs.length-1];
-  monster=(a.manifest.steps||[]).map(s=>({uses:s.uses,state:"ready"}));drawMonster();setAlive(true);$("wfname").textContent=name+" · v"+a.version}catch(e){}}
+  $("wfname").textContent=name+" · v"+a.version;monster=(a.manifest.steps||[]).map(s=>({uses:s.uses,state:"ready"}));drawMonster();setAlive(true)}catch(e){}}
 function setPart(uses,state){monster.forEach(p=>{if(p.uses===uses)p.state=state});drawMonster()}
 function drawFlasks(items){
   const g=$("flasks");let h="";
@@ -903,10 +1040,10 @@ function handle(ev){
   else if(k==="error"){log("✗ "+ev.msg,"fail",ev.ts);setScene(false);monster.forEach(p=>{if(p.state==="building")p.state="failed"});drawMonster();
     if(active){step(active,ev.msg.slice(0,300),"fail");if(active.kind==="ask")active.content.innerHTML=`<div class="empty" style="color:var(--fail)">Something broke: ${esc(ev.msg.slice(0,240))}</div>`}
     if(live)toast(ev.msg.slice(0,140),"bad")}
-  else if(k==="idle"){finish(active,ev.ts);Object.keys(pending).forEach(b=>{finish(pending[b],ev.ts);delete pending[b]});active=null;
+  else if(k==="idle"){if(lastLe&&lastLe.classList.contains("run")){lastLe.classList.remove("run");lastLe.classList.add("ok")}finish(active,ev.ts);Object.keys(pending).forEach(b=>{finish(pending[b],ev.ts);delete pending[b]});active=null;
     if(live){setBusy(false);setScene(false);lights(false);$("stage").textContent="idle";loadLedger();loadBots()}}
   else if(k==="reset"){[...$("msgs").querySelectorAll(".msg")].forEach(e=>e.remove());active=null;Object.keys(pending).forEach(b=>delete pending[b]);unread.clear();
-    monster=[];setAlive(false);drawMonster();$("log").innerHTML="";logN=0;lastCode=null;$("code").innerHTML='<span class="cm"># the code the agent writes appears here, attempt by attempt</span>';
+    monster=[];setAlive(false);drawMonster();$("log").innerHTML="";logN=0;lastLe=null;lastCode=null;$("code").innerHTML='<span class="cm"># the code the agent writes appears here, attempt by attempt</span>';
     $("buildUsd").textContent="$0.00";$("runTok").textContent="–";freshTiles.clear();
     if(live){loadRegistry();thread="lab";loadBots();toast("Lab reset · registry is empty")}renderIntro()}
 }
@@ -924,7 +1061,7 @@ function renderSel(){
   M.querySelectorAll(".bm").forEach(e=>e.onclick=()=>{closeSel();setThread(e.dataset.t)});
   const H=$("headInfo");
   H.innerHTML=b?(b.llm?`<span class="tag warm">~${(b.avg_tokens||0).toLocaleString()} tok / answer</span>`:`<span class="tag zero">runs as code · 0 tok</span>`)+`<span class="tag" title="${esc((b.steps||[]).join(" → "))}">${(b.steps||[]).length} step${(b.steps||[]).length===1?"":"s"}</span>`
-    :`<span class="tag">build once · ask forever</span>`;
+    :"";
 }
 function closeSel(){$("botMenu").classList.remove("open");$("botSel").setAttribute("aria-expanded","false")}
 $("botSel").onclick=e=>{e.stopPropagation();const o=!$("botMenu").classList.contains("open");$("botMenu").classList.toggle("open",o);$("botSel").setAttribute("aria-expanded",o)};
@@ -940,13 +1077,15 @@ function renderIntro(){
   const I=$("intro");const has=[...$("msgs").querySelectorAll(".msg")].some(m=>m.dataset.th===thread);
   I.hidden=has;if(has)return;
   const b=curBot();
-  if(!b){I.innerHTML=`<svg class="big" viewBox="0 0 34 38">${SCI.replace(/^<svg[^>]*>|<\/svg>$/g,"")}</svg><h2>What should I make?</h2>
-    <p>Describe a bot for a job you keep doing. I'll find what's missing, build it, test it in a sandbox and install it. Then you can ask it questions, nearly free.</p>
-    <div class="sugg">${SUGG.map(s=>`<button data-s="${esc(s)}">${esc(s)}</button>`).join("")}</div>
+  if(!b){I.innerHTML=`<div class="ring"><svg viewBox="0 0 34 38">${SCI.replace(/^<svg[^>]*>|<\/svg>$/g,"")}</svg></div><span class="eyebrow g">A spark of possibility</span><h2>What shall we bring to life?</h2>
+    <p>That task you keep doing? Let's make a monster for it.<br>A small, useful bot with a job of its own.</p>
+    <span class="eyebrow c" style="display:block">A few ideas to get the sparks flying</span>
+    <div class="ideas">${IDEAS.map(([i,t,d,s])=>idea(i,t,d,`data-s="${esc(s)}"`)).join("")}</div>
     <div class="howto"><div><b>1 · Describe</b>a purpose, in plain words</div><div><b>2 · I build &amp; test</b>installed only if tests pass</div><div><b>3 · Ask it</b>in words or with a 0-token form</div></div>`;
     I.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{$("input").value=x.dataset.s;grow();$("input").focus()});return}
-  I.innerHTML=`<svg class="big" viewBox="0 0 34 38">${FACE.replace(/^<svg[^>]*>|<\/svg>$/g,"")}</svg><h2>${esc(title(b.name))}</h2><p>${esc(b.purpose||b.description||"")}</p>
-    <div class="sugg">${(b.examples||[]).map(q=>`<button data-q="${esc(q)}">💬 ${esc(q)}</button>`).join("")}<button id="tryEx">▶ Run its example · 0 tokens</button><button id="openForm">☰ Fill the form · 0 tokens</button></div>
+  I.innerHTML=`<div class="ring"><svg viewBox="0 0 34 38">${FACE.replace(/^<svg[^>]*>|<\/svg>$/g,"")}</svg></div><span class="eyebrow g">It's alive</span><h2>${esc(title(b.name))}</h2><p>${esc(b.purpose||b.description||"")}</p>
+    <span class="eyebrow c" style="display:block">Ask it something</span>
+    <div class="ideas">${(b.examples||[]).map(q=>idea("chat",q,"Ask in words · a few hundred tokens to read it",`data-q="${esc(q)}"`)).join("")}${idea("play","Run its example","Straight into the code · 0 tokens",'id="tryEx"')}${idea("form","Fill the form yourself","No language model at all · 0 tokens",'id="openForm"')}</div>
     <div class="howto"><div><b>Ask in words</b>a small Claude Haiku call reads your question</div><div><b>Or use the form</b>no language model at all</div><div><b>Then it runs</b>${b.llm?"with one LLM judgment step":"as plain code · 0 tokens"}</div></div>`;
   I.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>{$("input").value=x.dataset.q;grow();send()});
   $("tryEx").onclick=()=>{const ex=exampleOf(b);ask({input_json:JSON.stringify(ex)})};
@@ -959,7 +1098,9 @@ function updateComposer(){
   const b=curBot();
   $("formBtn").hidden=!b;$("igorBtn").hidden=!b;if(!b)toggleForm(false);else buildForm(schemaOf(b),exampleOf(b));
   $("input").placeholder=b?`Ask ${title(b.name)}…  e.g. ${Object.values(exampleOf(b)).map(flat).filter(Boolean).join(" · ").slice(0,34)}…`:"What should the scientist make?  e.g. a bot that checks suppliers before we pay them";
-  $("hint").innerHTML=b?`Enter to send · reading your question costs a few hundred tokens on Claude Haiku · the form costs 0`:`The scientist builds and tests it once (paid once). Asking it later is nearly free. Installs are automatic once tests pass.`;
+  $("modeTxt").textContent=b?`Ask ${title(b.name)}`:"New experiment";$("motto").textContent=b?(b.llm?"Built once. Answers with judgment.":"Built once. Answers for free."):"Build once. Bring it to life.";
+  $("expNo").textContent=`Experiment no. ${String((bots.length||0)+1).padStart(3,"0")}`;
+  $("hint").innerHTML=b?`Enter to send · reading your question costs a few hundred tokens · the form costs 0`:`A little imagination. A useful new creation.`;
   setBusy(busy);renderChips();
 }
 function renderChips(){const C=$("chips");const b=curBot();const ex=(b&&b.examples)||[];
@@ -1089,6 +1230,7 @@ async function openDrawer(name){
   if($("runBtn"))$("runBtn").onclick=async()=>{const r=await fetch("/api/run/"+name,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({input_json:$("runIn").value})});if(!r.ok)toast((await r.json()).detail,"bad");else{setBusy(true);setThread(name)}};
 }
 async function loadLedger(){try{const L=await (await fetch("/api/ledger")).json();
+  $("sessUsd").textContent="$"+L.usd.toFixed(2);$("sessTok").textContent=L.tokens.toLocaleString()+" tok";
   $("ledgerTot").textContent=`${L.calls} LLM calls · ${L.tokens.toLocaleString()} tok · $${L.usd.toFixed(2)}`;
   $("audit").innerHTML=(L.by_model||[]).map(r=>{const ok=/claude/.test(r.model||"");return `<tr><td>${esc(r.model||"?")}</td><td class="${ok?"ok-badge":"bad-badge"}">${ok?"✓ claude":"⚠ other vendor"}</td><td class="n">${r.calls} calls</td><td class="n">$${r.usd.toFixed(3)}</td></tr>`}).join("")||`<tr><td style="color:var(--mute)">no reconciled calls yet</td></tr>`}catch(e){}}
 async function loadStatus(){try{const s=await (await fetch("/api/status")).json();if(s.busy!==busy){setBusy(s.busy);if(!s.busy)lights(false)}if(!s.busy){$("stage").textContent="idle";setScene(false)}
