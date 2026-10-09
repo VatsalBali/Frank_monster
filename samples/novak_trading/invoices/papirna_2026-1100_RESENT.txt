@@ -1,0 +1,21 @@
+Upomínka / znovu zasíláme fakturu
+
+PAPÍRNA BRNO A.S.
+IČO: 25311654   DIČ: CZ25311654
+Bankovní spojení: 2400360494/2010
+
+FAKTURA - DAŇOVÝ DOKLAD č. 2026-1100
+
+Odběratel: Novák Trading s.r.o., Vinohradská 88, 120 00 Praha 2, IČO 27654321
+Datum vystavení: 08.08.2026
+Datum splatnosti: 22.08.2026
+Číslo objednávky: PO-2026-038
+Variabilní symbol: 20261100
+
+Kód          Popis                                    Množství     Cena/ks        Celkem
+PAP-A3-80    Kancelářský papír A3 80g (bal.)             40 ks       189,00       7 560,00
+PAP-A4-80    Kancelářský papír A4 80g (krabice 5 bal.    10 ks       612,00       6 120,00
+
+Základ daně 21 %: 13 680,00 Kč
+DPH 21 %: 2 872,80 Kč
+CELKEM K ÚHRADĚ: 16 552,80 Kč

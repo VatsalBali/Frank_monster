@@ -1,0 +1,17 @@
+INVOICE
+
+OfficeLine GmbH, Industriestr. 14, 90402 Nürnberg, Germany - VAT ID DE814455210
+
+Invoice number: OL-1135
+Invoice date: 2026-09-03
+Payment due: 2026-09-17
+Customer: Novák Trading s.r.o. (CZ27654321)
+PO reference: PO-2026-043
+
+SKU | Description | Qty | Unit price (CZK) | Amount (CZK)
+OL-STP-24 | Stapler 24/6, metal | 50 | 240.00 | 12,000.00
+OL-LAB-A4 | Labels A4 3x8 (100 sheets) | 65 | 365.00 | 23,725.00
+
+Net amount: 35,725.00 CZK
+VAT 21%: 7,502.25 CZK
+Total due: 43,227.25 CZK

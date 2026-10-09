@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from . import config, gate, gateway, registry
+from . import config, gate, gateway, inbox, registry
 from .builder import build_capability
 from .events import emit
 from .executor import StepFailed, resolve, run_capability, run_capability_batch, run_workflow
@@ -31,6 +31,12 @@ Never add trivial adapter/glue capabilities (format conversion, renaming fields)
 re-declare the consuming capability as a gap with the SAME name so an improved version is built.
 Workflow input should be the task's variable parts (ids, dates, lists), so the workflow is reusable for similar tasks.
 Bindings: '$input.<field>', '$steps.<id>.<field>', '$steps.<id>', or a JSON literal.
+User files: when the task names a folder of the user's files (listed under "User files"), the workflow input gets a
+string field `folder` (task_input: that folder's name) and every step that reads files takes `folder` bound to
+'$input.folder'. Never put file contents into inputs or schemas. Split file work into reusable parts, e.g. one
+capability that parses a kind of document into clean records, another that matches/analyses records; later tasks
+reuse them. Business answers must be traceable: outputs list the concrete records (ids, file names, amounts) behind
+every finding, and estimates are labelled as estimates.
 Be brief, it saves time: reasoning in at most 2 sentences, one-line descriptions, minimal schemas (only the needed
 properties, no long descriptions). Prefer hosts the factory already knows (listed with the capabilities) when they fit."""
 
@@ -52,6 +58,9 @@ class Verdict(BaseModel):
 def plan(task: str, budget: gateway.Budget, feedback: str = "") -> Plan:
     emit("stage", stage="plan", msg="planning" + (" (revised)" if feedback else ""))
     prompt = f"Registry:\n{registry.catalog_text()}\n\nTask:\n{task}"
+    files = inbox.mentioned(task)
+    if files:
+        prompt += "\n\nUser files:\n" + "\n".join(inbox.describe(f) for f in files)
     if feedback:
         prompt += ("\n\nA previous attempt was REJECTED by the acceptance check:\n" + feedback +
                    "\nFix it: declare a gap with the SAME name to build an improved version of an inadequate "
@@ -66,8 +75,9 @@ def judge(task: str, output, budget: gateway.Budget, purpose: str = "", task_inp
     out = json.dumps(output, ensure_ascii=False, default=str)[:6000]
     ask = (f"A bot built for: {purpose}\nIt was given this input:\n{json.dumps(task_input, ensure_ascii=False)}"
            if purpose else f"Task:\n{task}")
+    look = "".join(f"\n\nThe user's files ({f}):\n{inbox.texts(f, 12000)}" for f in inbox.refs(task_input))
     v: Verdict = gateway.complete_json(budget, "accept", system=JUDGE, schema=Verdict,
-                                       prompt=f"{ask}\n\nOutput:\n{out}")
+                                       prompt=f"{ask}{look}\n\nOutput:\n{out}")
     emit("test", capability="acceptance",
          msg="acceptance: PASSED" if v.satisfied else f"acceptance: FAILED, missing {', '.join(v.missing)}")
     return v
@@ -78,7 +88,8 @@ BOT_FRAME = ("Build a reusable bot for this purpose: {purpose}\n"
              "of this kind, and choose a realistic example input to test it with (task_input_json).")
 
 EXTRACT = """Turn the user's question into the input of a workflow. Reply with one JSON object that matches the input
-schema exactly. Use only facts from the question; normalise obvious formats (lists, numbers, dates)."""
+schema exactly. Use only facts from the question; normalise obvious formats (lists, numbers, dates).
+If the question names a folder of files, put that folder's name in the `folder` field."""
 
 
 INSTANT = """You are the scientist in a lab that builds reusable, tested bots. The user just described a bot they

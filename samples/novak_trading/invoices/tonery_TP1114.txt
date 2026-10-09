@@ -1,0 +1,19 @@
+TONERY PRAHA S.R.O.
+IČO: 28196547   DIČ: CZ28196547
+Bankovní spojení: 2400932967/2010
+
+FAKTURA - DAŇOVÝ DOKLAD č. TP1114
+
+Odběratel: Novák Trading s.r.o., Vinohradská 88, 120 00 Praha 2, IČO 27654321
+Datum vystavení: 22.08.2026
+Datum splatnosti: 05.09.2026
+Číslo objednávky: PO-2026-040
+Variabilní symbol: 1114
+
+Kód          Popis                                    Množství     Cena/ks        Celkem
+TON-HP59X    Toner HP 59X kompatibilní                    2 ks     1 490,00       2 980,00
+TON-BR2420   Toner Brother TN-2420 kompatibilní          10 ks       690,00       6 900,00
+
+Základ daně 21 %: 9 880,00 Kč
+DPH 21 %: 2 074,80 Kč
+CELKEM K ÚHRADĚ: 11 954,80 Kč

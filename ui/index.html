@@ -403,6 +403,21 @@ table.audit td.n{text-align:right;color:var(--mute)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:1180px){main{grid-template-columns:minmax(240px,300px) minmax(0,1fr);grid-template-rows:minmax(0,1fr) 210px}#side{grid-column:1 / -1}#modelTxt{display:none}}
 @media(max-width:760px){body{height:auto}main{grid-template-columns:1fr;grid-template-rows:none;padding:10px}#side{height:320px}#scene{height:420px}#chat{height:80vh}header{padding:10px 12px}#botSel{max-width:70vw}}
+/* ===== user files ===== */
+#attBtn{border-radius:8px;font-size:12px;padding:5px 10px;background:transparent;border:1px solid var(--line2);color:var(--mute)}
+#attBtn:hover,#attBtn.on{color:var(--txt,#eee);border-color:var(--mute)}
+#attMenu{display:none;position:absolute;bottom:calc(100% + 6px);left:0;min-width:270px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:5px;box-shadow:0 14px 40px rgba(0,0,0,.5);z-index:30}
+#attMenu.open{display:block}
+#attMenu button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 10px;border-radius:7px;font-size:13px}
+#attMenu button:hover{background:var(--line)}
+#attMenu small{display:block;color:var(--mute);font-size:11.5px;margin-top:2px}
+.attwrap{position:relative;display:inline-flex}
+#attached{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+#attached:empty{display:none}
+.fchip{display:inline-flex;align-items:center;gap:7px;font-size:12px;padding:5px 9px;border:1px solid oklch(45% .06 140);background:oklch(26% .03 140);color:oklch(85% .08 140);border-radius:8px}
+.fchip button{border:0;background:transparent;color:inherit;padding:0 2px;cursor:pointer;font-size:12px}
+.fchip small{color:var(--mute)}
+.ub .fchip{margin-top:8px}
 /* ===== monster killer ===== */
 #killBtn{border-radius:8px;font-size:12.5px;font-weight:600;padding:6px 12px;white-space:nowrap;flex-shrink:0;background:oklch(26% .05 28);color:oklch(78% .14 28);border:1px solid oklch(50% .12 28)}
 #killBtn:hover{background:oklch(30% .04 32)}
@@ -721,10 +736,18 @@ main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
         <button class="primary" id="formRun">Run · 0 tokens</button>
       </div>
       <div id="chips"></div>
+      <input type="file" id="fileIn" multiple hidden><input type="file" id="dirIn" webkitdirectory multiple hidden>
       <div class="box">
+        <div id="attached"></div>
         <textarea id="input" rows="1" autocomplete="off"></textarea>
         <div class="boxbar">
           <span class="mode" id="mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><span id="modeTxt">New experiment</span></span>
+          <span class="attwrap"><button id="attBtn" title="Give the monster files: invoices, exports, statements (CSV, Excel, PDF, text)">📎 Files</button>
+            <div id="attMenu">
+              <button data-a="files">Upload files<small>CSV, Excel, PDF or text. They stay on this machine.</small></button>
+              <button data-a="dir">Upload a folder<small>e.g. a month of invoices</small></button>
+              <button data-a="sample">Use the sample company<small>Novák Trading s.r.o.: invoices, orders, bank statement, sales</small></button>
+            </div></span>
           <button id="formBtn" title="Fill the bot's input fields yourself: no language model, 0 tokens" hidden>☰ Form · 0 tok</button>
           <button id="sendBtn" title="Send (Enter)"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
@@ -767,9 +790,10 @@ const FACE=`<svg class="face" viewBox="0 0 34 38"><rect x="3" y="6" width="28" h
 const SCI=`<svg class="face" viewBox="0 0 34 38"><path d="M4 18 L0 9 L7 11 L4 2 L11 7 L13 0 L17 6 L21 0 L23 7 L30 2 L27 11 L34 9 L30 18Z" fill="#F2F0EB" stroke="#9C9993"/><circle cx="17" cy="23" r="12" fill="#C9C6C0" stroke="#7A7771"/><line x1="5" y1="21" x2="29" y2="21" stroke="#2B2B2E" stroke-width="1.5"/><circle cx="12" cy="21" r="4" fill="#6E6C67" stroke="#1C1C1E" stroke-width="1.5"/><circle cx="22" cy="21" r="4" fill="#6E6C67" stroke="#1C1C1E" stroke-width="1.5"/><circle cx="13" cy="20" r="1.2" fill="#ECEAE5"/><circle cx="23" cy="20" r="1.2" fill="#ECEAE5"/><path d="M13 29 q4 3 8 0" fill="none" stroke="#4A4A50" stroke-width="1.4" stroke-linecap="round"/><path d="M23 26 l4 4" stroke="#6E6C67"/></svg>`;
 const IGOR=`<svg class="face" viewBox="0 0 34 38"><path d="M2 38 Q2 22 14 20 Q28 18 32 30 L32 38Z" fill="#4A4038"/><circle cx="19" cy="17" r="11" fill="#B8B09A" stroke="#6E6656"/><path d="M9 10 Q18 3 29 10" fill="none" stroke="#2B2520" stroke-width="3"/><circle cx="23" cy="16" r="4" fill="#F2F0EB" stroke="#2B2520"/><circle cx="23.5" cy="16.5" r="1.8" fill="#24331D"/><circle cx="14" cy="17" r="1.8" fill="#2B2520"/><path d="M15 24 q4 2 8 -1" fill="none" stroke="#2B2520" stroke-width="1.4"/></svg>`;
 const ICONS={"shield": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z\"/><path d=\"m9 12 2 2 4-4\"/></svg>", "wallet": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 12V8H6a2 2 0 0 1 0-4h12v4\"/><path d=\"M4 6v12a2 2 0 0 0 2 2h14v-4\"/><path d=\"M18 12a2 2 0 0 0 0 4h4v-4z\"/></svg>", "folder": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v1H8a2 2 0 0 0-1.9 1.4L3 19z\"/><path d=\"m3 19 3-8h16l-3 8z\"/></svg>", "chat": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg>", "play": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linejoin=\"round\"><path d=\"M6 4v16l14-8z\"/></svg>", "form": "<svg class=\"ii\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"><path d=\"M4 6h16M4 12h16M4 18h10\"/></svg>"};
-const IDEAS=[["shield","A little due diligence","Check Czech suppliers in the official ARES registry.","a bot that checks Czech suppliers in the official ARES registry before we pay them"],
-  ["wallet","Make currencies make sense","Convert any currency to CZK at the official ČNB rate.","a bot that converts amounts in any currency to CZK at today's official ČNB rate"],
-  ["folder","Bring order to your invoices","Sort supplier invoice lines into accounting categories.","a bot that sorts supplier invoice lines into accounting categories"]];
+const IDEAS=[["folder","Reconcile supplier invoices","Invoices vs purchase orders vs bank payments, with an audit trail. Sample company files.","a bot that reconciles our supplier invoices against the purchase orders and the bank statement: find duplicate invoices, price or quantity mismatches, invoices without an order and double payments, with the evidence (file, invoice number, amounts) for every finding","novak_trading"],
+  ["wallet","Forecast next month's cash","Cash-flow exposure and overdue customers, from the same files.","a bot that estimates next month's cash-flow exposure from our bank statement, supplier invoices and customer invoices, and flags overdue receivables","novak_trading"],
+  ["chat","Why did sales drop?","Compare months, find the customers and categories behind a change.","a bot that explains what changed in our sales last month compared with earlier months, and which customers and categories caused it","novak_trading"],
+  ["shield","A little due diligence","Check Czech suppliers in the official ARES registry.","a bot that checks Czech suppliers in the official ARES registry before we pay them",""]];
 function idea(icon,t,d,attr){return `<button ${attr}>${ICONS[icon]}<span class="tx"><b>${esc(t)}</b><small>${esc(d)}</small></span><span class="ar">↗</span></button>`}
 const SUGG=["a bot that checks Czech suppliers in the official ARES registry before we pay them",
   "a bot that converts amounts in any currency to CZK at today's official ČNB rate",
@@ -916,7 +940,9 @@ function nearBottom(){const m=$("msgs");return m.scrollHeight-m.scrollTop-m.clie
 function toBottom(force){const m=$("msgs");if(force||nearBottom())requestAnimationFrame(()=>{m.scrollTop=m.scrollHeight})}
 function addMsg(th,cls,live){const stick=nearBottom();const d=document.createElement("div");d.className="msg "+cls;d.dataset.th=th;d.hidden=th!==thread;$("msgs").appendChild(d);
   if(th!==thread&&live){unread.add(th);renderSel()}renderIntro();if(stick)toBottom(true);return d}
-function userMsg(th,text,form,live){const d=addMsg(th,"user",live);d.innerHTML=`<div class="ub${form?" form":""}">${form?formHtml(text):esc(text)}</div>`;return d}
+function userMsg(th,text,form,live){const d=addMsg(th,"user",live);let f="";
+  if(!form&&typeof text==="string"){const m=text.match(/\n\nFiles: folder (\S+)\s*$/);if(m){text=text.slice(0,m.index);f=`<div><span class="fchip">📎 ${esc(m[1])}<small>files</small></span></div>`}}
+  d.innerHTML=`<div class="ub${form?" form":""}">${form?formHtml(text):esc(text)}${f}</div>`;return d}
 function sysMsg(th,text,live){const d=addMsg(th,"sys",live);d.innerHTML=`<span title="${esc(text)}">${esc(text)}</span>`;return d}
 function formHtml(inp){if(!isObj(inp))return esc(JSON.stringify(inp));return "☰ "+Object.entries(inp).map(([k,v])=>`<span class="k">${esc(nice(k))}:</span> ${esc(Array.isArray(v)?v.map(x=>typeof x==="object"?JSON.stringify(x):x).join(", "):typeof v==="object"?JSON.stringify(v):v)}`).join("  ")}
 function aiMsg(th,kind,who,live){const d=addMsg(th,"ai",live);
@@ -1052,6 +1078,7 @@ function handle(ev){
       toast(`Killed ${title(th)} · kept ${ev.skills.length} skill${ev.skills.length===1?"":"s"} for future monsters`);
       const d=addMsg("lab","sys",live);d.className="msg keep";d.innerHTML=`<div class="banner killed">☠ ${esc(title(th))} is gone <span>its skills stay in the lab: ${esc(ev.skills.join(", "))}${ev.spare.length?` · ${ev.spare.length} now spare, ready for the next monster`:""}</span></div>`;
       if(thread===th)setTimeout(()=>setThread("lab"),1400);loadBots();loadRegistry();if(treeOpen)openTree()}}
+  else if(k==="files"){log("📎 "+ev.msg,"dim",ev.ts)}
   else if(k==="knock"){log("⌂ "+ev.msg,"gate",ev.ts);if(live){knock();say(ev.say||"Someone's at the door.",true);toast("External agent: "+ev.msg)}}
   else if(k==="flask"){log("⚗ "+ev.msg,"pass",ev.ts);if(active)step(active,ev.msg,"inst");if(live){freshTiles.add(ev.name);loadRegistry();toast("Distilled "+ev.name+" into code")}}
   else if(k==="error"){log("✗ "+ev.msg,"fail",ev.ts);setScene(false);monster.forEach(p=>{if(p.state==="building")p.state="failed"});drawMonster();
@@ -1101,9 +1128,9 @@ function renderIntro(){
   if(!b){I.innerHTML=`<div class="ring"><svg viewBox="0 0 34 38">${SCI.replace(/^<svg[^>]*>|<\/svg>$/g,"")}</svg></div><span class="eyebrow g">A spark of possibility</span><h2>What shall we bring to life?</h2>
     <p>That task you keep doing? Let's make a monster for it.<br>A small, useful bot with a job of its own.</p>
     <span class="eyebrow c" style="display:block">A few ideas to get the sparks flying</span>
-    <div class="ideas">${IDEAS.map(([i,t,d,s])=>idea(i,t,d,`data-s="${esc(s)}"`)).join("")}</div>
+    <div class="ideas">${IDEAS.map(([i,t,d,s,f])=>idea(i,t,d,`data-s="${esc(s)}" data-f="${esc(f||"")}"`)).join("")}</div>
     <div class="howto"><div><b>1 · Describe</b>a purpose, in plain words</div><div><b>2 · I build &amp; test</b>installed only if tests pass</div><div><b>3 · Ask it</b>in words or with a 0-token form</div></div>`;
-    I.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{$("input").value=x.dataset.s;grow();$("input").focus()});return}
+    I.querySelectorAll("[data-s]").forEach(x=>x.onclick=async()=>{if(x.dataset.f)await useSample(x.dataset.f);$("input").value=x.dataset.s;grow();$("input").focus()});return}
   I.innerHTML=`<div class="ring"><svg viewBox="0 0 34 38">${FACE.replace(/^<svg[^>]*>|<\/svg>$/g,"")}</svg></div><span class="eyebrow g">It's alive</span><h2>${esc(title(b.name))}</h2><p>${esc(b.purpose||b.description||"")}</p>
     <span class="eyebrow c" style="display:block">Ask it something</span>
     <div class="ideas">${(b.examples||[]).map(q=>idea("chat",q,"Ask in words · a few hundred tokens to read it",`data-q="${esc(q)}"`)).join("")}${idea("play","Run its example","Straight into the code · 0 tokens",'id="tryEx"')}${idea("form","Fill the form yourself","No language model at all · 0 tokens",'id="openForm"')}</div>
@@ -1151,12 +1178,34 @@ async function post(url,body){const r=await fetch(url,{method:"POST",headers:{"C
   if(!r.ok){let d="request failed";try{d=(await r.json()).detail}catch(e){}toast(d==="the scientist is busy"?"The scientist is busy. Wait until the light is green.":d,"bad");return false}setBusy(true);return true}
 async function ask(body){const b=curBot();if(!b)return;lights(true);if(!await post(`/api/bots/${b.name}/ask`,body)){if(!busy)lights(false);return}toggleForm(false)}
 async function send(){
-  if(busy)return;const t=$("input").value.trim();if(!t){$("input").focus();return}
+  if(busy)return;let t=$("input").value.trim();if(!t){$("input").focus();return}
+  if(att)t+=`\n\nFiles: folder ${att.folder}`;
   lights(true);
   const ok=thread==="lab"?await post("/api/bots/create",{purpose:t}):await post(`/api/bots/${thread}/ask`,{question:t});
-  if(ok){$("input").value="";grow()}else if(!busy)lights(false)
+  if(ok){$("input").value="";grow();setAtt(null)}else if(!busy)lights(false)
 }
 $("sendBtn").onclick=send;
+let att=null;
+function setAtt(a){att=a;$("attBtn").classList.toggle("on",!!a);
+  $("attached").innerHTML=a?`<span class="fchip">📎 <b>${esc(a.folder)}</b><small>${a.files.length} file${a.files.length===1?"":"s"}: ${esc(a.files.slice(0,4).join(", "))}${a.files.length>4?" …":""}</small><button title="Remove" id="attX">✕</button></span>`:"";
+  if(a)$("attX").onclick=()=>setAtt(null)}
+async function useSample(name){const r=await fetch(`/api/inbox/sample/${name}`,{method:"POST"});if(!r.ok){toast("could not load the sample files","bad");return}
+  setAtt(await r.json());toast("Sample company files attached: Novák Trading s.r.o.")}
+async function upload(list){const files=[...list];if(!files.length)return;
+  const enc=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]||"");r.onerror=no;r.readAsDataURL(f)});
+  const body={folder:"",files:[]};
+  for(const f of files)body.files.push({name:f.webkitRelativePath?f.webkitRelativePath.split("/").slice(1).join("/"):f.name,b64:await enc(f)});
+  const dir=files[0].webkitRelativePath&&files[0].webkitRelativePath.split("/")[0];if(dir)body.folder=dir;
+  const r=await fetch("/api/inbox",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok){let d="upload failed";try{d=(await r.json()).detail}catch(e){}toast(d,"bad");return}
+  setAtt(await r.json())}
+$("attBtn").onclick=e=>{e.stopPropagation();$("attMenu").classList.toggle("open")};
+$("attMenu").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("attMenu").classList.remove("open");
+  if(b.dataset.a==="files")$("fileIn").click();else if(b.dataset.a==="dir")$("dirIn").click();else useSample("novak_trading")});
+$("fileIn").onchange=e=>{upload(e.target.files);e.target.value=""};$("dirIn").onchange=e=>{upload(e.target.files);e.target.value=""};
+document.addEventListener("click",e=>{if(!e.target.closest(".attwrap"))$("attMenu").classList.remove("open")});
+$("chat").addEventListener("dragover",e=>{e.preventDefault()});
+$("chat").addEventListener("drop",e=>{e.preventDefault();if(e.dataTransfer.files.length)upload(e.dataTransfer.files)});
 $("killBtn").onclick=()=>killBot(curBot());
 async function killBot(b){if(!b)return;if(busy){toast("The scientist is busy. Try again in a moment.","bad");return}
   const n=(b.steps||[]).length;

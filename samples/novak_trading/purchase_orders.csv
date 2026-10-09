@@ -1,0 +1,23 @@
+po_number,supplier,order_date,sku,description,qty,unit_price_czk
+PO-2026-038,Papírna Brno a.s.,2026-08-03,PAP-A3-80,Kancelářský papír A3 80g (bal.),40,189.00
+PO-2026-038,Papírna Brno a.s.,2026-08-03,PAP-A4-80,Kancelářský papír A4 80g (krabice 5 bal.),10,612.00
+PO-2026-039,OfficeLine GmbH,2026-08-08,OL-STP-24,"Stapler 24/6, metal",25,240.00
+PO-2026-039,OfficeLine GmbH,2026-08-08,OL-LAB-A4,Labels A4 3x8 (100 sheets),50,365.00
+PO-2026-040,Tonery Praha s.r.o.,2026-08-13,TON-HP59X,Toner HP 59X kompatibilní,2,1490.00
+PO-2026-040,Tonery Praha s.r.o.,2026-08-13,TON-BR2420,Toner Brother TN-2420 kompatibilní,10,690.00
+PO-2026-041,Papírna Brno a.s.,2026-08-18,PAP-A3-80,Kancelářský papír A3 80g (bal.),10,189.00
+PO-2026-041,Papírna Brno a.s.,2026-08-18,OBA-C4,Obálky C4 samolepicí (250 ks),20,455.00
+PO-2026-042,Kancl Nábytek s.r.o.,2026-08-23,KN-ZID-ERGO,Kancelářská židle ERGO 300,2,3890.00
+PO-2026-042,Kancl Nábytek s.r.o.,2026-08-23,KN-STUL-160,Psací stůl 160x80 bílý,2,5450.00
+PO-2026-043,OfficeLine GmbH,2026-08-28,OL-STP-24,"Stapler 24/6, metal",50,240.00
+PO-2026-043,OfficeLine GmbH,2026-08-28,OL-LAB-A4,Labels A4 3x8 (100 sheets),50,365.00
+PO-2026-044,Tonery Praha s.r.o.,2026-09-02,TON-BR2420,Toner Brother TN-2420 kompatibilní,20,690.00
+PO-2026-044,Tonery Praha s.r.o.,2026-09-02,TON-HP59X,Toner HP 59X kompatibilní,2,1490.00
+PO-2026-045,Papírna Brno a.s.,2026-09-07,OBA-C4,Obálky C4 samolepicí (250 ks),25,455.00
+PO-2026-045,Papírna Brno a.s.,2026-09-07,PAP-A4-80,Kancelářský papír A4 80g (krabice 5 bal.),40,612.00
+PO-2026-046,OfficeLine GmbH,2026-09-12,OL-STP-24,"Stapler 24/6, metal",50,240.00
+PO-2026-046,OfficeLine GmbH,2026-09-12,OL-LAB-A4,Labels A4 3x8 (100 sheets),25,365.00
+PO-2026-047,Kancl Nábytek s.r.o.,2026-09-17,KN-ZID-ERGO,Kancelářská židle ERGO 300,4,3890.00
+PO-2026-047,Kancl Nábytek s.r.o.,2026-09-17,KN-STUL-160,Psací stůl 160x80 bílý,6,5450.00
+PO-2026-048,Tonery Praha s.r.o.,2026-09-22,TON-HP59X,Toner HP 59X kompatibilní,2,1490.00
+PO-2026-048,Tonery Praha s.r.o.,2026-09-22,TON-BR2420,Toner Brother TN-2420 kompatibilní,50,690.00

@@ -1,0 +1,19 @@
+KANCL NÁBYTEK S.R.O.
+IČO: 06485921   DIČ: CZ06485921
+Bankovní spojení: 2400832948/2010
+
+FAKTURA - DAŇOVÝ DOKLAD č. KN-26/1128
+
+Odběratel: Novák Trading s.r.o., Vinohradská 88, 120 00 Praha 2, IČO 27654321
+Datum vystavení: 30.08.2026
+Datum splatnosti: 13.09.2026
+Číslo objednávky: PO-2026-042
+Variabilní symbol: 261128
+
+Kód          Popis                                    Množství     Cena/ks        Celkem
+KN-ZID-ERGO  Kancelářská židle ERGO 300                   2 ks     3 890,00       7 780,00
+KN-STUL-160  Psací stůl 160x80 bílý                       2 ks     5 450,00      10 900,00
+
+Základ daně 21 %: 18 680,00 Kč
+DPH 21 %: 3 922,80 Kč
+CELKEM K ÚHRADĚ: 22 602,80 Kč

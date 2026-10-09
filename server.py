@@ -13,7 +13,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
-from factory import config, gate, gateway, registry, sandbox, voice
+from factory import config, gate, gateway, inbox, registry, sandbox, voice
 from factory.events import emit
 
 app = FastAPI()
@@ -124,6 +124,50 @@ def api_bot_kill(name: str):
         return {"killed": name, "kept_skills": skills, "now_spare": spare}
     finally:
         _busy.release()
+
+
+class Upload(BaseModel):
+    folder: str = ""
+    files: list[dict]  # [{"name": "invoices/a.txt", "b64": "..."}]
+
+
+@app.get("/api/inbox")
+def api_inbox():
+    return [{"folder": f, "files": [p.relative_to(inbox.INBOX / f).as_posix() for p in inbox.files(f)]}
+            for f in inbox.folders()]
+
+
+@app.post("/api/inbox")
+def api_inbox_upload(u: Upload):
+    if not u.files:
+        raise HTTPException(400, "no files")
+    try:
+        folder = inbox.save(u.folder, u.files)
+    except (ValueError, KeyError) as e:
+        raise HTTPException(400, str(e))
+    names = [p.relative_to(inbox.INBOX / folder).as_posix() for p in inbox.files(folder)]
+    emit("files", folder=folder, files=names, msg=f"received {len(names)} file(s) in folder {folder}")
+    return {"folder": folder, "files": names}
+
+
+@app.post("/api/inbox/sample/{name}")
+def api_inbox_sample(name: str):
+    try:
+        folder = inbox.load_sample(name)
+    except KeyError:
+        raise HTTPException(404, "no such sample")
+    names = [p.relative_to(inbox.INBOX / folder).as_posix() for p in inbox.files(folder)]
+    emit("files", folder=folder, files=names, msg=f"loaded the sample company files into folder {folder} ({len(names)} files)")
+    return {"folder": folder, "files": names}
+
+
+@app.get("/api/inbox/{folder}/{path:path}")
+def api_inbox_file(folder: str, path: str):
+    root = (inbox.INBOX / folder).resolve()
+    f = (root / path).resolve()
+    if root not in f.parents or not f.is_file():
+        raise HTTPException(404)
+    return FileResponse(f)
 
 
 class Task(BaseModel):

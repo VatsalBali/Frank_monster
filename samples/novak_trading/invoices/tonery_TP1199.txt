@@ -1,0 +1,18 @@
+TONERY PRAHA S.R.O.
+IČO: 28196547   DIČ: CZ28196547
+Bankovní spojení: 2400414834/2010
+
+FAKTURA - DAŇOVÝ DOKLAD č. TP1199
+
+Odběratel: Novák Trading s.r.o., Vinohradská 88, 120 00 Praha 2, IČO 27654321
+Datum vystavení: 22.09.2026
+Datum splatnosti: 06.10.2026
+Číslo objednávky: -
+Variabilní symbol: 1199
+
+Kód          Popis                                    Množství     Cena/ks        Celkem
+TON-HP59X    Toner HP 59X kompatibilní                    6 ks     1 490,00       8 940,00
+
+Základ daně 21 %: 8 940,00 Kč
+DPH 21 %: 1 877,40 Kč
+CELKEM K ÚHRADĚ: 10 817,40 Kč

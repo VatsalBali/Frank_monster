@@ -16,7 +16,7 @@ from pathlib import Path
 from . import config
 from .events import emit
 
-IMAGE = "factory-sandbox:1"
+IMAGE = "factory-sandbox:2"
 NET = "factory_internal"
 PROXY = "factory-egress"
 ALLOW_DIR = config.DATA / "allow"
@@ -107,11 +107,16 @@ class SandboxResult:
 
 
 # Runs inside the container: unpack the files into tmpfs, then run the command there with the real stdin payload.
-_BOOT = ("import json,os,subprocess,sys\n"
+# Names may hold sub-folders (inbox/<folder>/...); anything that would land outside /tmp/w is dropped.
+_BOOT = ("import json,os,subprocess,sys,base64\n"
          "e=json.load(sys.stdin)\n"
          "os.makedirs('/tmp/w',exist_ok=True)\n"
          "for n,c in e['files'].items():\n"
-         "    open(os.path.join('/tmp/w',os.path.basename(n)),'w',encoding='utf-8').write(c)\n"
+         "    p=os.path.normpath(os.path.join('/tmp/w',n))\n"
+         "    if not p.startswith('/tmp/w/'): continue\n"
+         "    os.makedirs(os.path.dirname(p),exist_ok=True)\n"
+         "    if isinstance(c,dict): open(p,'wb').write(base64.b64decode(c['b64']))\n"
+         "    else: open(p,'w',encoding='utf-8').write(c)\n"
          "os.chdir('/tmp/w')\n"
          "r=subprocess.run(e['cmd'],input=e.get('stdin'),text=True,env={**os.environ,'PYTHONPATH':'/tmp/w'})\n"
          "sys.exit(r.returncode)\n")
@@ -163,7 +168,7 @@ def _discard(run_id: str) -> None:
     threading.Thread(target=lambda: docker("rm", "-f", f"sbx-{run_id}", timeout=30, lane="bg"), daemon=True).start()
 
 
-def run(files: dict[str, str] | Path, command: list[str], *, net: list[str] | None = None,
+def run(files: dict | Path, command: list[str], *, net: list[str] | None = None,
         stdin: str | None = None, timeout: int = config.SANDBOX_TIMEOUT_S, label: str = "") -> SandboxResult:
     """files: either a dict of name->content or a directory to copy. command runs in a fresh in-memory /tmp/w of a
     container nobody used before. The files travel over stdin (no bind mount of the Windows disk)."""

@@ -7,7 +7,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel
 
-from . import config, gateway, registry, sandbox
+from . import config, gateway, inbox, registry, sandbox
 from .events import emit
 from .models import GapSpec
 
@@ -15,7 +15,13 @@ SYSTEM = """You are the builder inside a self-extending workflow factory. You wr
 
 Contract:
 - impl.py defines `run(inp: dict) -> dict`. Pure function of its input plus the network hosts you were granted.
-  Available: Python 3.12 stdlib, requests, httpx, beautifulsoup4, lxml, pydantic, openpyxl, python-dateutil.
+  Available: Python 3.12 stdlib, requests, httpx, beautifulsoup4, lxml, pydantic, openpyxl, python-dateutil, pypdf.
+- User files: if the input has a `folder` field, the user's files are at ./inbox/<folder>/ (relative to the working
+  directory; read-only copy, sub-folders possible). Read them from there; never expect file contents in the input.
+  Probe them first (print a few lines of each kind of file): real files are messy (local number formats like
+  "1 250,50", several layouts, duplicates). Tests may use the example folder; also test with small files you write
+  into a temporary directory (tmp_path) so the code is not tied to one folder. Be robust and report what you could
+  not parse instead of crashing on one bad file.
 - test_impl.py: pytest tests importing `from impl import run`. Cover the example input, an edge case and bad input.
   Tests may call the granted hosts. Keep them fast (<30s total). Don't assert on values you haven't observed.
 - Generic and reusable, not tailored to one task. Validate input; raise ValueError with a clear message on bad input.
@@ -81,6 +87,14 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
     spec = (f"Capability to build: {gap.name}\nDescription: {gap.description}\nWhy it is missing: {gap.why_missing}\n"
             f"Input schema: {gap.input_schema_json}\nOutput schema: {gap.output_schema_json}\n"
             f"Example input: {gap.example_input_json}\nGranted network hosts: {net or 'none'}")
+    try:
+        user_files = inbox.refs(json.loads(gap.example_input_json))
+    except (ValueError, TypeError):
+        user_files = []
+    if user_files:
+        spec += "\n\nThe user's files for the example input:\n" + "\n".join(inbox.describe(f) for f in user_files)
+        emit("log", msg=f"{gap.name} reads the user's files: {', '.join(user_files)}")
+    attach = inbox.sandbox_files(user_files) if user_files else {}
     known = registry.knowhow(net, exclude=gap.name, like=f"{gap.name.replace('_', ' ')} {gap.description}")
     if known:
         spec += "\n\nWhat the factory already knows (from earlier builds):\n" + known
@@ -96,7 +110,7 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
             lines = [l for l in act.code.strip().splitlines() if l.strip() and not l.startswith(("import ", "from "))]
             first = (lines[0] if lines else "")[:100]
             emit("log", msg=f"probe ({gap.name}): {first}")
-            r = sandbox.run({"probe.py": act.code}, ["python", "probe.py"], net=net, timeout=45, label="probe")
+            r = sandbox.run({"probe.py": act.code, **attach}, ["python", "probe.py"], net=net, timeout=45, label="probe")
             res = (r.stdout[-3000:] + ("\nSTDERR:\n" + r.stderr[-1500:] if r.stderr.strip() else "")) or "(no output)"
             history.append({"action": "probe", "code": act.code, "result": res})
             trace["events"].append({"probe": act.code, "out": res, "ms": r.ms})
@@ -114,9 +128,10 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
             submits += 1
             emit("stage", stage="test", capability=gap.name, msg=f"testing {gap.name} (attempt {submits})")
             files = {"impl.py": act.impl_py, "test_impl.py": act.test_py, **(extra_tests or {})}
+            run_files = {**files, **attach}
             emit("code", capability=gap.name, attempt=submits, impl=act.impl_py[:12000], tests=act.test_py[:8000],
                  msg=f"{gap.name}: wrote impl.py ({len(act.impl_py.splitlines())} lines) + tests (attempt {submits})")
-            rep = run_tests(files, net, gap.name)
+            rep = run_tests(run_files, net, gap.name)
             n = re.search(r"(\d+) passed", rep["summary"])
             if rep["passed"] and (not n or int(n.group(1)) < config.MIN_TESTS):
                 rep["passed"] = False

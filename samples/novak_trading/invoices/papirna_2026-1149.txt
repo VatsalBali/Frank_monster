@@ -1,0 +1,19 @@
+PAPÍRNA BRNO A.S.
+IČO: 25311654   DIČ: CZ25311654
+Bankovní spojení: 2400355953/2010
+
+FAKTURA - DAŇOVÝ DOKLAD č. 2026-1149
+
+Odběratel: Novák Trading s.r.o., Vinohradská 88, 120 00 Praha 2, IČO 27654321
+Datum vystavení: 15.09.2026
+Datum splatnosti: 29.09.2026
+Číslo objednávky: PO-2026-045
+Variabilní symbol: 20261149
+
+Kód          Popis                                    Množství     Cena/ks        Celkem
+OBA-C4       Obálky C4 samolepicí (250 ks)               25 ks       455,00      11 375,00
+PAP-A4-80    Kancelářský papír A4 80g (krabice 5 bal.    40 ks       612,00      24 480,00
+
+Základ daně 21 %: 35 855,00 Kč
+DPH 21 %: 7 529,55 Kč
+CELKEM K ÚHRADĚ: 43 384,55 Kč

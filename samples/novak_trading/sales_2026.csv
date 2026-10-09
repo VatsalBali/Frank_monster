@@ -1,0 +1,217 @@
+month,customer,category,units,revenue_czk
+2026-01,Alza Office s.r.o.,paper,83,50144.46
+2026-01,Alza Office s.r.o.,toner,69,41938.86
+2026-01,Alza Office s.r.o.,furniture,49,29953.51
+2026-01,Alza Office s.r.o.,small supplies,24,14404.89
+2026-01,Kanceláře Plus a.s.,paper,80,48199.17
+2026-01,Kanceláře Plus a.s.,toner,63,37985.11
+2026-01,Kanceláře Plus a.s.,furniture,0,0.0
+2026-01,Kanceláře Plus a.s.,small supplies,23,14119.44
+2026-01,Škola Hostivař,paper,90,54366.93
+2026-01,Škola Hostivař,toner,69,41563.51
+2026-01,Škola Hostivař,furniture,59,35409.55
+2026-01,Škola Hostivař,small supplies,23,13902.79
+2026-01,Moravia Consult s.r.o.,paper,82,49233.72
+2026-01,Moravia Consult s.r.o.,toner,57,34243.41
+2026-01,Moravia Consult s.r.o.,furniture,46,27667.54
+2026-01,Moravia Consult s.r.o.,small supplies,20,12309.18
+2026-01,Městský úřad Kolín,paper,98,58880.01
+2026-01,Městský úřad Kolín,toner,59,35410.07
+2026-01,Městský úřad Kolín,furniture,0,0.0
+2026-01,Městský úřad Kolín,small supplies,24,14569.64
+2026-01,BrightDesk s.r.o.,paper,92,55324.47
+2026-01,BrightDesk s.r.o.,toner,61,37010.14
+2026-01,BrightDesk s.r.o.,furniture,45,27428.31
+2026-01,BrightDesk s.r.o.,small supplies,27,16367.67
+2026-02,Alza Office s.r.o.,paper,96,57731.5
+2026-02,Alza Office s.r.o.,toner,72,43214.22
+2026-02,Alza Office s.r.o.,furniture,52,31413.03
+2026-02,Alza Office s.r.o.,small supplies,28,16866.11
+2026-02,Kanceláře Plus a.s.,paper,96,58155.33
+2026-02,Kanceláře Plus a.s.,toner,68,41031.05
+2026-02,Kanceláře Plus a.s.,furniture,0,0.0
+2026-02,Kanceláře Plus a.s.,small supplies,24,14770.27
+2026-02,Škola Hostivař,paper,89,53519.12
+2026-02,Škola Hostivař,toner,60,36572.35
+2026-02,Škola Hostivař,furniture,60,36454.65
+2026-02,Škola Hostivař,small supplies,21,13114.53
+2026-02,Moravia Consult s.r.o.,paper,94,56833.84
+2026-02,Moravia Consult s.r.o.,toner,59,35505.28
+2026-02,Moravia Consult s.r.o.,furniture,54,32464.66
+2026-02,Moravia Consult s.r.o.,small supplies,28,16853.02
+2026-02,Městský úřad Kolín,paper,95,57049.16
+2026-02,Městský úřad Kolín,toner,58,35117.48
+2026-02,Městský úřad Kolín,furniture,0,0.0
+2026-02,Městský úřad Kolín,small supplies,25,15451.5
+2026-02,BrightDesk s.r.o.,paper,104,62704.81
+2026-02,BrightDesk s.r.o.,toner,69,41551.19
+2026-02,BrightDesk s.r.o.,furniture,0,0.0
+2026-02,BrightDesk s.r.o.,small supplies,24,14799.43
+2026-03,Alza Office s.r.o.,paper,108,64967.03
+2026-03,Alza Office s.r.o.,toner,68,41279.41
+2026-03,Alza Office s.r.o.,furniture,0,0.0
+2026-03,Alza Office s.r.o.,small supplies,27,16444.04
+2026-03,Kanceláře Plus a.s.,paper,101,60918.96
+2026-03,Kanceláře Plus a.s.,toner,68,41257.32
+2026-03,Kanceláře Plus a.s.,furniture,57,34670.6
+2026-03,Kanceláře Plus a.s.,small supplies,23,13945.28
+2026-03,Škola Hostivař,paper,107,64527.2
+2026-03,Škola Hostivař,toner,66,39801.46
+2026-03,Škola Hostivař,furniture,57,34651.04
+2026-03,Škola Hostivař,small supplies,27,16482.91
+2026-03,Moravia Consult s.r.o.,paper,88,53379.93
+2026-03,Moravia Consult s.r.o.,toner,72,43303.96
+2026-03,Moravia Consult s.r.o.,furniture,47,28759.59
+2026-03,Moravia Consult s.r.o.,small supplies,25,15382.61
+2026-03,Městský úřad Kolín,paper,106,63781.2
+2026-03,Městský úřad Kolín,toner,66,39726.02
+2026-03,Městský úřad Kolín,furniture,50,30055.6
+2026-03,Městský úřad Kolín,small supplies,25,15310.56
+2026-03,BrightDesk s.r.o.,paper,98,59147.67
+2026-03,BrightDesk s.r.o.,toner,71,42934.12
+2026-03,BrightDesk s.r.o.,furniture,59,35618.08
+2026-03,BrightDesk s.r.o.,small supplies,23,13899.06
+2026-04,Alza Office s.r.o.,paper,89,53950.64
+2026-04,Alza Office s.r.o.,toner,69,41495.04
+2026-04,Alza Office s.r.o.,furniture,0,0.0
+2026-04,Alza Office s.r.o.,small supplies,26,15723.0
+2026-04,Kanceláře Plus a.s.,paper,104,62582.41
+2026-04,Kanceláře Plus a.s.,toner,81,49051.34
+2026-04,Kanceláře Plus a.s.,furniture,61,36704.0
+2026-04,Kanceláře Plus a.s.,small supplies,23,14308.94
+2026-04,Škola Hostivař,paper,100,60372.48
+2026-04,Škola Hostivař,toner,67,40771.33
+2026-04,Škola Hostivař,furniture,61,36890.91
+2026-04,Škola Hostivař,small supplies,25,15045.78
+2026-04,Moravia Consult s.r.o.,paper,111,66857.96
+2026-04,Moravia Consult s.r.o.,toner,62,37387.3
+2026-04,Moravia Consult s.r.o.,furniture,49,29735.28
+2026-04,Moravia Consult s.r.o.,small supplies,24,14990.09
+2026-04,Městský úřad Kolín,paper,97,58221.89
+2026-04,Městský úřad Kolín,toner,81,48995.47
+2026-04,Městský úřad Kolín,furniture,0,0.0
+2026-04,Městský úřad Kolín,small supplies,29,17691.46
+2026-04,BrightDesk s.r.o.,paper,92,55787.54
+2026-04,BrightDesk s.r.o.,toner,74,44605.85
+2026-04,BrightDesk s.r.o.,furniture,0,0.0
+2026-04,BrightDesk s.r.o.,small supplies,25,15230.22
+2026-05,Alza Office s.r.o.,paper,106,64107.03
+2026-05,Alza Office s.r.o.,toner,66,40078.7
+2026-05,Alza Office s.r.o.,furniture,64,38836.96
+2026-05,Alza Office s.r.o.,small supplies,28,16891.25
+2026-05,Kanceláře Plus a.s.,paper,88,52808.76
+2026-05,Kanceláře Plus a.s.,toner,83,49948.81
+2026-05,Kanceláře Plus a.s.,furniture,61,37092.62
+2026-05,Kanceláře Plus a.s.,small supplies,29,17414.71
+2026-05,Škola Hostivař,paper,87,52775.65
+2026-05,Škola Hostivař,toner,65,39543.95
+2026-05,Škola Hostivař,furniture,0,0.0
+2026-05,Škola Hostivař,small supplies,27,16672.0
+2026-05,Moravia Consult s.r.o.,paper,99,59655.69
+2026-05,Moravia Consult s.r.o.,toner,76,46112.19
+2026-05,Moravia Consult s.r.o.,furniture,59,35942.32
+2026-05,Moravia Consult s.r.o.,small supplies,26,16104.98
+2026-05,Městský úřad Kolín,paper,113,68193.71
+2026-05,Městský úřad Kolín,toner,65,39505.05
+2026-05,Městský úřad Kolín,furniture,0,0.0
+2026-05,Městský úřad Kolín,small supplies,29,17687.39
+2026-05,BrightDesk s.r.o.,paper,107,64376.08
+2026-05,BrightDesk s.r.o.,toner,64,38802.76
+2026-05,BrightDesk s.r.o.,furniture,0,0.0
+2026-05,BrightDesk s.r.o.,small supplies,30,18598.82
+2026-06,Alza Office s.r.o.,paper,94,56405.79
+2026-06,Alza Office s.r.o.,toner,84,50463.68
+2026-06,Alza Office s.r.o.,furniture,0,0.0
+2026-06,Alza Office s.r.o.,small supplies,27,16722.56
+2026-06,Kanceláře Plus a.s.,paper,111,67002.34
+2026-06,Kanceláře Plus a.s.,toner,71,43005.32
+2026-06,Kanceláře Plus a.s.,furniture,60,36298.2
+2026-06,Kanceláře Plus a.s.,small supplies,24,14514.66
+2026-06,Škola Hostivař,paper,110,66559.8
+2026-06,Škola Hostivař,toner,84,50787.61
+2026-06,Škola Hostivař,furniture,62,37567.6
+2026-06,Škola Hostivař,small supplies,28,16800.79
+2026-06,Moravia Consult s.r.o.,paper,113,68184.42
+2026-06,Moravia Consult s.r.o.,toner,84,50521.69
+2026-06,Moravia Consult s.r.o.,furniture,0,0.0
+2026-06,Moravia Consult s.r.o.,small supplies,27,16769.63
+2026-06,Městský úřad Kolín,paper,115,69035.05
+2026-06,Městský úřad Kolín,toner,81,49137.84
+2026-06,Městský úřad Kolín,furniture,61,36988.15
+2026-06,Městský úřad Kolín,small supplies,24,14960.48
+2026-06,BrightDesk s.r.o.,paper,92,55413.96
+2026-06,BrightDesk s.r.o.,toner,78,46995.22
+2026-06,BrightDesk s.r.o.,furniture,0,0.0
+2026-06,BrightDesk s.r.o.,small supplies,29,17631.13
+2026-07,Alza Office s.r.o.,paper,107,64542.96
+2026-07,Alza Office s.r.o.,toner,77,46489.66
+2026-07,Alza Office s.r.o.,furniture,66,39956.65
+2026-07,Alza Office s.r.o.,small supplies,24,14929.01
+2026-07,Kanceláře Plus a.s.,paper,96,58030.83
+2026-07,Kanceláře Plus a.s.,toner,67,40316.58
+2026-07,Kanceláře Plus a.s.,furniture,54,32443.71
+2026-07,Kanceláře Plus a.s.,small supplies,24,14779.44
+2026-07,Škola Hostivař,paper,119,71512.97
+2026-07,Škola Hostivař,toner,67,40613.39
+2026-07,Škola Hostivař,furniture,58,34965.96
+2026-07,Škola Hostivař,small supplies,29,17766.49
+2026-07,Moravia Consult s.r.o.,paper,96,58186.18
+2026-07,Moravia Consult s.r.o.,toner,72,43611.22
+2026-07,Moravia Consult s.r.o.,furniture,61,36986.5
+2026-07,Moravia Consult s.r.o.,small supplies,28,17258.28
+2026-07,Městský úřad Kolín,paper,98,59111.96
+2026-07,Městský úřad Kolín,toner,78,47060.62
+2026-07,Městský úřad Kolín,furniture,68,41057.85
+2026-07,Městský úřad Kolín,small supplies,32,19402.11
+2026-07,BrightDesk s.r.o.,paper,119,71488.85
+2026-07,BrightDesk s.r.o.,toner,70,42565.33
+2026-07,BrightDesk s.r.o.,furniture,60,36315.41
+2026-07,BrightDesk s.r.o.,small supplies,27,16662.25
+2026-08,Alza Office s.r.o.,paper,103,62235.51
+2026-08,Alza Office s.r.o.,toner,84,50608.95
+2026-08,Alza Office s.r.o.,furniture,0,0.0
+2026-08,Alza Office s.r.o.,small supplies,27,16685.49
+2026-08,Kanceláře Plus a.s.,paper,97,58409.07
+2026-08,Kanceláře Plus a.s.,toner,86,52136.5
+2026-08,Kanceláře Plus a.s.,furniture,71,43013.86
+2026-08,Kanceláře Plus a.s.,small supplies,28,17022.82
+2026-08,Škola Hostivař,paper,101,60993.06
+2026-08,Škola Hostivař,toner,71,42898.79
+2026-08,Škola Hostivař,furniture,62,37635.26
+2026-08,Škola Hostivař,small supplies,25,15575.35
+2026-08,Moravia Consult s.r.o.,paper,122,73478.94
+2026-08,Moravia Consult s.r.o.,toner,72,43267.63
+2026-08,Moravia Consult s.r.o.,furniture,0,0.0
+2026-08,Moravia Consult s.r.o.,small supplies,31,18832.51
+2026-08,Městský úřad Kolín,paper,126,75635.72
+2026-08,Městský úřad Kolín,toner,77,46748.16
+2026-08,Městský úřad Kolín,furniture,0,0.0
+2026-08,Městský úřad Kolín,small supplies,25,15565.08
+2026-08,BrightDesk s.r.o.,paper,105,63223.05
+2026-08,BrightDesk s.r.o.,toner,76,45797.5
+2026-08,BrightDesk s.r.o.,furniture,62,37531.91
+2026-08,BrightDesk s.r.o.,small supplies,28,17119.44
+2026-09,Alza Office s.r.o.,paper,113,68203.06
+2026-09,Alza Office s.r.o.,toner,77,46538.88
+2026-09,Alza Office s.r.o.,furniture,0,0.0
+2026-09,Alza Office s.r.o.,small supplies,34,20560.49
+2026-09,Kanceláře Plus a.s.,paper,103,62323.07
+2026-09,Kanceláře Plus a.s.,toner,0,0.0
+2026-09,Kanceláře Plus a.s.,furniture,0,0.0
+2026-09,Kanceláře Plus a.s.,small supplies,34,20491.17
+2026-09,Škola Hostivař,paper,102,61366.36
+2026-09,Škola Hostivař,toner,88,53385.91
+2026-09,Škola Hostivař,furniture,71,42898.33
+2026-09,Škola Hostivař,small supplies,32,19231.17
+2026-09,Moravia Consult s.r.o.,paper,128,76926.33
+2026-09,Moravia Consult s.r.o.,toner,80,48182.41
+2026-09,Moravia Consult s.r.o.,furniture,65,39572.97
+2026-09,Moravia Consult s.r.o.,small supplies,30,18237.3
+2026-09,Městský úřad Kolín,paper,107,64327.87
+2026-09,Městský úřad Kolín,toner,77,46295.06
+2026-09,Městský úřad Kolín,furniture,0,0.0
+2026-09,Městský úřad Kolín,small supplies,34,20433.01
+2026-09,BrightDesk s.r.o.,paper,105,63144.77
+2026-09,BrightDesk s.r.o.,toner,70,42394.54
+2026-09,BrightDesk s.r.o.,furniture,0,0.0
+2026-09,BrightDesk s.r.o.,small supplies,31,18859.64

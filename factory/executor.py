@@ -3,7 +3,7 @@ import json
 import time
 from pathlib import Path
 
-from . import config, gateway, registry, sandbox
+from . import config, gateway, inbox, registry, sandbox
 from .events import emit
 
 RUNNER = """import json, sys, impl
@@ -32,7 +32,8 @@ def _log_io(cap: dict, inp, out, via: str = "") -> None:
 
 
 def _sandbox_call(cap: dict, payload, timeout: int = config.SANDBOX_TIMEOUT_S):
-    files = {"impl.py": Path(cap["path"], "impl.py").read_text(encoding="utf-8"), "_runner.py": RUNNER}
+    files = {"impl.py": Path(cap["path"], "impl.py").read_text(encoding="utf-8"), "_runner.py": RUNNER,
+             **inbox.sandbox_files(payload)}  # the user's files this input names, as a throw-away copy
     r = sandbox.run(files, ["python", "_runner.py"], net=cap["manifest"].get("permissions", {}).get("net", []),
                     stdin=json.dumps(payload), label=cap["name"], timeout=timeout)
     if not r.ok or "__RESULT__" not in r.stdout:
@@ -81,7 +82,8 @@ def _run_llm(cap: dict, inp: dict, budget: gateway.Budget) -> tuple[dict, int]:
     before = budget.tokens
     out = gateway.complete_json(budget, f"llm-step:{cap['name']}", model=m.get("model") or config.RUNTIME_MODEL,
                                 system=prompt + "\nOutput JSON schema: " + m["signature"]["out_schema"],
-                                prompt=json.dumps(inp, ensure_ascii=False))
+                                prompt=json.dumps(inp, ensure_ascii=False) + "".join(
+                                    f"\n\nFiles in folder {f}:\n{inbox.texts(f)}" for f in inbox.refs(inp)))
     return out, budget.tokens - before
 
 
