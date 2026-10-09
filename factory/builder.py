@@ -82,6 +82,7 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
     emit("stage", stage="learn", capability=gap.name,
          msg=f"building {gap.name} (network: {', '.join(gap.net_hosts) or 'none'}): {gap.why_missing}")
     emit("say", text=f"Rebuilding {gap.name.replace('_', ' ')}." if "FAILED in production" in gap.why_missing
+         else f"Building the requested change to {gap.name.replace('_', ' ')}." if gap.why_missing.startswith("Change requested")
          else f"I'm missing a capability: {gap.name.replace('_', ' ')}. Let me build it.")
     net = list(gap.net_hosts)
     spec = (f"Capability to build: {gap.name}\nDescription: {gap.description}\nWhy it is missing: {gap.why_missing}\n"

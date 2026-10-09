@@ -426,6 +426,7 @@ table.audit td.n{text-align:right;color:var(--mute)}
 .vnote{font-size:11.5px;color:var(--mute);margin-top:10px;line-height:1.45}
 .from-earlier{font-size:9.5px}
 #chat{position:relative}
+@media (max-width:1400px){#motto{display:none}}
 /* ===== user files ===== */
 #attBtn{border-radius:8px;font-size:12px;padding:5px 10px;background:transparent;border:1px solid var(--line2);color:var(--mute)}
 #attBtn:hover,#attBtn.on{color:var(--txt,#eee);border-color:var(--mute)}
@@ -1039,8 +1040,9 @@ function threadOf(name){return bots.find(b=>b.name===name)?name:name}
 
 function handle(ev){
   const live=ev.ts>LOADED-LIVE_EPS;const k=ev.kind;
-  if(k==="task"){finish(active,ev.ts);if(live)clearLab(true);userMsg("lab",ev.text,false,live);active=aiMsg("lab","sci","Scientist",live);active.kind=ev.mode==="bot"?"build":"task";active.t0=ev.ts;
-    active.sub.textContent=ev.mode==="bot"?" · building your monster":" · working";buildTok=0;
+  if(k==="task"){finish(active,ev.ts);if(live)clearLab(true);const um=userMsg("lab",ev.text,false,live);active=aiMsg("lab","sci","Scientist",live);active.kind=ev.mode==="bot"?"build":"task";active.t0=ev.ts;
+    if(ev.mode==="upgrade"){um.classList.add("keep");active.el.classList.add("keep")}
+    active.sub.textContent=ev.mode==="bot"?" · building your monster":ev.mode==="upgrade"?" · upgrade request":" · working";buildTok=0;
     monster=[];setAlive(false);drawMonster();$("wfname").textContent="";log("▶ "+ev.text,"stage",ev.ts);if(live){setBusy(true);if(thread!=="lab")setThread("lab")}}
   else if(k==="ask"){const th=ev.bot;if(!(active&&active.kind!=="ask"))finish(active,ev.ts);
     userMsg(th,ev.question||ev.input,!ev.question,live);const m=aiMsg(th,"bot",title(th),live);m.kind="ask";m.t0=ev.ts;typing(m);pending[th]=m;if(!active||active.kind==="ask")active=m;
