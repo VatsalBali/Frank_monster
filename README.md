@@ -9,8 +9,9 @@ Topic: **Frankenstein** (Etnetera / prg.ai) — *build an agent that can build i
 ## How you use it
 
 1. **Create a monster.** Describe a purpose to the scientist ("a bot that checks Czech suppliers before we pay
-   them"). The factory builds the bot once — finding gaps, writing and testing capabilities, asking you to approve.
-2. **Ask it.** Pick the monster and ask in plain words (a small Claude Haiku call turns the sentence into the bot's
+   them"). The factory builds the bot once — finding gaps, writing and testing capabilities, and installing whatever passes
+   its tests. You only approve new network access.
+2. **Ask it.** Pick the monster in the chat's bot selector and ask in plain words (a small Claude Haiku call turns the sentence into the bot's
    input; the token count is shown) or fill the auto-generated form (0 tokens). The bot itself runs as compiled
    code. Pay once to build, ask as often as you like.
 
@@ -32,14 +33,16 @@ Task ──► PLAN ─► DISCOVER ─► GAP? ──► LEARN (probe real APIs
 * **Learn before writing.** The builder probes the real API / page from inside the sandbox, then writes
   `impl.py` + pytest tests. Missing capabilities are built **on the real output of the previous steps**, so parts fit.
 * **Tests before install, visible in the log.** The harness rejects anything with failing tests or fewer than 3 tests.
-* **Operator control.** Every install, every upgrade and every *widening of authority* (new network host) needs
-  approval in the lab. Rollback and revoke per artifact.
+* **Operator control.** Installs and upgrades happen automatically, but only after their tests pass (enforced in
+  `registry.install()`, logged as `auto · tests passed`). Every *widening of authority* (new network host) still needs
+  the operator's approval in the chat. Rollback and revoke per artifact. Set `INSTALL_GATE=console` to approve
+  installs by hand as well.
 * **Capabilities grow, authority doesn't.** Each artifact declares its network hosts. The sandbox's egress proxy
   enforces them. A builder that needs a new host must ask, with a reason (it once found that the planner had
   granted an unofficial look-alike site and asked for the official `ares.gov.cz` instead).
 * **Self-repair.** When a running workflow breaks (e.g. an outside agent sends input the code never handled), the
   factory rebuilds only the failing capability, from the input it failed on, and the harness adds a regression test
-  generated from that capability's own successful history. The operator approves v2; if the re-run still fails, the
+  generated from that capability's own successful history. v2 installs once its tests pass; if the re-run still fails, the
   factory rolls back automatically.
 * **Fresh-session composition.** The registry persists (SQLite + a git repo of artifacts). A new process — or an
   external agent over MCP — gets a different task and composes existing capabilities (incl. `foreach` over lists)
@@ -117,8 +120,8 @@ MCP (Claude Desktop): see the config snippet at the top of `mcp_server.py`.
   2.5 Flash**. We disabled the backup cascade, set Opus to low reasoning effort (≈5 s per call, under the 15 s limit),
   and the gateway now reconciles every call against the provider's billing and raises a `model substitution` error
   if any other model answered. The demo is re-recorded from an empty registry after this fix.
-* Development runs used an auto-approve gate mode; it is labelled `auto-mode` in every log line. The demo uses
-  real operator approvals.
+* Installs are approved by the test gate, not a human (labelled `auto · tests passed`). Development runs also used an
+  auto-approve mode for network access, labelled `auto-mode`; in the demo the operator grants access by hand.
 * The acceptance check is an LLM judge — it can be wrong.
 
 **Missing / limits**

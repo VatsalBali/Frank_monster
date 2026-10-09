@@ -79,6 +79,7 @@ def ask_bot(name: str, question: str = "", inp: dict | None = None) -> dict:
         raise KeyError(f"no active bot named {name}")
     m = wf["manifest"]
     ask_budget = gateway.Budget(scope=f"ask:{name}", max_usd=0.05)
+    emit("ask", bot=name, question=question or None, input=inp, msg=f"asked {name}: {question or json.dumps(inp, ensure_ascii=False)[:120]}")
     if inp is None:
         emit("stage", stage="understand", msg=f"reading the question for {name}")
         inp = gateway.complete_json(

@@ -28,7 +28,7 @@ def index():
 
 
 @app.get("/events")
-async def events(replay: int = 300):
+async def events(replay: int = 1500):
     """Tail data/events.jsonl, so events from any process (CLI, MCP server, UI runs) show up."""
     async def gen():
         EVENTS.touch()
@@ -220,7 +220,7 @@ def api_reset():
 
 @app.get("/api/status")
 def api_status():
-    return {"busy": _busy.locked(), "gate_mode": gate.MODE, "build_model": config.BUILD_MODEL,
+    return {"busy": _busy.locked(), "gate_mode": gate.MODE, "install_mode": gate.INSTALL_MODE, "build_model": config.BUILD_MODEL,
             "runtime_model": config.RUNTIME_MODEL, "caps": {"usd_per_task": config.MAX_USD_PER_TASK,
             "iterations": config.MAX_FACTORY_ITERATIONS, "repairs": config.MAX_REPAIR_ATTEMPTS,
             "replans": config.MAX_REPLANS, "llm_calls": config.MAX_LLM_CALLS_PER_TASK}}
