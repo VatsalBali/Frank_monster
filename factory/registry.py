@@ -75,6 +75,17 @@ def save_candidate(manifest: dict, files: dict[str, str]) -> int:
     return version
 
 
+def update_manifest(name: str, version: int, patch: dict) -> None:
+    """Add presentation metadata (headline template, example questions) to an artifact. Never touches code."""
+    a = get(name, version)
+    m = {**a["manifest"], **patch}
+    con = _db()
+    con.execute("UPDATE artifacts SET manifest=? WHERE name=? AND version=?", (json.dumps(m), name, version))
+    con.commit()
+    con.close()
+    (artifact_dir(name, version) / "manifest.json").write_text(json.dumps(m, indent=2), encoding="utf-8")
+
+
 def install(name: str, version: int, test_report: dict) -> None:
     """Gate-only entry point: activates a version. Refuses unless the attached test report passed."""
     if not test_report.get("passed"):
@@ -162,13 +173,46 @@ def _host_match(a: str, b: str) -> bool:
     return a == b or a.endswith("." + b) or b.endswith("." + a)
 
 
-def knowhow(hosts: list[str], exclude: str = "", max_refs: int = 2) -> str:
+_STOP = {"the", "and", "for", "from", "with", "into", "that", "this", "each", "given", "using", "return", "returns"}
+
+
+def _stem(w: str) -> str:
+    for suf, rep in (("ies", "y"), ("ing", ""), ("es", ""), ("s", "")):
+        if w.endswith(suf) and len(w) - len(suf) >= 3:
+            return w[: len(w) - len(suf)] + rep
+    return w
+
+
+def _words(text: str) -> set[str]:
+    return {_stem(w) for w in re.split(r"[^a-z0-9]+", text.lower()) if len(w) > 2 and w not in _STOP}
+
+
+def similar_code(text: str, exclude: str = "", min_score: float = 0.4) -> dict | None:
+    """The installed Python part most similar to `text`: the share of the new part's words (name + description)
+    found in an existing part's name + description, with at least 2 words in common."""
+    want, best = _words(text), (0.0, None)
+    for a in list_artifacts("capability"):
+        if a["name"] == exclude or a["manifest"].get("impl") != "code":
+            continue
+        have = _words(a["name"].replace("_", " ") + " " + a["description"])
+        common = len(want & have)
+        score = common / max(1, len(want)) if common >= 2 else 0.0
+        if score > best[0]:
+            best = (score, a)
+    return best[1] if best[0] >= min_score else None
+
+
+def knowhow(hosts: list[str], exclude: str = "", max_refs: int = 2, like: str = "") -> str:
     """What earlier builds learned about these hosts: their notes plus the working code of up to `max_refs`
     installed capabilities that use them. Lets a new build skip exploration it has already paid for."""
     want = {h.lower().lstrip("*.") for h in hosts}
-    if not want:
-        return ""
     notes, refs = [], []
+    sim = similar_code(like, exclude) if like else None
+    if sim:
+        refs.append(f"# a similar installed part, {sim['name']}: adapt it instead of starting from scratch\n"
+                    + (artifact_dir(sim["name"], sim["version"]) / "impl.py").read_text(encoding="utf-8")[:2500])
+    if not want:
+        return "\n".join(refs)
     for a in list_artifacts("capability"):
         m = a["manifest"]
         mine = {h.lower().lstrip("*.") for h in m.get("permissions", {}).get("net", [])}
@@ -177,7 +221,7 @@ def knowhow(hosts: list[str], exclude: str = "", max_refs: int = 2) -> str:
         if m.get("notes"):
             notes.append(f"- {a['name']}: {m['notes']}")
         impl = artifact_dir(a["name"], a["version"]) / "impl.py"
-        if impl.exists() and len(refs) < max_refs:
+        if impl.exists() and len(refs) < max_refs and not (sim and a["name"] == sim["name"]):
             refs.append(f"# working code of installed capability {a['name']} (hosts {sorted(mine)})\n"
                         + impl.read_text(encoding="utf-8")[:2500])
     if LESSONS.exists():

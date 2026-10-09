@@ -98,6 +98,62 @@ def _instant(purpose: str) -> None:
         emit("log", msg=f"quick answer skipped: {e}")
 
 
+def check_input(schema, inp) -> tuple[dict, list[str]]:
+    """Make an extracted input fit the bot's input schema: coerce obvious types ('80' -> 80, 'usd' kept as is),
+    drop unknown keys, and report required fields that are still missing."""
+    try:
+        s = json.loads(schema) if isinstance(schema, str) else (schema or {})
+    except json.JSONDecodeError:
+        s = {}
+    props, problems = s.get("properties") or {}, []
+    if not isinstance(inp, dict):
+        return {}, ["the input must be a JSON object"]
+    out = {k: v for k, v in inp.items() if not props or k in props}
+    for k, p in props.items():
+        if k not in out or out[k] is None:
+            continue
+        t, v = p.get("type"), out[k]
+        try:
+            if t in ("number", "integer") and isinstance(v, str):
+                n = float(v.replace(" ", "").replace("\u00a0", "").replace(",", "."))
+                out[k] = int(n) if t == "integer" or n.is_integer() else n
+            elif t == "array" and not isinstance(v, list):
+                out[k] = [v]
+            elif t == "string" and not isinstance(v, str):
+                out[k] = str(v)
+        except ValueError:
+            problems.append(f"{k} should be a {t}, got {v!r}")
+    problems += [f"missing required field {k}" for k in s.get("required", []) if out.get(k) in (None, "", [])]
+    return out, problems
+
+
+DESCRIBE = """You write the presentation layer of a bot, once, so every later answer reads well at zero cost.
+Given its purpose, input schema, an example input and its real output, reply with JSON:
+{"headline": "<one-sentence answer template with {placeholders}>", "examples": ["<question>", "<question>", "<question>"]}
+Placeholders are dotted paths into the OUTPUT (lists by index: {ranking.0.currency}) or into the input as
+{input.<field>}. Use only paths that exist in the example output, and prefer output fields over input fields
+(outputs are cleaned up; inputs may be messy). The sentence must read naturally for other inputs
+too, e.g. "{amount} {currency} is {czk} CZK at the ČNB rate of {rate_date}." If the output already has a
+full-sentence answer field, the headline is just that placeholder, e.g. "{answer}".
+examples: 3 short, varied questions a real user would type to this bot, in plain words."""
+
+
+def describe_bot(wf: dict, example_input, output, budget: gateway.Budget | None = None) -> dict:
+    b = budget or gateway.Budget(scope=f"describe:{wf['name']}", max_usd=0.05)
+    m = wf["manifest"]
+    try:
+        d = gateway.complete_json(b, "describe", model=config.INSTANT_MODEL, system=DESCRIBE,
+                                  prompt=f"Purpose: {m.get('purpose') or m.get('description')}\n"
+                                         f"Input schema: {m['signature'].get('in')}\nExample input: {json.dumps(example_input, ensure_ascii=False)}\n"
+                                         f"Output: {fit_json(output, 3000)}")
+        patch = {"headline": str(d.get("headline") or "")[:300], "examples": [str(x)[:140] for x in (d.get("examples") or [])][:3]}
+        registry.update_manifest(wf["name"], wf["version"], patch)
+        return patch
+    except Exception as e:
+        emit("log", msg=f"could not write the answer template for {wf['name']}: {e}")
+        return {}
+
+
 def create_bot(purpose: str) -> dict:
     """The scientist's job: build (or find) a bot for a purpose. A quick direct answer arrives in seconds while
     the bot is built; asking the finished bot later is a separate, cheap step."""
@@ -116,10 +172,15 @@ def ask_bot(name: str, question: str = "", inp: dict | None = None) -> dict:
     emit("ask", bot=name, question=question or None, input=inp, msg=f"asked {name}: {question or json.dumps(inp, ensure_ascii=False)[:120]}")
     if inp is None:
         emit("stage", stage="understand", msg=f"reading the question for {name}")
-        inp = gateway.complete_json(
-            ask_budget, f"ask:{name}", model=config.RUNTIME_MODEL,
-            system=EXTRACT + "\nInput schema: " + str(m["signature"].get("in")) + "\nExample input: " + str(m.get("example_input")),
-            prompt=question)
+        system = EXTRACT + "\nInput schema: " + str(m["signature"].get("in")) + "\nExample input: " + str(m.get("example_input"))
+        prompt = question
+        for _ in range(2):
+            inp, problems = check_input(m["signature"].get("in"), gateway.complete_json(
+                ask_budget, f"ask:{name}", model=config.RUNTIME_MODEL, system=system, prompt=prompt))
+            if not problems:
+                break
+            emit("log", msg=f"input did not fit the bot ({'; '.join(problems)}), asking again")
+            prompt = f"{question}\n\nYour previous reading had problems: {'; '.join(problems)}. Fix them."
         emit("log", msg=f"question → input ({ask_budget.tokens} tok): {json.dumps(inp, ensure_ascii=False)[:200]}")
     run_budget = gateway.Budget(scope=f"run:{name}", max_usd=0.5,
                                 max_tokens=m.get("budget", {}).get("max_tokens_per_run") or None)
@@ -303,6 +364,7 @@ def install_workflow(wf: dict, task_input: dict, output, budget: gateway.Budget)
         registry.set_status(wf["name"], wf["version"], "archived")
         raise RuntimeError("operator rejected workflow")
     registry.install(wf["name"], wf["version"], rep)
+    describe_bot(registry.get(wf["name"]), task_input, output, budget)
     wf = registry.get(wf["name"])
     _record_replay(wf, task_input, output)
     emit("result", workflow=wf["name"], result=output, input=task_input, build_usd=round(budget.spent_usd, 4),
@@ -315,7 +377,6 @@ def install_workflow(wf: dict, task_input: dict, output, budget: gateway.Budget)
 def regression_test(rows: list[dict]) -> str:
     """Harness-generated contract test from a capability's own successful history: a healed version must still
     accept every input that used to work and return the same output fields with the same types."""
-    rows = rows[-6:]
     return f'''import json
 import pytest
 from impl import run
@@ -334,7 +395,7 @@ def test_still_handles_recorded_input(row):
 def heal(e: StepFailed, budget: gateway.Budget, wf: dict) -> bool:
     """Self-repair: rebuild ONLY the capability that broke, against the input it failed on, and require it to
     keep working on its recorded history. Operator approves; the old version stays available for rollback."""
-    from .compiler import samples
+    from .compiler import history_all_versions
     cap = registry.get(e.capability)
     if not cap or cap["manifest"].get("impl") != "code":
         return False
@@ -344,7 +405,7 @@ def heal(e: StepFailed, budget: gateway.Budget, wf: dict) -> bool:
     emit("say", text=f"Step {e.step} broke: {cap['name'].replace('_', ' ')}. I'll repair just that part.")
     emit("monster", steps=[{"id": s["id"], "uses": s["uses"],
                             "state": "failed" if s["uses"] == cap["name"] else "ready"} for s in wf["manifest"]["steps"]])
-    history = [r for r in samples(cap) if r.get("via") != "fallback"]
+    history = history_all_versions(cap["name"])
     old_impl = Path(cap["path"], "impl.py").read_text(encoding="utf-8")
     gap = GapSpec(
         name=cap["name"], description=m.get("description", cap["description"]), kind="code",
@@ -362,7 +423,7 @@ def heal(e: StepFailed, budget: gateway.Budget, wf: dict) -> bool:
     if not gate.ask("install", f"heal {cap['name']} v{cap['version']} → v{built['version']}",
                     {"broke on": json.dumps(e.inputs[:2], ensure_ascii=False)[:300], "error": e.detail[-300:],
                      "tests": built["test_report"]["summary"],
-                     "regression": f"{len(history[-6:])} recorded inputs must still work" if history else "no history yet"}):
+                     "regression": f"{len(history)} recorded inputs (every input shape seen) must still work" if history else "no history yet"}):
         registry.set_status(cap["name"], built["version"], "archived")
         return False
     registry.install(cap["name"], built["version"], built["test_report"])

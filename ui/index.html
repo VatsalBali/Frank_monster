@@ -233,6 +233,14 @@ svg text{font-family:'JetBrains Mono',monospace}
 .typing i{width:7px;height:7px;border-radius:50%;background:var(--mute);animation:dots 1.2s infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
 @keyframes dots{0%,60%,100%{opacity:.25;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+.headline{font:500 16px/1.5 Inter,sans-serif;color:var(--ink);margin:0 0 8px;white-space:pre-wrap}
+.headline.long{font-size:14.5px;line-height:1.6}
+.understood{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--mute);margin:0 0 8px}
+.understood b{font-weight:500;color:var(--ink2);background:var(--soft);border:1px solid var(--line);border-radius:7px;padding:0 7px}
+details.more summary{cursor:pointer;font-size:12.5px;color:var(--mute);margin:2px 0 6px}
+#chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px;justify-content:center}
+#chips button{border-radius:999px;font-size:12.5px;padding:5px 12px;background:var(--panel2);color:var(--ink2)}
+#chips button:hover{border-color:var(--green);color:var(--ink)}
 .ans{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;overflow:auto;max-height:520px}
 .ans pre{margin:0;font:12px/1.55 'JetBrains Mono',monospace;white-space:pre-wrap;color:var(--ink2)}
 .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:7px;font-size:12px;color:var(--mute)}
@@ -586,6 +594,7 @@ table.audit td.n{text-align:right;color:var(--mute)}
         <div id="askForm"></div>
         <button class="primary" id="formRun">Run · 0 tokens</button>
       </div>
+      <div id="chips"></div>
       <div class="box">
         <textarea id="input" rows="1" autocomplete="off"></textarea>
         <button id="formBtn" title="Fill the bot's input fields yourself: no language model, 0 tokens" hidden>☰ Form</button>
@@ -781,13 +790,29 @@ function answer(m,ev){
   const rt=ev.run_tokens!==undefined?ev.run_tokens:(r?r.tokens:undefined);
   if(rt!==undefined)tags.push(`<span class="tag ${rt?"warm":"zero"}">${rt.toLocaleString()} tok to run</span>`);
   if(r&&r.ms)tags.push(`<span class="tag">${(r.ms/1000).toFixed(1)} s</span>`);
-  m.content.innerHTML=`<div class="ans">${renderValue(ev.result)}</div><div class="meta">${tags.join("")}<span class="acts"><button class="mini cp">Copy</button>${firstRows(ev.result)?'<button class="mini csv">CSV</button>':""}<button class="mini raw">Raw</button></span></div>`;
-  const A=m.content.querySelector(".ans");let raw=false;
+  const hl=headlineFor(ev);const rest=hl.used&&isObj(ev.result)?Object.fromEntries(Object.entries(ev.result).filter(([k])=>!hl.long.includes(k))):ev.result;
+  const hasRest=isObj(rest)?Object.keys(rest).length>0:true;
+  const und=ev.question&&isObj(ev.input)?`<div class="understood">Understood as ${Object.entries(ev.input).map(([k,v])=>`<b>${esc(nice(k))}: ${esc(Array.isArray(v)?v.map(x=>typeof x==="object"?flat(x):x).join(", "):typeof v==="object"?flat(v):v)}</b>`).join("")}</div>`:"";
+  const details=hasRest?(hl.text?`<details class="more"${hl.long.length?"":" open"}><summary>Details</summary><div class="ans">${renderValue(rest)}</div></details>`:`<div class="ans">${renderValue(rest)}</div>`):"";
+  m.content.innerHTML=`${hl.text?`<div class="headline${hl.long.length?" long":""}">${hl.text}</div>`:""}${und}${details}<div class="meta">${tags.join("")}<span class="acts"><button class="mini cp">Copy</button>${firstRows(ev.result)?'<button class="mini csv">CSV</button>':""}<button class="mini raw">Raw</button></span></div>`;
+  const A=m.content.querySelector(".ans")||document.createElement("div");let raw=false;
   m.content.querySelector(".cp").onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(ev.result,null,2));toast("Copied as JSON")}catch(e){toast("Copy failed","bad")}};
   const c=m.content.querySelector(".csv");if(c)c.onclick=()=>downloadCsv(ev.result,ev.workflow);
-  m.content.querySelector(".raw").onclick=e=>{raw=!raw;A.innerHTML=raw?`<pre>${esc(JSON.stringify(ev.result,null,2))}</pre>`:renderValue(ev.result);e.target.textContent=raw?"Readable":"Raw"};
+  m.content.querySelector(".raw").onclick=e=>{raw=!raw;if(!A.isConnected){m.content.querySelector(".meta").before(A);A.className="ans"}
+    A.innerHTML=raw?`<pre>${esc(JSON.stringify(ev.result,null,2))}</pre>`:renderValue(rest);e.target.textContent=raw?"Readable":"Raw";
+    const d=m.content.querySelector("details.more");if(d)d.open=true};
   if(m.th===thread)toBottom(true);
 }
+function getPath(obj,path){let o=obj;for(const k of path.split(".")){if(o==null)return undefined;o=Array.isArray(o)?o[+k]:o[k]}return o}
+function fmt(v){if(typeof v==="number")return v.toLocaleString(undefined,{maximumFractionDigits:Math.abs(v)<10?4:2});if(Array.isArray(v))return v.map(fmt).join(", ");if(isObj(v))return flat(v);return String(v)}
+function headlineFor(ev){
+  const b=bots.find(x=>x.name===ev.workflow);const t=b&&b.headline;const res={text:"",used:false,long:[]};
+  if(!t||!isObj(ev.result))return res;let ok=true;
+  const text=t.replace(/\{([\w.]+)\}/g,(_,p)=>{const v=p.startsWith("input.")?getPath(ev.input||{},p.slice(6)):getPath(ev.result,p);
+    if(v===undefined||v===null||v===""){ok=false;return ""}
+    if(!p.startsWith("input.")&&!p.includes(".")&&typeof v==="string"&&v.length>120)res.long.push(p);
+    return esc(fmt(v))});
+  if(!ok)return res;res.text=text.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");res.used=true;return res}
 function built(m,ev){
   const bot=ev.workflow,r=runInfo[bot],per=ev.run_tokens!==undefined?ev.run_tokens:(r?r.tokens:null);
   m.content.innerHTML=`<div class="built"><div class="alive"><span class="ok">✓</span>${esc(title(bot))} is alive</div>
@@ -921,8 +946,9 @@ function renderIntro(){
     <div class="howto"><div><b>1 · Describe</b>a purpose, in plain words</div><div><b>2 · I build &amp; test</b>installed only if tests pass</div><div><b>3 · Ask it</b>in words or with a 0-token form</div></div>`;
     I.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{$("input").value=x.dataset.s;grow();$("input").focus()});return}
   I.innerHTML=`<svg class="big" viewBox="0 0 34 38">${FACE.replace(/^<svg[^>]*>|<\/svg>$/g,"")}</svg><h2>${esc(title(b.name))}</h2><p>${esc(b.purpose||b.description||"")}</p>
-    <div class="sugg"><button id="tryEx">▶ Run its example · 0 tokens</button><button id="openForm">☰ Fill the form · 0 tokens</button></div>
+    <div class="sugg">${(b.examples||[]).map(q=>`<button data-q="${esc(q)}">💬 ${esc(q)}</button>`).join("")}<button id="tryEx">▶ Run its example · 0 tokens</button><button id="openForm">☰ Fill the form · 0 tokens</button></div>
     <div class="howto"><div><b>Ask in words</b>a small Claude Haiku call reads your question</div><div><b>Or use the form</b>no language model at all</div><div><b>Then it runs</b>${b.llm?"with one LLM judgment step":"as plain code · 0 tokens"}</div></div>`;
+  I.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>{$("input").value=x.dataset.q;grow();send()});
   $("tryEx").onclick=()=>{const ex=exampleOf(b);ask({input_json:JSON.stringify(ex)})};
   $("openForm").onclick=()=>toggleForm(true);
 }
@@ -934,8 +960,12 @@ function updateComposer(){
   $("formBtn").hidden=!b;$("igorBtn").hidden=!b;if(!b)toggleForm(false);else buildForm(schemaOf(b),exampleOf(b));
   $("input").placeholder=b?`Ask ${title(b.name)}…  e.g. ${Object.values(exampleOf(b)).map(flat).filter(Boolean).join(" · ").slice(0,34)}…`:"What should the scientist make?  e.g. a bot that checks suppliers before we pay them";
   $("hint").innerHTML=b?`Enter to send · reading your question costs a few hundred tokens on Claude Haiku · the form costs 0`:`The scientist builds and tests it once (paid once). Asking it later is nearly free. Installs are automatic once tests pass.`;
-  setBusy(busy);
+  setBusy(busy);renderChips();
 }
+function renderChips(){const C=$("chips");const b=curBot();const ex=(b&&b.examples)||[];
+  const show=b&&ex.length&&!$("input").value.trim()&&!busy;C.hidden=!show;if(!show)return;
+  C.innerHTML=ex.map(q=>`<button data-q="${esc(q)}" title="Ask this">${esc(q)}</button>`).join("");
+  C.querySelectorAll("button").forEach(x=>x.onclick=()=>{$("input").value=x.dataset.q;grow();send()})}
 function toggleForm(o){$("formTray").hidden=!o;$("formBtn").classList.toggle("on",o)}
 $("formBtn").onclick=()=>toggleForm($("formTray").hidden);$("formClose").onclick=()=>toggleForm(false);
 function buildForm(schema,ex){
@@ -967,10 +997,10 @@ async function send(){
 $("sendBtn").onclick=send;
 $("igorBtn").onclick=async()=>{const b=curBot();if(!b||busy)return;lights(true);if(!await post(`/api/bots/${b.name}/sabotage`,{})&&!busy)lights(false)};
 function grow(){const i=$("input");i.style.height="36px";i.style.height=Math.min(180,i.scrollHeight)+"px"}
-$("input").addEventListener("input",grow);
+$("input").addEventListener("input",()=>{grow();renderChips()});
 $("input").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
 $("formRun").onclick=()=>{let inp;try{inp=readForm()}catch(e){toast("A JSON field is not valid JSON","bad");return}ask({input_json:JSON.stringify(inp)})};
-function setBusy(b){busy=b;if(b)lights(true);$("igorBtn").disabled=b;$("status").classList.toggle("busy",b);$("statusTxt").textContent=b?"working":"idle";$("sendBtn").disabled=b;$("formRun").disabled=b;$("optBtn").disabled=b;$("resetBtn").disabled=b;
+function setBusy(b){busy=b;if($("chips"))setTimeout(renderChips,0);if(b)lights(true);$("igorBtn").disabled=b;$("status").classList.toggle("busy",b);$("statusTxt").textContent=b?"working":"idle";$("sendBtn").disabled=b;$("formRun").disabled=b;$("optBtn").disabled=b;$("resetBtn").disabled=b;
   $("sendBtn").title=b?"The scientist is busy":"Send (Enter)"}
 async function loadBots(){
   try{bots=await (await fetch("/api/bots")).json()}catch(e){return}

@@ -102,11 +102,11 @@ def _reconcile(row_id: int, conv_id: str, requested: str = "") -> None:
 
 
 def complete(budget: Budget, purpose: str, *, system: str, prompt: str, model: str | None = None,
-             timeout: float = 300) -> str:
-    """One metered model call. Returns raw text."""
+             timeout: float = 300, until_json: bool = False) -> str:
+    """One metered model call. Returns raw text. until_json: stop reading as soon as a full JSON object arrived."""
     budget.check()
     model = model or config.BUILD_MODEL
-    text, conv_id, secs = llm_elevenlabs.ask(system, prompt, model, timeout=timeout)
+    text, conv_id, secs = llm_elevenlabs.ask(system, prompt, model, timeout=timeout, until_json=until_json)
     budget.record(model, purpose, estimate_tokens(system + prompt), estimate_tokens(text), secs, conv_id)
     return text
 
@@ -136,7 +136,7 @@ def complete_json(budget: Budget, purpose: str, *, system: str, prompt: str, sch
         sys_prompt += "\nJSON Schema of the required object:\n" + json.dumps(schema.model_json_schema())
     p = prompt
     for attempt in range(retries + 1):
-        text = complete(budget, purpose, system=sys_prompt, prompt=p, model=model)
+        text = complete(budget, purpose, system=sys_prompt, prompt=p, model=model, until_json=True)
         try:
             obj = extract_json(text)
             return schema.model_validate(obj) if schema is not None else obj

@@ -45,9 +45,17 @@ Task ──► PLAN ─► DISCOVER ─► GAP? ──► LEARN (probe real APIs
   generated from that capability's own successful history. v2 installs once its tests pass; if the re-run still fails, the
   factory rolls back automatically.
 * **Fast where it matters.** A quick answer from Claude arrives in ~6 s while the monster is built in the background
-  (labelled as untested). Measured on a currency bot: build 94 s from an empty registry; asking the finished bot
-  8.9 s in words, 3.4 s with the form (0 tokens). Sandbox steps start in ~1.5 s (a long-lived WSL helper and a clean
-  PATH; the WSL-appended Windows PATH had made every docker command take ~1.7 s).
+  (labelled as untested). Builds take ~40-90 s. Asking a finished bot: ~4-5 s in words (one Haiku call reads the
+  question), ~1-3 s with the form at 0 tokens. Sandbox steps run in pre-started, single-use containers (~0.3 s instead
+  of ~1.5 s); docker runs through a long-lived WSL helper with a clean PATH; JSON replies are read until the object is
+  complete instead of waiting for the end-of-turn event.
+* **Answers you can check.** Every answer opens with one plain sentence (a template written once at build time,
+  filled by code, 0 tokens), shows how the question was understood ("Understood as: amount 300 · currency CHF"),
+  and keeps the full data under Details. The extracted input is checked against the bot's schema before running.
+  Each bot offers 3 example questions to click.
+* **Repairs keep every bot working.** A repaired part must pass a regression test built from the history of all its
+  versions, with at least one example of every input shape seen, so fixing it for one bot can't break another
+  bot that shares it. New parts start from the most similar installed Python part, not from scratch.
 * **Igor tries to break it.** "🪓 Let Igor break it" sends a bot messy but legitimate input (`"  1 250,50 "`,
   `"euros"`), escalating up to 3 tries. When a step breaks, the scientist rebuilds only that part with Igor's input as
   a regression test, installs it once tests pass, and the bot answers. Measured: currency bot broken on try 1, repaired

@@ -81,10 +81,10 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
     spec = (f"Capability to build: {gap.name}\nDescription: {gap.description}\nWhy it is missing: {gap.why_missing}\n"
             f"Input schema: {gap.input_schema_json}\nOutput schema: {gap.output_schema_json}\n"
             f"Example input: {gap.example_input_json}\nGranted network hosts: {net or 'none'}")
-    known = registry.knowhow(net, exclude=gap.name)
+    known = registry.knowhow(net, exclude=gap.name, like=f"{gap.name.replace('_', ' ')} {gap.description}")
     if known:
         spec += "\n\nWhat the factory already knows (from earlier builds):\n" + known
-        emit("log", msg=f"reusing know-how for {', '.join(net)}: skipping what earlier builds already learned")
+        emit("log", msg=f"reusing know-how{' for ' + ', '.join(net) if net else ''}: starting from existing Python instead of from scratch")
     history: list[dict] = []
     trace = {"gap": gap.model_dump(), "events": []}
     submits = 0

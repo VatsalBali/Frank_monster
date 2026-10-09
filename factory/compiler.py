@@ -43,6 +43,32 @@ def samples(cap: dict) -> list[dict]:
     return out
 
 
+def history_all_versions(name: str, limit: int = 10) -> list[dict]:
+    """Successful I/O of every version of a capability, newest first, with at least one row per input shape
+    (set of input keys). Shared parts are called differently by different bots; a repair must keep all of them."""
+    rows = []
+    for v in sorted(registry.versions(name), key=lambda a: -a["version"]):
+        rows += [r for r in reversed(samples(v)) if r.get("via") != "fallback"]
+    seen, uniq = set(), []
+    for r in rows:
+        k = json.dumps(r["input"], sort_keys=True, ensure_ascii=False, default=str)
+        if k not in seen:
+            seen.add(k)
+            uniq.append(r)
+    shape = lambda r: tuple(sorted(r["input"])) if isinstance(r["input"], dict) else ("<" + type(r["input"]).__name__ + ">",)
+    picked, shapes = [], set()
+    for r in uniq:
+        if shape(r) not in shapes:
+            shapes.add(shape(r))
+            picked.append(r)
+    for r in uniq:
+        if len(picked) >= limit:
+            break
+        if r not in picked:
+            picked.append(r)
+    return picked[:max(limit, len(shapes))]
+
+
 def _llm_parent(cap: dict) -> dict:
     """The LLM version a capability distills from: itself, or the fallback of an already-distilled version."""
     fb = cap["manifest"].get("fallback")

@@ -151,7 +151,8 @@ def api_bots():
                     "purpose": m.get("purpose") or a["description"], "input_schema": m["signature"].get("in"),
                     "example_input": m.get("example_input"), "steps": [s["uses"] for s in m.get("steps", [])],
                     "runs": a["runs"], "avg_tokens": round(a["tokens"] / a["runs"]) if a["runs"] else 0,
-                    "llm": bool(m.get("permissions", {}).get("llm"))})
+                    "llm": bool(m.get("permissions", {}).get("llm")),
+                    "headline": m.get("headline") or "", "examples": m.get("examples") or []})
     return out
 
 

@@ -58,7 +58,22 @@ def agent_id() -> str:
         return aid
 
 
-async def _ask(aid: str, system: str, user: str, llm: str, timeout: float) -> tuple[str, str]:
+def _json_done(text: str) -> bool:
+    """True once the streamed reply holds one complete JSON object (so we need not wait for the end event)."""
+    t = text.strip()
+    if t.startswith("```"):
+        t = t.split("\n", 1)[-1]
+    i = t.find("{")
+    if i < 0 or not t.rstrip("` \n").endswith("}"):
+        return False
+    try:
+        json.JSONDecoder().raw_decode(t[i:])
+        return True
+    except ValueError:
+        return False
+
+
+async def _ask(aid: str, system: str, user: str, llm: str, timeout: float, until_json: bool = False) -> tuple[str, str]:
     url = f"wss://api.elevenlabs.io/v1/convai/conversation?agent_id={aid}"
     parts: list[str] = []
     final = None
@@ -82,6 +97,8 @@ async def _ask(aid: str, system: str, user: str, llm: str, timeout: float) -> tu
                 p = msg.get("text_response_part", {})
                 if p.get("type") == "delta":
                     parts.append(p.get("text", ""))
+                    if until_json and _json_done("".join(parts)):
+                        break
             elif t == "agent_response":
                 final = msg["agent_response_event"]["agent_response"]
                 break
@@ -90,14 +107,14 @@ async def _ask(aid: str, system: str, user: str, llm: str, timeout: float) -> tu
     return ("".join(parts) or final or ""), conv_id
 
 
-def ask(system: str, user: str, llm: str, timeout: float = 300, retries: int = 2) -> tuple[str, str, float]:
+def ask(system: str, user: str, llm: str, timeout: float = 300, retries: int = 2, until_json: bool = False) -> tuple[str, str, float]:
     """Returns (raw_text, conversation_id, seconds)."""
     aid = agent_id()
     last = None
     for attempt in range(retries + 1):
         t0 = time.time()
         try:
-            text, cid = asyncio.run(_ask(aid, system, user, llm, timeout))
+            text, cid = asyncio.run(_ask(aid, system, user, llm, timeout, until_json))
             return text, cid, time.time() - t0
         except Exception as e:  # network hiccups, socket closed by server
             last = e
