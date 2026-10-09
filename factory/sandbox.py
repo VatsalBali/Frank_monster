@@ -118,7 +118,10 @@ _BOOT = ("import json,os,subprocess,sys,base64\n"
          "    if isinstance(c,dict): open(p,'wb').write(base64.b64decode(c['b64']))\n"
          "    else: open(p,'w',encoding='utf-8').write(c)\n"
          "os.chdir('/tmp/w')\n"
-         "r=subprocess.run(e['cmd'],input=e.get('stdin'),text=True,env={**os.environ,'PYTHONPATH':'/tmp/w'})\n"
+         # the base image sets GPG_KEY (the public id of Python's release-signing key): not a secret, but generated
+         # code gets an environment with nothing that even looks like a key
+         "env={k:v for k,v in os.environ.items() if k!='GPG_KEY'}\n"
+         "r=subprocess.run(e['cmd'],input=e.get('stdin'),text=True,env={**env,'PYTHONPATH':'/tmp/w'})\n"
          "sys.exit(r.returncode)\n")
 
 

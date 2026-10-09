@@ -52,6 +52,7 @@ class Budget:
     spent_usd: float = 0.0
     tokens: int = 0
     calls: int = 0
+    created: float = field(default_factory=time.time)
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def check(self) -> None:

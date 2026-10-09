@@ -13,7 +13,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
-from factory import config, gate, gateway, inbox, registry, sandbox, voice
+from factory import config, gate, gateway, governance, inbox, registry, sandbox, voice
 from factory.events import emit
 
 app = FastAPI()
@@ -54,7 +54,7 @@ async def events(replay: int = 1500):
 
 @app.get("/api/registry")
 def api_registry():
-    return [{k: a[k] for k in ("name", "version", "kind", "status", "description", "runs", "ok_runs", "tokens", "ms")}
+    return [{k: a[k] for k in ("name", "version", "kind", "status", "description", "runs", "ok_runs", "tokens", "ms", "created")}
             | {"manifest": a["manifest"]} for a in registry.list_artifacts(status=None)]
 
 
@@ -124,6 +124,55 @@ def api_bot_kill(name: str):
         return {"killed": name, "kept_skills": skills, "now_spare": spare}
     finally:
         _busy.release()
+
+
+@app.post("/api/session/new")
+def api_session_new():
+    if not _busy.acquire(blocking=False):
+        raise HTTPException(409, "the scientist is busy")
+    try:
+        return governance.new_session()
+    finally:
+        _busy.release()
+
+
+@app.get("/api/session")
+def api_session():
+    return governance.session()
+
+
+@app.get("/api/bots/{name}/value")
+def api_bot_value(name: str):
+    try:
+        return governance.value(name)
+    except KeyError:
+        raise HTTPException(404, "no such bot")
+
+
+@app.post("/api/bots/{name}/drill")
+def api_bot_drill(name: str):
+    if not registry.get(name):
+        raise HTTPException(404, "no such bot")
+    return _background(f"authority test {name}", lambda: governance.drill(name))
+
+
+class Change(BaseModel):
+    request: str
+
+
+@app.post("/api/capabilities/{name}/upgrade")
+def api_cap_upgrade(name: str, c: Change):
+    a = registry.get(name)
+    if not a or a["kind"] != "capability":
+        raise HTTPException(404, "no such capability")
+    if not c.request.strip():
+        raise HTTPException(400, "describe the change")
+    return _background(f"upgrade {name}", lambda: governance.upgrade(name, c.request.strip()))
+
+
+@app.get("/api/capabilities/{name}/dependents")
+def api_cap_dependents(name: str):
+    return {"capability": name, "used_by": governance.dependents(name)}
 
 
 class Upload(BaseModel):

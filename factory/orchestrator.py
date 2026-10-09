@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from . import config, gate, gateway, inbox, registry
+from . import config, gate, gateway, governance, inbox, registry
 from .builder import build_capability
 from .events import emit
 from .executor import StepFailed, resolve, run_capability, run_capability_batch, run_workflow
@@ -46,7 +46,9 @@ Judge only the answer to the given input, not the workflow's design. If the outp
 detail does not exist in published sources, accept that.
 satisfied=false ONLY for blocking problems: the question is not answered at all, a key figure is clearly wrong or
 implausible, or a source is invented. Wishes for more detail, more breakdowns, more citations or tighter ranges are
-NOT blocking: set satisfied=true and put them in notes. List in `missing` only the blocking problems."""
+NOT blocking: set satisfied=true and put them in notes. List in `missing` only the blocking problems.
+When the user's files are shown, claim a figure is wrong or a finding is missing only if you can point to the exact
+lines in those files that prove it (quote them in `missing`); otherwise it is not blocking."""
 
 
 class Verdict(BaseModel):
@@ -75,7 +77,7 @@ def judge(task: str, output, budget: gateway.Budget, purpose: str = "", task_inp
     out = json.dumps(output, ensure_ascii=False, default=str)[:6000]
     ask = (f"A bot built for: {purpose}\nIt was given this input:\n{json.dumps(task_input, ensure_ascii=False)}"
            if purpose else f"Task:\n{task}")
-    look = "".join(f"\n\nThe user's files ({f}):\n{inbox.texts(f, 12000)}" for f in inbox.refs(task_input))
+    look = "".join(f"\n\nThe user's files ({f}):\n{inbox.texts(f, 40000)}" for f in inbox.refs(task_input))
     v: Verdict = gateway.complete_json(budget, "accept", system=JUDGE, schema=Verdict,
                                        prompt=f"{ask}{look}\n\nOutput:\n{out}")
     emit("test", capability="acceptance",
@@ -140,7 +142,9 @@ def check_input(schema, inp) -> tuple[dict, list[str]]:
 
 DESCRIBE = """You write the presentation layer of a bot, once, so every later answer reads well at zero cost.
 Given its purpose, input schema, an example input and its real output, reply with JSON:
-{"headline": "<one-sentence answer template with {placeholders}>", "examples": ["<question>", "<question>", "<question>"]}
+{"headline": "<one-sentence answer template with {placeholders}>", "examples": ["<question>", "<question>", "<question>"],
+ "manual_minutes": <minutes a competent office worker needs to produce one such answer by hand; conservative>,
+ "manual_basis": "<one short sentence: what that manual work consists of>"}
 Placeholders are dotted paths into the OUTPUT (lists by index: {ranking.0.currency}) or into the input as
 {input.<field>}. Use only paths that exist in the example output, and prefer output fields over input fields
 (outputs are cleaned up; inputs may be messy). The sentence must read naturally for other inputs
@@ -158,6 +162,11 @@ def describe_bot(wf: dict, example_input, output, budget: gateway.Budget | None 
                                          f"Input schema: {m['signature'].get('in')}\nExample input: {json.dumps(example_input, ensure_ascii=False)}\n"
                                          f"Output: {fit_json(output, 3000)}")
         patch = {"headline": str(d.get("headline") or "")[:300], "examples": [str(x)[:140] for x in (d.get("examples") or [])][:3]}
+        try:
+            patch["manual_minutes"] = max(1, round(float(d.get("manual_minutes")), 1))
+            patch["manual_basis"] = str(d.get("manual_basis") or "")[:200]
+        except (TypeError, ValueError):
+            pass
         registry.update_manifest(wf["name"], wf["version"], patch)
         return patch
     except Exception as e:
@@ -245,6 +254,11 @@ def _solve(task: str, purpose: str = "") -> dict:
         try:
             build_on_real_data(p, task_input, budget)
             wf, output = assemble(p, purpose)
+        except RuntimeError as e:
+            if "regression gate refused" not in str(e):
+                raise
+            feedback = str(e)
+            continue
         except StepFailed as e:
             emit("say", text=f"The parts don't fit together yet: {e.capability.replace('_', ' ')} failed. Back to the bench.")
             feedback = f"End-to-end run failed at step {e.step} ({e.capability}): {e.detail[-1200:]}"
@@ -327,6 +341,17 @@ def install_capability(g, budget: gateway.Budget) -> None:
               "network": perms["net"] or "none"}
     if widened:
         detail["NEW network access"] = widened
+    if prev and governance.dependents(g.name):
+        emit("stage", stage="regression", capability=g.name,
+             msg=f"regression gate: {g.name} is used by {', '.join(governance.dependents(g.name))}; replaying its recorded inputs on v{built['version']}")
+        rep = governance.regression_gate(g.name, built["version"])
+        if not rep["passed"]:
+            governance.report_refusal(g.name, prev["version"], built["version"], rep)
+            raise RuntimeError(f"regression gate refused {g.name} v{built['version']}: "
+                               f"{rep['problems'][0]['problem']} (bots relying on it: {', '.join(rep['dependents'])}). "
+                               f"Keep its output fields and types, or use a NEW capability name for the new behaviour.")
+        emit("test", capability=g.name, msg=f"regression gate: PASSED on {rep['checked']} recorded inputs")
+        detail["regression"] = f"{rep['checked']} recorded inputs still work"
     if not gate.ask("install", title, detail):
         registry.set_status(g.name, built["version"], "archived")
         raise RuntimeError(f"operator rejected {g.name}")
@@ -375,6 +400,8 @@ def install_workflow(wf: dict, task_input: dict, output, budget: gateway.Budget)
         registry.set_status(wf["name"], wf["version"], "archived")
         raise RuntimeError("operator rejected workflow")
     registry.install(wf["name"], wf["version"], rep)
+    registry.update_manifest(wf["name"], wf["version"], {"build_usd": round(budget.spent_usd, 4),
+                                                         "build_seconds": round(time.time() - budget.created)})
     describe_bot(registry.get(wf["name"]), task_input, output, budget)
     wf = registry.get(wf["name"])
     _record_replay(wf, task_input, output)

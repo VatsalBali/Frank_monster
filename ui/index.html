@@ -403,6 +403,29 @@ table.audit td.n{text-align:right;color:var(--mute)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:1180px){main{grid-template-columns:minmax(240px,300px) minmax(0,1fr);grid-template-rows:minmax(0,1fr) 210px}#side{grid-column:1 / -1}#modelTxt{display:none}}
 @media(max-width:760px){body{height:auto}main{grid-template-columns:1fr;grid-template-rows:none;padding:10px}#side{height:320px}#scene{height:420px}#chat{height:80vh}header{padding:10px 12px}#botSel{max-width:70vw}}
+/* ===== governance: session, value, authority test, refused updates ===== */
+.hbtn{border-radius:8px;font-size:12px;padding:5px 10px;white-space:nowrap;flex-shrink:0;background:transparent;border:1px solid var(--line2);color:var(--ink2)}
+.hbtn:hover{border-color:var(--mute);color:var(--ink)}
+.banner.session{background:oklch(25% .03 250);border:1px solid oklch(48% .07 250);color:oklch(85% .06 250)}
+.banner.refused{background:oklch(26% .04 28);border:1px solid var(--fail);color:var(--fail);flex-direction:column;align-items:stretch}
+.banner.drill{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);flex-direction:column;align-items:stretch}
+.drl{display:grid;grid-template-columns:22px 1fr;gap:2px 8px;font-size:12.5px;font-weight:400;margin-top:8px}
+.drl i{font-style:normal;text-align:center}
+.drl .ev{grid-column:2;color:var(--mute);font:11px 'JetBrains Mono',monospace;margin-bottom:4px;word-break:break-word}
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;font-weight:400}
+.diff pre{font:11px 'JetBrains Mono',monospace;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:7px;white-space:pre-wrap;margin:0;color:var(--ink2);max-height:180px;overflow:auto}
+.diff b{display:block;font-size:11px;color:var(--mute);margin-bottom:3px;font-weight:500}
+#valueCard{position:absolute;right:16px;top:58px;width:340px;max-width:90vw;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:14px 16px;box-shadow:0 14px 40px rgba(0,0,0,.5);z-index:40;animation:fadein .15s}
+#valueCard h4{margin:0 0 10px;font-size:13.5px;display:flex;gap:8px;align-items:center}
+#valueCard h4 button{margin-left:auto;border:0;background:transparent;color:var(--mute);cursor:pointer}
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vgrid div{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+.vgrid small{display:block;font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.5px}
+.vgrid b{font-size:16px;font-weight:600}
+.vgrid .est{border-style:dashed}
+.vnote{font-size:11.5px;color:var(--mute);margin-top:10px;line-height:1.45}
+.from-earlier{font-size:9.5px}
+#chat{position:relative}
 /* ===== user files ===== */
 #attBtn{border-radius:8px;font-size:12px;padding:5px 10px;background:transparent;border:1px solid var(--line2);color:var(--mute)}
 #attBtn:hover,#attBtn.on{color:var(--txt,#eee);border-color:var(--mute)}
@@ -542,6 +565,7 @@ main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
   <span class="spacer"></span>
   <span id="modelTxt"></span>
   <span id="status" title="Lab status"><i></i><span id="statusTxt">idle</span></span>
+  <button id="sessBtn" class="ghost" title="Start a fresh agent session: no chat history carries over, only the tested capabilities in the registry">↻ Fresh session</button>
   <button id="treeBtn" class="ghost" title="Every monster and the parts it is stitched from">🧬 Family tree</button>
   <button id="voiceBtn" class="ghost" title="Browsers need a click before audio can play">🔈 Voice: off</button>
   <div class="menu"><button id="menuBtn" class="ghost" aria-haspopup="true" aria-expanded="false" title="More">⋯</button>
@@ -725,6 +749,8 @@ main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
       </div>
       <div id="headInfo"></div>
       <span class="motto" id="motto">Build once. Bring it to life.</span>
+      <button id="valueBtn" class="hbtn" hidden title="What this monster is worth: measured runs, speed and cost, plus a labelled estimate of manual time saved">📈 Value</button>
+      <button id="drillBtn" class="hbtn" hidden title="Run hostile code with exactly this monster's permissions and show that everything else is blocked">🛡 Authority test</button>
       <button id="killBtn" hidden title="Kill this monster. Its skills stay in the lab for future monsters.">☠ Kill</button>
       <button id="igorBtn" hidden title="Igor sends this bot messy but legitimate input. If a part breaks, the scientist repairs just that part.">🪓 Let Igor break it</button>
     </div>
@@ -1079,6 +1105,27 @@ function handle(ev){
       const d=addMsg("lab","sys",live);d.className="msg keep";d.innerHTML=`<div class="banner killed">☠ ${esc(title(th))} is gone <span>its skills stay in the lab: ${esc(ev.skills.join(", "))}${ev.spare.length?` · ${ev.spare.length} now spare, ready for the next monster`:""}</span></div>`;
       if(thread===th)setTimeout(()=>setThread("lab"),1400);loadBots();loadRegistry();if(treeOpen)openTree()}}
   else if(k==="files"){log("📎 "+ev.msg,"dim",ev.ts)}
+  else if(k==="session"){log("↻ "+ev.msg,"stage",ev.ts);sessStart=ev.ts;
+    [...$("msgs").querySelectorAll(".msg")].forEach(e=>e.remove());Object.keys(pending).forEach(b=>delete pending[b]);active=null;unread.clear();
+    const d=addMsg("lab","sys",live);d.className="msg keep";
+    d.innerHTML=`<div class="banner session">↻ Fresh session #${ev.n} <span>no chat history carried over · the registry holds ${ev.capabilities.length} tested skill${ev.capabilities.length===1?"":"s"} and ${ev.bots.length} monster${ev.bots.length===1?"":"s"}, which this session has to discover and reuse on its own</span></div>`;
+    if(live){toast(`Fresh session #${ev.n}: only the registry carries over`);setThread("lab");if(treeOpen)openTree()}}
+  else if(k==="drill"){const th=ev.bot;
+    if(ev.phase==="start"){log("🛡 "+ev.msg,"stage",ev.ts);finish(active,ev.ts);const m=aiMsg(th,"sci","Scientist",live);m.kind="drill";m.t0=ev.ts;active=m;
+      m.content.innerHTML=`<div class="banner drill">🛡 Authority test <span>hostile code runs in the sandbox with exactly this monster's permissions (network: ${esc((ev.hosts||[]).join(", ")||"none")}). Everything else must be blocked.</span><div class="drl"></div></div>`;
+      if(live&&thread!==th)setThread(th)}
+    else if(ev.phase==="check"){const open=ev.check.startsWith("Use a host");log((ev.ok?"✓ ":"✗ ")+ev.msg,ev.ok?(open?"pass":"fail"):"fail",ev.ts);
+      const L=active&&active.kind==="drill"&&active.content.querySelector(".drl");
+      if(L)L.insertAdjacentHTML("beforeend",`<i>${ev.ok?(open?"✅":"⛔"):"⚠️"}</i><span><b>${esc(ev.check)}</b> · ${open?(ev.ok?"allowed, as declared":"failed"):(ev.ok?"blocked":"NOT blocked")}</span><span class="ev">${esc(ev.attempt)} → ${esc(ev.evidence)}</span>`);if(active&&active.th===thread)toBottom()}
+    else{log((ev.passed?"✓ ":"✗ ")+ev.msg,ev.passed?"pass":"fail",ev.ts);if(active&&active.kind==="drill"){
+      active.content.insertAdjacentHTML("beforeend",`<div class="banner ${ev.passed?"healed":"won"}" style="margin-top:8px">${ev.passed?"🛡 Passed":"⚠️ Failed"} <span>${ev.blocked} attempts outside its permissions blocked · its abilities can grow, its authority cannot</span></div>`);finish(active,ev.ts);active=null}}}
+  else if(k==="refused"){log("⛔ "+ev.msg,"fail",ev.ts);const m=active;
+    const p=(ev.problems||[])[0]||{};
+    const html=`<div class="banner refused">⛔ Update refused: ${esc(ev.capability)} v${ev.candidate} <span>${(ev.problems||[]).length} of ${ev.checked} recorded inputs would break · v${ev.kept} stays active${(ev.dependents||[]).length?` for ${esc(ev.dependents.map(title).join(", "))}`:""}</span>
+      <span style="margin-top:6px">${esc(p.problem||"")}</span>
+      <div class="diff"><div><b>v${ev.kept} (installed) returned</b><pre>${esc(JSON.stringify(p.old,null,1))}</pre></div><div><b>v${ev.candidate} (candidate) returns</b><pre>${esc(p.new==null?"(crashed)":JSON.stringify(p.new,null,1))}</pre></div></div></div>`;
+    if(m&&!m.done){m.content.insertAdjacentHTML("beforeend",html)}else{const d=addMsg("lab","sys",live);d.className="msg keep";d.innerHTML=html}
+    if(live){toast(`Refused ${ev.capability} v${ev.candidate}: it would break what already works`,"bad");loadRegistry();if(treeOpen)openTree()}}
   else if(k==="knock"){log("⌂ "+ev.msg,"gate",ev.ts);if(live){knock();say(ev.say||"Someone's at the door.",true);toast("External agent: "+ev.msg)}}
   else if(k==="flask"){log("⚗ "+ev.msg,"pass",ev.ts);if(active)step(active,ev.msg,"inst");if(live){freshTiles.add(ev.name);loadRegistry();toast("Distilled "+ev.name+" into code")}}
   else if(k==="error"){log("✗ "+ev.msg,"fail",ev.ts);setScene(false);monster.forEach(p=>{if(p.state==="building")p.state="failed"});drawMonster();
@@ -1144,7 +1191,7 @@ function exampleOf(b){try{return typeof b.example_input==="string"?JSON.parse(b.
 function flat(v){return Array.isArray(v)?v.slice(0,3).map(flat).join(", "):(v&&typeof v==="object"?Object.values(v).filter(x=>typeof x!=="object").join(" "):String(v))}
 function updateComposer(){
   const b=curBot();
-  $("formBtn").hidden=!b;$("igorBtn").hidden=!b;$("killBtn").hidden=!b;if(!b)toggleForm(false);else buildForm(schemaOf(b),exampleOf(b));
+  $("formBtn").hidden=!b;$("igorBtn").hidden=!b;$("killBtn").hidden=!b;$("valueBtn").hidden=!b;$("drillBtn").hidden=!b;closeValue();if(!b)toggleForm(false);else buildForm(schemaOf(b),exampleOf(b));
   $("input").placeholder=b?`Ask ${title(b.name)}…  e.g. ${Object.values(exampleOf(b)).map(flat).filter(Boolean).join(" · ").slice(0,34)}…`:"What should the scientist make?  e.g. a bot that checks suppliers before we pay them";
   $("modeTxt").textContent=b?`Ask ${title(b.name)}`:"New experiment";$("motto").textContent=b?(b.llm?"Built once. Answers with judgment.":"Built once. Answers for free."):"Build once. Bring it to life.";
   $("expNo").textContent=`Experiment no. ${String((bots.length||0)+1).padStart(3,"0")}`;
@@ -1207,6 +1254,23 @@ document.addEventListener("click",e=>{if(!e.target.closest(".attwrap"))$("attMen
 $("chat").addEventListener("dragover",e=>{e.preventDefault()});
 $("chat").addEventListener("drop",e=>{e.preventDefault();if(e.dataTransfer.files.length)upload(e.dataTransfer.files)});
 $("killBtn").onclick=()=>killBot(curBot());
+$("drillBtn").onclick=async()=>{const b=curBot();if(!b||busy)return;lights(true);if(!await post(`/api/bots/${b.name}/drill`,{})&&!busy)lights(false)};
+$("sessBtn").onclick=async()=>{if(busy)return;if(!confirm("Start a fresh session?\n\nNo chat history carries over. The new session only has the registry: the tested capabilities and monsters, which it has to find and reuse on its own."))return;
+  const r=await fetch("/api/session/new",{method:"POST"});if(!r.ok){toast("The scientist is busy.","bad")}};
+function closeValue(){const v=$("valueCard");if(v)v.remove()}
+$("valueBtn").onclick=async()=>{if($("valueCard")){closeValue();return}const b=curBot();if(!b)return;
+  const d=document.createElement("div");d.id="valueCard";d.innerHTML=`<h4>📈 ${esc(title(b.name))}<button onclick="closeValue()">✕</button></h4><div class="vnote">Measuring…</div>`;$("chat").appendChild(d);
+  let v;try{const r=await fetch(`/api/bots/${b.name}/value`);v=await r.json();if(!r.ok)throw 0}catch(e){d.querySelector(".vnote").textContent="Could not measure it.";return}
+  const money=x=>x==null?"–":"$"+Number(x).toFixed(x<0.01?4:3);
+  d.innerHTML=`<h4>📈 ${esc(title(b.name))}<button onclick="closeValue()">✕</button></h4>
+    <div class="vgrid"><div><small>Answers</small><b>${v.answers}</b></div><div><small>Success</small><b>${v.success_rate==null?"–":Math.round(v.success_rate*100)+"%"}</b></div>
+    <div><small>Avg time / answer</small><b>${v.avg_seconds==null?"–":v.avg_seconds+" s"}</b></div><div><small>Cost / answer</small><b>${money(v.usd_per_answer)}</b></div>
+    <div><small>Built for · once</small><b>${money(v.build_usd)}</b></div><div><small>Parts tested</small><b>${v.parts_tested}/${v.parts}</b></div>
+    <div class="est"><small>Manual time · estimate</small><b>${v.manual_minutes_estimate} min</b></div><div class="est"><small>Time saved · estimate</small><b>${v.minutes_saved_estimate>=90?(v.minutes_saved_estimate/60).toFixed(1)+" h":v.minutes_saved_estimate+" min"}</b></div></div>
+    <div class="vnote">Measured: answers, success, time and cost come from the registry and the cost ledger. <b>Estimated</b> (dashed): ${esc(v.manual_basis||"manual time for one answer")}. Saved = answers × manual minutes − machine time.</div>`};
+
+// ---------- registry drawer: propose an upgrade (the regression gate decides) ----------
+
 async function killBot(b){if(!b)return;if(busy){toast("The scientist is busy. Try again in a moment.","bad");return}
   const n=(b.steps||[]).length;
   if(!confirm(`Kill ${title(b.name)}?\n\nThe bot and its chat go away. Its ${n} skill${n===1?"":"s"} (${(b.steps||[]).join(", ")}) stay in the lab, so future monsters can reuse them.`))return;
@@ -1216,7 +1280,7 @@ function grow(){const i=$("input");i.style.height="36px";i.style.height=Math.min
 $("input").addEventListener("input",()=>{grow();renderChips()});
 $("input").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
 $("formRun").onclick=()=>{let inp;try{inp=readForm()}catch(e){toast("A JSON field is not valid JSON","bad");return}ask({input_json:JSON.stringify(inp)})};
-function setBusy(b){busy=b;if($("killBtn"))$("killBtn").disabled=b;if($("chips"))setTimeout(renderChips,0);if(b)lights(true);$("igorBtn").disabled=b;$("status").classList.toggle("busy",b);$("statusTxt").textContent=b?"working":"idle";$("sendBtn").disabled=b;$("formRun").disabled=b;$("optBtn").disabled=b;$("resetBtn").disabled=b;
+function setBusy(b){busy=b;if($("killBtn"))$("killBtn").disabled=b;if($("drillBtn"))$("drillBtn").disabled=b;if($("sessBtn"))$("sessBtn").disabled=b;if($("chips"))setTimeout(renderChips,0);if(b)lights(true);$("igorBtn").disabled=b;$("status").classList.toggle("busy",b);$("statusTxt").textContent=b?"working":"idle";$("sendBtn").disabled=b;$("formRun").disabled=b;$("optBtn").disabled=b;$("resetBtn").disabled=b;
   $("sendBtn").title=b?"The scientist is busy":"Send (Enter)"}
 async function loadBots(){
   try{bots=await (await fetch("/api/bots")).json()}catch(e){return}
@@ -1224,13 +1288,14 @@ async function loadBots(){
   renderSel();renderIntro();updateComposer();
 }
 // ---------- family tree: every monster and the parts it is stitched from ----------
-let treeOpen=false;
+let treeOpen=false, sessStart=0;
 function closeTree(){treeOpen=false;const m=$("treeModal");if(m)m.remove()}
 async function openTree(){
   const rows=await (await fetch("/api/registry")).json();
   const act=rows.filter(r=>r.status==="active");
   const wfs=act.filter(r=>r.kind==="workflow"), caps=Object.fromEntries(act.filter(r=>r.kind==="capability").map(r=>[r.name,r]));
   const allv={};rows.forEach(r=>{(allv[r.name]=allv[r.name]||[]).push(r)});
+  const first={};rows.forEach(r=>{if(r.created&&(!first[r.name]||r.created<first[r.name]))first[r.name]=r.created});
   const order=[],users={};
   wfs.forEach(w=>(w.manifest.steps||[]).forEach(s=>{if(!order.includes(s.uses))order.push(s.uses);(users[s.uses]=users[s.uses]||new Set()).add(w.name)}));
   Object.keys(caps).sort().forEach(c=>{if(!order.includes(c)){order.push(c);users[c]=new Set()}});
@@ -1261,6 +1326,7 @@ async function openTree(){
       <text x="12" y="30" font-size="15">${icon}</text><text x="34" y="29" font-size="10.5" fill="#ECEAE5" font-family="'JetBrains Mono',monospace">${esc(nm)}</text>
       <text x="12" y="50" font-size="10" fill="#8E8B85" font-family="Inter">${kind==="code"?"Python, tested in sandbox":kind==="llm"?"LLM prompt":"distilled from LLM to code"}</text>
       <text x="12" y="66" font-size="10" fill="#8E8B85" font-family="Inter">v${r.version}${healed?" · 🩹 repaired":""} · ${r.runs||0} runs</text>
+      ${sessStart&&first[c]&&first[c]<sessStart?`<text x="146" y="22" text-anchor="end" font-size="9" fill="#9DB4D9" font-family="Inter">earlier session</text>`:""}
       ${(m.permissions||{}).net&&m.permissions.net.length?`<text x="12" y="82" font-size="9.5" fill="#6E6C67" font-family="'JetBrains Mono',monospace">${esc(m.permissions.net.join(", ").slice(0,24))}</text>`:""}
       ${sp?`<g transform="translate(70,72)"><rect width="76" height="17" rx="8.5" fill="none" stroke="#8E8B85"/><text x="38" y="12" text-anchor="middle" font-size="9.5" fill="#C6C3BD" font-family="Inter">spare · reusable</text></g>`:""}
       ${sh>1?`<g transform="translate(96,72)"><rect width="50" height="17" rx="8.5" fill="#D9B87A"/><text x="25" y="12" text-anchor="middle" font-size="9.5" font-weight="600" fill="#1A1A1C" font-family="Inter">shared ×${sh}</text></g>`:""}</g>`});
@@ -1305,6 +1371,13 @@ async function openDrawer(name){
   $("cl").onclick=()=>{D.style.display="none"};
   $("rb").onclick=async()=>{const r=await fetch("/api/rollback/"+name,{method:"POST"});if(!r.ok)toast((await r.json()).detail,"bad");loadRegistry();openDrawer(name)};
   $("rv").onclick=async()=>{if(!confirm("Revoke "+name+"? It will no longer be used."))return;await fetch("/api/revoke/"+name,{method:"POST"});loadRegistry();openDrawer(name)};
+  if(m.kind==="capability"&&act.status==="active"){const deps=await (await fetch(`/api/capabilities/${name}/dependents`)).json();
+    D.insertAdjacentHTML("beforeend",`<div class="lb"><b>Propose an upgrade</b> · used by ${deps.used_by.length?esc(deps.used_by.map(title).join(", ")):"no monster yet"}</div>
+      <textarea id="upIn" placeholder="e.g. also return the supplier's VAT number · or: rename the output field total to amount"></textarea>
+      <div class="vrow"><button class="primary" id="upBtn">Build and test the upgrade</button></div>
+      <div class="vrow" style="color:var(--mute);font-size:11.5px">It is installed only if its own tests pass AND every recorded input that worked before still works.</div>`);
+    $("upBtn").onclick=async()=>{const t=$("upIn").value.trim();if(!t){$("upIn").focus();return}lights(true);
+      if(await post(`/api/capabilities/${name}/upgrade`,{request:t})){setThread("lab");D.style.display="none"}else if(!busy)lights(false)}}
   if($("runBtn"))$("runBtn").onclick=async()=>{const r=await fetch("/api/run/"+name,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({input_json:$("runIn").value})});if(!r.ok)toast((await r.json()).detail,"bad");else{setBusy(true);setThread(name)}};
 }
 async function loadLedger(){try{const L=await (await fetch("/api/ledger")).json();
