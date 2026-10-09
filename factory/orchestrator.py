@@ -2,6 +2,7 @@
 PLAN → DISCOVER → GAP? → BUILD (learn+test) → GATE → INSTALL → ASSEMBLE → E2E TEST → ACCEPT? → GATE → INSTALL → RUN.
 A failed acceptance check is itself a detected gap: the factory replans with the judge's feedback (capped)."""
 import json
+import time
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -24,7 +25,9 @@ To apply a single-item capability to a list, use `foreach` — do not build batc
 Never add trivial adapter/glue capabilities (format conversion, renaming fields). If two capabilities don't fit,
 re-declare the consuming capability as a gap with the SAME name so an improved version is built.
 Workflow input should be the task's variable parts (ids, dates, lists), so the workflow is reusable for similar tasks.
-Bindings: '$input.<field>', '$steps.<id>.<field>', '$steps.<id>', or a JSON literal."""
+Bindings: '$input.<field>', '$steps.<id>.<field>', '$steps.<id>', or a JSON literal.
+Be brief, it saves time: reasoning in at most 2 sentences, one-line descriptions, minimal schemas (only the needed
+properties, no long descriptions). Prefer hosts the factory already knows (listed with the capabilities) when they fit."""
 
 JUDGE = """You check whether a workflow's output actually answers the task it was built for.
 Be strict about requested facts being present and plausible; ignore formatting and extra fields."""
@@ -98,6 +101,19 @@ def ask_bot(name: str, question: str = "", inp: dict | None = None) -> dict:
 
 
 def solve(task: str, purpose: str = "") -> dict:
+    """Build (or reuse) a workflow for a task, then keep only what's useful: the working code, prompts and
+    know-how stay; failed attempts and parts nothing uses are thrown away so the next build starts lean."""
+    started = time.time()
+    try:
+        return _solve(task, purpose)
+    finally:
+        r = registry.prune(drop_unused_since=started)
+        if r["dropped"]:
+            emit("log", msg=f"tidied the registry: dropped {len(r['dropped'])} unused or failed versions "
+                            f"({', '.join(r['dropped'][:6])}); kept working code, prompts and API notes")
+
+
+def _solve(task: str, purpose: str = "") -> dict:
     budget = gateway.Budget(scope=f"task:{(purpose or task)[:40]}", max_usd=config.MAX_USD_PER_TASK)
     emit("task", text=purpose or task, mode="bot" if purpose else "task", msg=f"{'bot' if purpose else 'task'}: {purpose or task}")
     feedback = ""

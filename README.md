@@ -44,6 +44,11 @@ Task ──► PLAN ─► DISCOVER ─► GAP? ──► LEARN (probe real APIs
   factory rebuilds only the failing capability, from the input it failed on, and the harness adds a regression test
   generated from that capability's own successful history. v2 installs once its tests pass; if the re-run still fails, the
   factory rolls back automatically.
+* **It keeps what it learned, not how it got there.** When a capability passes, the builder saves its working code,
+  its prompt (LLM steps) and short notes on the APIs it touched (endpoints, fields, quirks). After every build the
+  registry is pruned: failed attempts, parts no monster uses, sandbox scratch and stale traces are deleted; notes of
+  dropped parts survive in `data/knowhow.json`. The next build for the same host starts from those notes and that
+  code instead of probing again.
 * **Fresh-session composition.** The registry persists (SQLite + a git repo of artifacts). A new process — or an
   external agent over MCP — gets a different task and composes existing capabilities (incl. `foreach` over lists)
   without rebuilding or manual wiring.

@@ -7,6 +7,7 @@ version has a diff and rollback is just re-activating an older version.
 import json
 import re
 import sqlite3
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -157,6 +158,89 @@ def record_run(name: str, version: int, ok: bool, tokens: int, ms: int) -> None:
     con.close()
 
 
+def _host_match(a: str, b: str) -> bool:
+    return a == b or a.endswith("." + b) or b.endswith("." + a)
+
+
+def knowhow(hosts: list[str], exclude: str = "", max_refs: int = 2) -> str:
+    """What earlier builds learned about these hosts: their notes plus the working code of up to `max_refs`
+    installed capabilities that use them. Lets a new build skip exploration it has already paid for."""
+    want = {h.lower().lstrip("*.") for h in hosts}
+    if not want:
+        return ""
+    notes, refs = [], []
+    for a in list_artifacts("capability"):
+        m = a["manifest"]
+        mine = {h.lower().lstrip("*.") for h in m.get("permissions", {}).get("net", [])}
+        if a["name"] == exclude or not any(_host_match(w, h) for w in want for h in mine):
+            continue
+        if m.get("notes"):
+            notes.append(f"- {a['name']}: {m['notes']}")
+        impl = artifact_dir(a["name"], a["version"]) / "impl.py"
+        if impl.exists() and len(refs) < max_refs:
+            refs.append(f"# working code of installed capability {a['name']} (hosts {sorted(mine)})\n"
+                        + impl.read_text(encoding="utf-8")[:2500])
+    if LESSONS.exists():
+        for x in json.loads(LESSONS.read_text(encoding="utf-8")):
+            hs = {h.lower().lstrip("*.") for h in x["hosts"]}
+            if x["name"] != exclude and any(_host_match(w, h) for w in want for h in hs):
+                notes.append(f"- {x['name']} (an earlier attempt, since removed): {x['notes']}")
+    out = ("Notes:\n" + "\n".join(notes) + "\n") if notes else ""
+    return out + ("\n".join(refs) if refs else "")
+
+
+LESSONS = config.DATA / "knowhow.json"
+
+
+def _save_lesson(m: dict) -> None:
+    """A dropped capability's code goes, but what it learned about its hosts stays."""
+    if not m.get("notes") or not m.get("permissions", {}).get("net"):
+        return
+    lessons = json.loads(LESSONS.read_text(encoding="utf-8")) if LESSONS.exists() else []
+    lessons = [x for x in lessons if x["name"] != m["name"]][-40:]
+    lessons.append({"name": m["name"], "hosts": m["permissions"]["net"], "notes": m["notes"]})
+    LESSONS.write_text(json.dumps(lessons, indent=1), encoding="utf-8")
+
+
+def prune(drop_unused_since: float | None = None) -> dict:
+    """Keep only what is useful for the next build: active versions, plus formerly installed versions (rollback).
+    Drops versions that never passed install (failed attempts) with their files, sandbox scratch dirs and traces no
+    kept version points to. With `drop_unused_since`, also drops capabilities created since then that no active
+    workflow uses: the leftovers of a failed build."""
+    con = _db()
+    rows = [dict(r) for r in con.execute("SELECT name, version, kind, status, created, manifest FROM artifacts")]
+    used = set()
+    for r in rows:
+        if r["kind"] == "workflow" and r["status"] == "active":
+            used |= {s["uses"] for s in json.loads(r["manifest"]).get("steps", [])}
+    dropped = []
+    for r in rows:
+        d = artifact_dir(r["name"], r["version"])
+        never_installed = r["status"] == "candidate" or (r["status"] == "archived" and not (d / "test_report.json").exists())
+        orphan = (drop_unused_since is not None and r["kind"] == "capability" and r["created"] >= drop_unused_since
+                  and r["name"] not in used)
+        if orphan and r["status"] == "active":
+            _save_lesson(json.loads(r["manifest"]))
+        if never_installed or orphan:
+            con.execute("DELETE FROM artifacts WHERE name=? AND version=?", (r["name"], r["version"]))
+            shutil.rmtree(d, ignore_errors=True)
+            dropped.append(f"{r['name']} v{r['version']}")
+            if not any(d.parent.iterdir()):
+                d.parent.rmdir()
+    con.commit()
+    keep_traces = {json.loads(m[0]).get("lineage", {}).get("trace") for m in con.execute("SELECT manifest FROM artifacts")}
+    con.close()
+    for t in config.TRACES_DIR.glob("*.json"):
+        if t.name not in keep_traces:
+            t.unlink(missing_ok=True)
+    for run in config.RUNS_DIR.glob("r*"):
+        shutil.rmtree(run, ignore_errors=True)
+    if dropped:
+        _git("add", "-A")
+        _git("commit", "-q", "-m", f"prune {len(dropped)} versions")
+    return {"dropped": dropped}
+
+
 def catalog_text(kind: str | None = None) -> str:
     """Compact, token-cheap listing for prompts. This is the ONLY discovery the team ships;
     anything smarter (search, dedup, ranking) has to be built by the factory itself."""
@@ -164,7 +248,9 @@ def catalog_text(kind: str | None = None) -> str:
     for a in list_artifacts(kind):
         m = a["manifest"]
         sig = m.get("signature", {})
-        lines.append(f"- {a['name']} v{a['version']} [{a['kind']}] in={sig.get('in')} out={sig.get('out')} :: {a['description']}")
+        net = m.get("permissions", {}).get("net") or []
+        lines.append(f"- {a['name']} v{a['version']} [{a['kind']}] in={sig.get('in')} out={sig.get('out')}"
+                     + (f" hosts={','.join(net)}" if net else "") + f" :: {a['description']}")
     return "\n".join(lines) or "(registry is empty)"
 
 

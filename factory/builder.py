@@ -22,10 +22,14 @@ Contract:
 - Prefer official structured endpoints (JSON/REST/CSV) over scraping HTML. Return clean, well-named fields.
 - Explore before writing: use a `probe` action to inspect real APIs/pages (formats, field names, errors). Don't guess.
 - Only the granted hosts are reachable; the sandbox blocks everything else. Use https URLs.
+- Be fast. If "What the factory already knows" covers the API, skip probing and submit directly. Otherwise probe at
+  most twice: one probe can print everything you need. Keep impl.py compact (no docstrings) and write 3-5 tests.
+- On submit, put in "notes" the reusable facts you learned about the hosts (endpoints, parameters, response fields,
+  quirks), max 600 characters. They are saved so future builds don't have to probe again.
 
 Each turn reply with exactly one action as JSON:
   {"action": "probe", "code": "<python snippet; print what you need to see>"}
-  {"action": "submit", "impl_py": "<file>", "test_py": "<file>", "summary": "<one line: what it does>"}
+  {"action": "submit", "impl_py": "<file>", "test_py": "<file>", "summary": "<one line: what it does>", "notes": "<facts learned>"}
   {"action": "request_access", "hosts": ["<hostname>"], "reason": "<why>"}   (operator must approve; use sparingly)"""
 
 
@@ -37,6 +41,7 @@ class Action(BaseModel):
     impl_py: Optional[str] = None
     test_py: Optional[str] = None
     summary: Optional[str] = None
+    notes: Optional[str] = None
 
 
 def run_tests(files: dict[str, str], net: list[str], label: str) -> dict:
@@ -76,6 +81,10 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
     spec = (f"Capability to build: {gap.name}\nDescription: {gap.description}\nWhy it is missing: {gap.why_missing}\n"
             f"Input schema: {gap.input_schema_json}\nOutput schema: {gap.output_schema_json}\n"
             f"Example input: {gap.example_input_json}\nGranted network hosts: {net or 'none'}")
+    known = registry.knowhow(net, exclude=gap.name)
+    if known:
+        spec += "\n\nWhat the factory already knows (from earlier builds):\n" + known
+        emit("log", msg=f"reusing know-how for {', '.join(net)}: skipping what earlier builds already learned")
     history: list[dict] = []
     trace = {"gap": gap.model_dump(), "events": []}
     submits = 0
@@ -115,7 +124,7 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
                 emit("test", msg=f"rejected: fewer than {config.MIN_TESTS} tests", capability=gap.name)
             trace["events"].append({"submit": submits, "passed": rep["passed"], "summary": rep["summary"]})
             if rep["passed"]:
-                done = (files, act.summary or gap.description, rep)
+                done = (files, act.summary or gap.description, rep, (act.notes or "").strip()[:800])
                 emit("say", text="All tests pass.")
                 break
             history.append({"action": "submit", "n": submits, "impl_py": act.impl_py, "test_py": act.test_py,
@@ -131,7 +140,7 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
         emit("say", text=f"I couldn't build {gap.name} within my limits.")
         emit("log", msg=f"FAILED to build {gap.name} after {submits} attempts")
         return None
-    files, summary, rep = done
+    files, summary, rep, notes = done
     manifest = {
         "name": gap.name, "kind": "capability", "impl": "code", "description": summary,
         "signature": {"in": _short(gap.input_schema_json), "out": _short(gap.output_schema_json),
@@ -140,6 +149,7 @@ def build_capability(gap: GapSpec, budget: gateway.Budget, extra_tests: dict[str
         "budget": {"max_tokens_per_run": 0},
         "lineage": {"created_by": "factory", "trace": trace_path.name, "attempts": submits},
         "example_input": gap.example_input_json,
+        "notes": notes,
     }
     version = registry.save_candidate(manifest, files)
     return {"name": gap.name, "version": version, "test_report": rep}
