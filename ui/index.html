@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Frankenstein Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=VT323&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:oklch(20.8% .004 285); --bg2:oklch(18.6% .004 285); --panel:oklch(22.6% .004 285); --panel2:oklch(25.3% .004 285);
@@ -403,6 +403,17 @@ table.audit td.n{text-align:right;color:var(--mute)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:1180px){main{grid-template-columns:minmax(240px,300px) minmax(0,1fr);grid-template-rows:minmax(0,1fr) 210px}#side{grid-column:1 / -1}#modelTxt{display:none}}
 @media(max-width:760px){body{height:auto}main{grid-template-columns:1fr;grid-template-rows:none;padding:10px}#side{height:320px}#scene{height:420px}#chat{height:80vh}header{padding:10px 12px}#botSel{max-width:70vw}}
+/* ===== pixel look: sprites on a 6-unit grid, room mosaic on 3, choppy 8-bit motion ===== */
+#lab{shape-rendering:crispEdges}
+#lab text{font-family:'VT323',monospace;letter-spacing:.3px}
+#lab .px-lbl{font-size:15px}
+#sciArm{transform-origin:157px 200px}
+#scientist{animation-timing-function:steps(3)!important}
+.working #sciBody,.working #sciArm,.building #sciArm,#hair,.working #hair{animation-timing-function:steps(2)!important}
+.alive #monsterWrap,.working.alive #monsterWrap,.working .armL,.working .armR,.working #mHead{animation-timing-function:steps(2)!important}
+#lab.igor #igorArm{animation-timing-function:steps(2)!important}
+#lab.talking #mMouth{animation:chomp .22s steps(1) infinite}
+@keyframes chomp{50%{transform:translateY(6px)}}
 /* ===== governance: session, value, authority test, refused updates ===== */
 .hbtn{border-radius:8px;font-size:12px;padding:5px 10px;white-space:nowrap;flex-shrink:0;background:transparent;border:1px solid var(--line2);color:var(--ink2)}
 .hbtn:hover{border-color:var(--mute);color:var(--ink)}
@@ -619,28 +630,7 @@ main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
           <rect x="203" y="284" width="26" height="22" rx="2" fill="#1A1A1C" stroke="#4D4D54"/>
           <polyline points="205,298 210,292 214,300 219,288 223,296 227,294" fill="none" stroke="#8DB077" stroke-width="1.2"/>
           <g id="lever"><line x1="216" y1="252" x2="216" y2="212" stroke="#8E8B85" stroke-width="4" stroke-linecap="round"/><circle cx="216" cy="208" r="7" fill="#ECEAE5"/></g>
-          <g id="scientist"><g id="sciBody">
-            <rect x="100" y="308" width="18" height="8" rx="3" fill="#121213"/><rect x="124" y="308" width="18" height="8" rx="3" fill="#121213"/>
-            <rect x="106" y="256" width="11" height="54" fill="#4A4A50"/><rect x="125" y="256" width="11" height="54" fill="#4A4A50"/>
-            <path d="M94 172 Q121 162 148 172 L160 270 Q121 278 82 270 Z" fill="#D3D0CA" stroke="#8E8B85" stroke-width="1.5"/>
-            <path d="M121 176 L121 272" stroke="#A9A69F" stroke-width="1.5"/>
-            <path d="M108 172 L121 196 L134 172" fill="#B9B6AF" stroke="#8E8B85" stroke-width="1.2"/>
-            <rect x="132" y="214" width="16" height="12" rx="2" fill="none" stroke="#9C9993"/>
-            <line x1="136" y1="210" x2="136" y2="218" stroke="#4A4A50" stroke-width="1.5"/><line x1="141" y1="211" x2="141" y2="218" stroke="#8DB077" stroke-width="1.5"/>
-            <path d="M94 180 Q80 218 90 252" fill="none" stroke="#D3D0CA" stroke-width="13" stroke-linecap="round"/>
-            <circle cx="90" cy="256" r="6" fill="#BEBBB4" stroke="#7A7771"/>
-            <g id="sciArm"><path d="M146 180 Q182 190 208 210" fill="none" stroke="#D3D0CA" stroke-width="13" stroke-linecap="round"/>
-              <circle cx="210" cy="210" r="6" fill="#BEBBB4" stroke="#7A7771"/></g>
-            <rect x="114" y="154" width="14" height="14" fill="#BEBBB4"/>
-            <circle cx="121" cy="136" r="23" fill="#C9C6C0" stroke="#7A7771" stroke-width="1.5"/>
-            <path id="hair" d="M96 132 L88 118 L100 120 L94 104 L108 110 L108 94 L120 106 L128 92 L132 108 L146 98 L142 114 L156 112 L146 126 L152 136 L142 132" fill="#F2F0EB" stroke="#9C9993" stroke-width="1.5" stroke-linejoin="round"/>
-            <line x1="99" y1="134" x2="143" y2="134" stroke="#2B2B2E" stroke-width="2"/>
-            <circle cx="112" cy="134" r="7.5" fill="#6E6C67" stroke="#1C1C1E" stroke-width="2.2"/><circle cx="130" cy="134" r="7.5" fill="#6E6C67" stroke="#1C1C1E" stroke-width="2.2"/>
-            <circle id="glint1" cx="114" cy="132" r="2" fill="#ECEAE5"/><circle id="glint2" cx="132" cy="132" r="2" fill="#ECEAE5"/>
-            <path d="M114 150 Q121 154 128 150" fill="none" stroke="#4A4A50" stroke-width="1.6" stroke-linecap="round"/>
-            <path d="M131 143 L141 151" stroke="#6E6C67" stroke-width="1.4"/><path d="M133 141 l-2 4 M137 144 l-2 4 M140 147 l-2 4" stroke="#6E6C67" stroke-width="1"/>
-            <path d="M104 120 L112 124" stroke="#6E6C67" stroke-width="1.2"/><path d="M106 119 l-1 4 M110 121 l-1 4" stroke="#6E6C67" stroke-width="1"/>
-          </g></g>
+          <g id="scientist"><g id="sciBody"></g></g>
         </g>
         <g transform="translate(-396,2)">
           <g id="door">
@@ -685,21 +675,7 @@ main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
         <rect x="0" y="646" width="360" height="22" fill="url(#floorG)"/>
         <line x1="0" y1="646" x2="360" y2="646" stroke="#4D4D54"/>
         <g id="dust"></g>
-        <g id="igorFig">
-          <ellipse cx="44" cy="646" rx="30" ry="3" fill="#000" opacity=".35"/>
-          <rect x="28" y="632" width="9" height="14" fill="#2B2B2F"/><rect x="45" y="632" width="9" height="14" fill="#2B2B2F"/>
-          <path d="M16 640 Q14 600 34 588 Q52 580 62 600 Q68 620 64 640 Z" fill="#4A4038" stroke="#2B2520" stroke-width="1.5"/>
-          <path d="M22 606 Q30 586 44 588" fill="none" stroke="#5E5248" stroke-width="3"/>
-          <circle cx="58" cy="598" r="12" fill="#B8B09A" stroke="#6E6656" stroke-width="1.4"/>
-          <path d="M48 590 Q56 582 68 590" fill="none" stroke="#2B2520" stroke-width="3"/>
-          <circle cx="62" cy="597" r="4.2" fill="#F2F0EB" stroke="#2B2520"/><circle id="igorEye" cx="63" cy="597.5" r="1.8" fill="#24331D"/>
-          <circle cx="53" cy="599" r="2" fill="#2B2520"/>
-          <path d="M55 606 q4 2 8 -1" fill="none" stroke="#2B2520" stroke-width="1.4"/><path d="M58 606 v2" stroke="#F2F0EB" stroke-width="1.2"/>
-          <g id="igorArm"><path d="M58 612 L74 600" stroke="#4A4038" stroke-width="6" stroke-linecap="round"/>
-            <path d="M72 602 L84 586" stroke="#8E8B85" stroke-width="3" stroke-linecap="round"/>
-            <path d="M80 582 l6 -2 l2 6 l-4 1 l-1 -3 l-3 1z" fill="#8E8B85" stroke="#6E6C67"/></g>
-          <text x="44" y="574" text-anchor="middle" font-size="9" fill="#D9B87A">Igor</text>
-        </g>
+        <g id="igorFig"><g id="igorSprite"></g><text x="48" y="574" text-anchor="middle" font-size="12" fill="#D9B87A">Igor</text></g>
         <g transform="translate(-300,328)">
           <g id="coil">
             <rect x="592" y="294" width="40" height="24" rx="3" fill="#3B3B40" stroke="#6E6C67"/>
@@ -854,33 +830,59 @@ function setAlive(a,zap){const was=alive;alive=a;$("lab").classList.toggle("aliv
 function stitches(x1,y1,x2,y2,n){let h=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${M.stitch}" stroke-width="1.4"/>`;
   for(let i=1;i<=n;i++){const t=i/(n+1),x=x1+(x2-x1)*t,y=y1+(y2-y1)*t,dx=y2-y1,dy=-(x2-x1),L=Math.hypot(dx,dy)||1;
     h+=`<line x1="${x-dx/L*3.5}" y1="${y-dy/L*3.5}" x2="${x+dx/L*3.5}" y2="${y+dy/L*3.5}" stroke="${M.stitch}" stroke-width="1.2"/>`}return h}
+// ---------- pixel sprites: rows of characters, one colour per character, drawn as one path per colour ----------
+function sprite(rows,pal,x0,y0,s){const by={};rows.forEach((r,j)=>[...r].forEach((c,i)=>{if(!pal[c])return;
+  (by[c]=by[c]||[]).push(`M${x0+i*s} ${y0+j*s}h${s}v${s}h-${s}z`)}));
+  return Object.entries(by).map(([c,d])=>`<path fill="${pal[c]}" d="${d.join("")}"/>`).join("")}
+const SCI_PAL={K:"#1C1C1E",W:"#F2F0EB",w:"#BDB9B1",S:"#E2C4A0",s:"#B99A78",G:"#9BD07F",g:"#4E6B40",L:"#2E2E33",m:"#7A4A3A",
+  C:"#E8E5DE",c:"#B4B0A8",T:"#5A7A4A",P:"#45454B",B:"#111113",H:"#9C9993"};
+const SCI_HAIR=["..W..W..W.....",".WW.WWW.WW.W..","WWWWWWWWWWWWW.","WwWWWWWWWWWwWW"];
+const SCI_BODY=[".WwSSSSSSSSwW.",".WSSSSSSSSSSW.","..LLLLSSLLLL..","..LGGLSSLGGL..","..LGgLSSLGgL..","..sLLSSSSLLs..",
+  "..SSSSSsSSSS..","...SSmmmmSS...","....SSSSSS....",".....ssss.....","...CCcTTcCC...","..CCCCcTcCCCC.",".CCCCCCTCCCCCC",
+  "CCcCCCCTCCCCcC","CCcCCCCTCCCCcC","CCcCCCCCCCccCC","CCcCCCCCCCKKCC","CCcCCCCCCCCCCC","CCcCCCCCCCCCcC","CCcCCCCcCCCCcC",
+  "HHcCCCCcCCCCcC","HH.CCCCcCCCCc.","...CCCCcCCCC..","...CCCCcCCCC..","...CCCCcCCCC..","...cccc.cccc..","....PPP..PPP..",
+  "....PPP..PPP..","....PPP..PPP..","....PPP..PPP..","....PPP..PPP..","...BBBB.BBBB..","...BBBB.BBBB.."];
+function drawScientist(){const x=79,y=95,s=6;
+  $("sciBody").innerHTML=`<g id="hair">${sprite(SCI_HAIR,SCI_PAL,x,y,s)}</g>${sprite(SCI_BODY,SCI_PAL,x,y+4*s,s)}
+    <rect id="glint1" x="${x+3*s}" y="${y+7*s}" width="3" height="3" fill="#F2F7EC"/><rect id="glint2" x="${x+9*s}" y="${y+7*s}" width="3" height="3" fill="#F2F7EC"/>
+    <g id="sciArm">${sprite(["CCCCCCCCHH","ccccccccHH"],SCI_PAL,157,197,6)}</g>`}
+const IGOR_PAL={h:"#2B2520",f:"#C9BC9C",W:"#F2F0EB",p:"#24331D",m:"#5E3A30",r:"#5E5248",R:"#4A4038",K:"#1C1C1E",g:"#8E8B85",G:"#6E6C67"};
+function drawIgor(){$("igorSprite").innerHTML=`<ellipse cx="48" cy="646" rx="30" ry="3" fill="#000" opacity=".35"/>`+
+  sprite(["....hhhh..","...hffffh.","..hfWWffh.","...fWpff..","...ffmff..",".rrrrfrr..","rrrrrrrr..","rRrrrrrrr.","rRrrrrrrr.",".rrrrrrr..",".KK..KK..."],IGOR_PAL,18,579,6)+
+  `<g id="igorArm">${sprite(["....GGG","....GGG","...g...","..g....","rr.....","rr....."],IGOR_PAL,60,573,6)}</g>`}
 function drawMonster(){
   const g=$("monster");const parts=monster.length?monster:[{uses:"",state:"dormant"}];
-  const n=parts.length, tx=376, tw=88, ty=120, th=94, bh=th/n, dorm=!monster.length;
+  const n=parts.length, dorm=!monster.length, s=6;
+  const P={H:"#151516",s:M.skin,d:M.shade,x:M.stitch,b:M.hair,m:"#3A2420",K:"#24331D",p:M.pants,B:M.boot,g:"#8E8B85",G:"#55555B",W:"#F2F0EB",a:M.dark};
   let h=`<g${dorm?' opacity=".45"':""}>`;
-  h+=`<rect x="386" y="${ty+th}" width="26" height="40" fill="${M.pants}"/><rect x="428" y="${ty+th}" width="26" height="40" fill="${M.pants}"/>`;
-  h+=stitches(388,ty+th+20,410,ty+th+20,3)+stitches(430,ty+th+14,452,ty+th+26,3);
-  h+=`<rect x="380" y="250" width="34" height="9" rx="3" fill="${M.boot}"/><rect x="426" y="250" width="34" height="9" rx="3" fill="${M.boot}"/>`;
-  h+=`<g class="armL"><rect x="356" y="${ty+4}" width="18" height="82" rx="6" fill="${M.shade}" stroke="${M.dark}"/>`+stitches(356,ty+36,374,ty+40,2)+stitches(358,ty+80,372,ty+80,2)+`<rect x="354" y="${ty+84}" width="22" height="16" rx="5" fill="${M.skin}" stroke="${M.dark}"/></g>`;
-  h+=`<g class="armR"><rect x="466" y="${ty+4}" width="18" height="82" rx="6" fill="${M.shade}" stroke="${M.dark}"/>`+stitches(466,ty+52,484,ty+48,2)+stitches(468,ty+80,482,ty+80,2)+`<rect x="464" y="${ty+84}" width="22" height="16" rx="5" fill="${M.skin}" stroke="${M.dark}"/></g>`;
-  h+=`<rect x="404" y="110" width="32" height="12" fill="${M.shade}"/>`+stitches(406,116,434,116,4);
-  h+=`<rect class="bolt" x="368" y="100" width="14" height="10" rx="2" fill="#8E8B85" stroke="#55555B"/><rect class="bolt" x="458" y="100" width="14" height="10" rx="2" fill="#8E8B85" stroke="#55555B"/>`;
-  h+=`<g id="mHead"><rect x="382" y="50" width="76" height="62" rx="8" fill="${M.skin}" stroke="${M.dark}" stroke-width="1.5"/>`;
-  h+=`<path d="M380 62 L380 46 L460 46 L460 62 L452 56 L444 63 L436 56 L428 63 L420 56 L412 63 L404 56 L396 63 L388 56 Z" fill="${M.hair}"/>`;
-  h+=stitches(390,70,418,68,4)+stitches(444,88,452,104,2)+stitches(388,92,394,106,2);
-  h+=`<path d="M396 79 q9 -4 18 0 M426 79 q9 -4 18 0" fill="none" stroke="${M.hair}" stroke-width="2.4" stroke-linecap="round"/>`;
-  h+=`<g class="eyes-closed"><path d="M399 86 q6 4 12 0 M429 86 q6 4 12 0" fill="none" stroke="${M.stitch}" stroke-width="2" stroke-linecap="round"/></g>`;
-  h+=`<g class="eyes-open"><circle cx="405" cy="86" r="6" fill="#F2F0EB" stroke="${M.stitch}" stroke-width="1.4"/><circle cx="435" cy="86" r="6" fill="#F2F0EB" stroke="${M.stitch}" stroke-width="1.4"/><circle cx="406" cy="87" r="2.6" fill="${M.stitch}"/><circle cx="436" cy="87" r="2.6" fill="${M.stitch}"/></g>`;
-  h+=`<path d="M404 102 L436 102" stroke="${M.stitch}" stroke-width="1.8"/><path d="M410 99 v6 M418 99 v6 M426 99 v6 M432 99 v6" stroke="${M.stitch}" stroke-width="1.1"/></g>`;
-  parts.forEach((p,i)=>{const y=ty+i*bh;let fill=M.skin,stroke=M.dark,dash="",cls="";
+  // legs and boots
+  h+=sprite(["pppp...pppp","pppp...pppp","ppxp...pxpp","pppp...pppp","pppp...pppp","BBBBB.BBBBB","BBBBB.BBBBB"],P,384,215,s);
+  // arms (each its own group so they can swing)
+  h+=`<g class="armL">${sprite(["dda","dda","xxa","dda","dda","dda","dda","xda","dda","dda","dda","dda","sss","sss"],P,357,125,s)}</g>`;
+  h+=`<g class="armR">${sprite(["add","add","add","axx","add","add","add","add","adx","add","add","add","sss","sss"],P,465,125,s)}</g>`;
+  // neck and bolts
+  h+=sprite([".ddddd.",".dxdxd."],P,399,107,s)+`<g class="bolt">${sprite(["gg","GG"],P,381,107,s)}</g><g class="bolt">${sprite(["gg","GG"],P,441,107,s)}</g>`;
+  // torso: one band of pixels per workflow step, coloured by its state
+  const tx=375, ty=119, rows=16, cols=15;let r0=0;
+  parts.forEach((p,i)=>{const nr=i===n-1?rows-r0:Math.max(1,Math.floor(rows/n));const y=ty+r0*s;
+    let fill=M.skin,edge=M.dark,cls="",pat=null;
     if(p.state==="building"){fill=M.light;cls="part-building"}
-    else if(p.state==="failed"){fill="url(#hatch)";stroke="#D99383"}
-    else if(p.state!=="ready"){fill="#2A2A2D";stroke="#6C8F5A";dash=' stroke-dasharray="5 4"'}
-    h+=`<rect class="${cls}" x="${tx}" y="${y}" width="${tw}" height="${bh}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"${dash}/>`;
-    if(!dorm)h+=`<text x="${tx+tw/2}" y="${y+bh/2+4}" text-anchor="middle" font-size="12" font-weight="500" fill="${p.state==="ready"||p.state==="building"?M.stitch:"#86A872"}">${i+1}</text>`;
-    if(i>0)h+=stitches(tx+2,y,tx+tw-2,y,9);});
-  if(n===1&&!dorm)h+=stitches(tx+14,ty+20,tx+30,ty+60,3);
-  if(dorm)h+=`<text x="420" y="${ty+th/2+4}" text-anchor="middle" font-size="11" fill="#86A872">dormant</text>`;
+    else if(p.state==="failed"){fill="#D99383";edge="#6B2E26";pat="check"}
+    else if(p.state!=="ready"){fill="#2A2A2D";edge="#6C8F5A";pat="dash"}
+    let d="",e="";
+    for(let r=0;r<nr;r++)for(let c=0;c<cols;c++){const X=tx+c*s,Y=y+r*s,border=c===0||c===cols-1||(i===n-1&&r===nr-1);
+      const on=pat==="check"?(r+c)%2===0:pat==="dash"?border&&(r+c)%2===0:border;
+      if(on)e+=`M${X} ${Y}h${s}v${s}h-${s}z`;else d+=`M${X} ${Y}h${s}v${s}h-${s}z`}
+    h+=`<path class="${cls}" fill="${fill}" d="${d}"/><path fill="${edge}" d="${e}"/>`;
+    if(i>0){let st="";for(let c=1;c<cols-1;c+=2)st+=`M${tx+c*s} ${y-1}h${s}v3h-${s}z`;h+=`<path fill="${M.stitch}" d="${st}"/>`}
+    if(!dorm)h+=`<text class="px-lbl" x="${tx+cols*s/2}" y="${y+nr*s/2+5}" text-anchor="middle" fill="${p.state==="ready"||p.state==="building"?M.stitch:"#86A872"}">${i+1}</text>`;
+    r0+=nr});
+  if(dorm)h+=`<text class="px-lbl" x="420" y="${ty+rows*s/2+5}" text-anchor="middle" fill="#86A872">dormant</text>`;
+  // head: flat top, fringe, scar stitches; eyes and mouth are separate so they can blink and talk
+  h+=`<g id="mHead">`+sprite(["HHHHHHHHHHHHH","HHHHHHHHHHHHH","HsHHsHHsHHsHH","sssssssssssss","sxsxsssssssss","ssbbbsssbbbss",
+    "sssssssssssss","sssssssssssss","sssssssssssxs","sssssssssssxs","ddddddddddddd"],P,381,41,s);
+  h+=`<g class="eyes-closed">${sprite(["xx...xx"],P,399,77,s)}</g><g class="eyes-open">${sprite(["WK...WK"],P,399,77,s)}</g>`;
+  h+=`<g id="mMouth">${sprite(["mmmmmmm"],P,393,95,s)}</g></g>`;
   g.innerHTML=h+`</g>`;
   $("benchName").textContent=monster.length?($("wfname").textContent.split(" · ")[0]||"A monster in progress").replace(/_/g," "):"No monster assembled";
   $("benchParts").textContent=`${monster.length} part${monster.length===1?"":"s"}`;
@@ -888,6 +890,7 @@ function drawMonster(){
 }
 async function showWorkflow(name){try{const vs=await (await fetch("/api/artifact/"+name)).json();const a=vs.find(v=>v.status==="active")||vs[vs.length-1];
   $("wfname").textContent=name+" · v"+a.version;monster=(a.manifest.steps||[]).map(s=>({uses:s.uses,state:"ready"}));drawMonster();setAlive(true)}catch(e){}}
+drawScientist();drawIgor();
 function setPart(uses,state){monster.forEach(p=>{if(p.uses===uses)p.state=state});drawMonster()}
 function drawFlasks(items){
   const g=$("flasks");let h="";
