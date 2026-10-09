@@ -15,7 +15,7 @@ DB_PATH = DATA / "factory.db"
 
 # Models: big model builds, small model runs LLM steps inside workflows.
 BUILD_MODEL = os.getenv("FACTORY_BUILD_MODEL", "claude-sonnet-5-5")  # Sonnet: roughly half the build time of Opus
-INSTANT_MODEL = os.getenv("FACTORY_INSTANT_MODEL", "claude-sonnet-5-5")  # the quick first answer while a bot builds
+INSTANT_MODEL = os.getenv("FACTORY_INSTANT_MODEL", "claude-haiku-4-5")  # first reply in ~1.5 s instead of ~3 s  # the quick first answer while a bot builds
 RUNTIME_MODEL = os.getenv("FACTORY_RUNTIME_MODEL", "claude-haiku-4-5")  # served via ElevenLabs Agents
 KNOWLEDGE_MODEL = os.getenv("FACTORY_KNOWLEDGE_MODEL", "claude-sonnet-5-5")  # LLM steps that answer from world knowledge
 

@@ -239,6 +239,15 @@ svg text{font-family:'JetBrains Mono',monospace}
 @keyframes dots{0%,60%,100%{opacity:.25;transform:none}30%{opacity:1;transform:translateY(-3px)}}
 .headline{font:500 16px/1.5 Inter,sans-serif;color:var(--ink);margin:0 0 8px;white-space:pre-wrap}
 .headline.long{font-size:14.5px;line-height:1.6}
+.headline:not(.long){font:600 19px/1.4 Inter,sans-serif;padding:10px 14px;border-left:4px solid var(--green);background:rgba(155,208,127,.07);border-radius:4px}
+#proof{display:flex;gap:6px;margin-left:12px}
+#proof span{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+#proof span b{color:var(--ink);font-weight:700}
+#proof .grow{border-color:rgba(155,208,127,.5)}#proof .grow b{color:var(--green)}
+#proof .lock{border-color:rgba(217,184,122,.5)}#proof .lock b{color:#D9B87A}
+header button{white-space:nowrap}
+@media (max-width:1550px){.tagline{display:none}}
+@media (max-width:1150px){#proof span:nth-child(2){display:none}}
 .understood{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--mute);margin:0 0 8px}
 .understood b{font-weight:500;color:var(--ink2);background:var(--soft);border:1px solid var(--line);border-radius:7px;padding:0 7px}
 details.more summary{cursor:pointer;font-size:12.5px;color:var(--mute);margin:2px 0 6px}
@@ -538,7 +547,12 @@ main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
 .mode{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:5px;padding:3px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
 .mode svg{width:12px;height:12px;flex:0 0 12px}
 #formBtn{border-radius:5px;font-size:11px;padding:3px 9px;border:1px solid var(--line)}
-#sendBtn{width:30px;height:30px;border-radius:6px;margin-left:auto}
+#sendBtn{width:30px;height:30px;border-radius:6px}
+#micBtn{width:30px;height:30px;padding:0;border-radius:6px;display:grid;place-items:center;margin-left:auto;background:transparent;border:1px solid var(--line2);color:var(--mute)}
+#micBtn svg{width:16px;height:16px}
+#micBtn.rec{background:#C0392B;border-color:#C0392B;color:#fff;animation:recp 1s steps(2) infinite}
+#micBtn.wait{opacity:.6;cursor:progress}
+@keyframes recp{50%{box-shadow:0 0 0 5px rgba(192,57,43,.35)}}
 #sendBtn svg{width:15px;height:15px}
 #hint{font-size:10.5px;color:var(--dim);margin-top:8px}
 #chips button{border-radius:6px;font-size:11.5px;background:var(--panel)}
@@ -574,6 +588,7 @@ main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
 <header>
   <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" style="color:var(--green)"><path d="M13 2 4 14h7l-2 8 9-12h-7z"/></svg>Frankenstein <span>Lab</span></h1>
   <span class="tagline">A workshop for useful monsters.</span>
+  <span id="proof" title="Live from the registry: the agent's skills grow, its authority does not"></span>
   <span class="spacer"></span>
   <span id="modelTxt"></span>
   <span id="status" title="Lab status"><i></i><span id="statusTxt">idle</span></span>
@@ -752,6 +767,7 @@ main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
               <button data-a="sample">Use the sample company<small>Novák Trading s.r.o.: invoices, orders, bank statement, sales</small></button>
             </div></span>
           <button id="formBtn" title="Fill the bot's input fields yourself: no language model, 0 tokens" hidden>☰ Form · 0 tok</button>
+          <button id="micBtn" title="Talk to it: speak, pause, and it answers out loud (ElevenLabs Scribe in, the monster's own voice out)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
           <button id="sendBtn" title="Send (Enter)"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
       </div>
@@ -1001,7 +1017,7 @@ function answer(m,ev){
   m.content.innerHTML=`${hl.text?`<div class="headline${hl.long.length?" long":""}">${hl.text}</div>`:""}${und}${details}<div class="meta">${tags.join("")}<span class="acts"><button class="mini spk" title="Hear the monster say it">🔊</button><button class="mini cp">Copy</button>${firstRows(ev.result)?'<button class="mini csv">CSV</button>':""}<button class="mini raw">Raw</button></span></div>`;
   const A=m.content.querySelector(".ans")||document.createElement("div");let raw=false;
   const spoken=speechFor(hl,ev);m.content.querySelector(".spk").onclick=()=>speakBot(ev.workflow,spoken,true);
-  if(ev.ts>LOADED&&voiceOn&&spoken)speakBot(ev.workflow,spoken);
+  if(ev.ts>LOADED&&(voiceOn||voiceTurn)&&spoken){speakBot(ev.workflow,spoken,true);voiceTurn=false}
   m.content.querySelector(".cp").onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(ev.result,null,2));toast("Copied as JSON")}catch(e){toast("Copy failed","bad")}};
   const c=m.content.querySelector(".csv");if(c)c.onclick=()=>downloadCsv(ev.result,ev.workflow);
   m.content.querySelector(".raw").onclick=e=>{raw=!raw;if(!A.isConnected){m.content.querySelector(".meta").before(A);A.className="ans"}
@@ -1098,7 +1114,8 @@ function handle(ev){
   else if(k==="instant"){log("⚡ "+ev.msg,"pass",ev.ts);const m=active&&active.kind==="build"?active:null;
     if(m){const secs=m.t0?Math.max(0,ev.ts-m.t0):0;
       m.quick.innerHTML=`<div class="qa">${esc(ev.text).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>")}</div><div class="meta"><span class="tag warm">quick answer${secs?` · ${secs.toFixed(1)} s`:""}</span><span class="tag">${(ev.tokens||0).toLocaleString()} tok · ${esc(ev.model||"")}</span><span>straight from the model, not yet a tested monster. The monster is being built below.</span></div>`;
-      if(m.th===thread)toBottom(true)}}
+      if(m.th===thread)toBottom(true)}
+    if(voiceTurn&&ev.ts>LOADED&&ev.text)speakBot("",ev.text.replace(/[*#]/g,"").split("\n").slice(0,3).join(" ").slice(0,300),true)}
   else if(k==="igor"){const th=ev.bot;log("🪓 "+ev.msg,"gate",ev.ts);
     if(ev.phase==="plot"){finish(active,ev.ts);const d=addMsg(th,"igor",live);d.className="msg ai igor";
       d.innerHTML=`<div class="av">${IGOR}</div><div class="bd"><div class="who"><b>Igor</b><span> · lab assistant, professional saboteur</span></div><div class="ub2"><span class="typing"><i></i><i></i><i></i></span></div></div>`;
@@ -1249,6 +1266,28 @@ async function send(){
   if(ok){$("input").value="";grow();setAtt(null)}else if(!busy)lights(false)
 }
 $("sendBtn").onclick=send;
+// ---------- voice to voice: record → ElevenLabs Scribe → the normal send path → the answer spoken in the bot's voice ----------
+let voiceTurn=false, rec=null;
+async function listen(){
+  if(rec){rec.stop();return}if(busy){toast("The scientist is busy. Wait until the light is green.","bad");return}
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){toast("No microphone access","bad");return}
+  try{if(botAudio)botAudio.pause()}catch(e){}
+  const mime=["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t))||"";
+  const chunks=[];rec=new MediaRecorder(stream,mime?{mimeType:mime}:{});rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  const ctx=new AudioContext(),an=ctx.createAnalyser();ctx.createMediaStreamSource(stream).connect(an);an.fftSize=1024;
+  const buf=new Uint8Array(an.fftSize);let heard=false,quiet=0;const t0=Date.now();
+  const tick=setInterval(()=>{an.getByteTimeDomainData(buf);let s=0;for(const v of buf)s+=(v-128)*(v-128);const rms=Math.sqrt(s/buf.length);
+    if(rms>6){heard=true;quiet=0}else if(heard)quiet+=100;
+    if((heard&&quiet>=1300)||Date.now()-t0>20000||(!heard&&Date.now()-t0>7000))rec&&rec.state==="recording"&&rec.stop()},100);
+  rec.onstop=async()=>{clearInterval(tick);stream.getTracks().forEach(t=>t.stop());ctx.close();rec=null;
+    $("micBtn").classList.remove("rec");if(!heard){toast("Didn't hear anything");return}
+    $("micBtn").classList.add("wait");const ph=$("input").placeholder;$("input").placeholder="Transcribing…";
+    try{const r=await fetch("/api/stt",{method:"POST",headers:{"Content-Type":mime||"audio/webm"},body:new Blob(chunks,{type:mime||"audio/webm"})});
+      const d=await r.json();if(!r.ok)throw new Error(d.detail);if(!d.text){toast("Didn't catch that");return}
+      $("input").value=d.text;grow();voiceTurn=true;send()}
+    catch(e){toast(String(e.message||e),"bad")}finally{$("micBtn").classList.remove("wait");$("input").placeholder=ph}};
+  rec.start();$("micBtn").classList.add("rec");toast("Listening… speak, then pause")}
+$("micBtn").onclick=listen;
 let att=null;
 function setAtt(a){att=a;$("attBtn").classList.toggle("on",!!a);
   $("attached").innerHTML=a?`<span class="fchip">📎 <b>${esc(a.folder)}</b><small>${a.files.length} file${a.files.length===1?"":"s"}: ${esc(a.files.slice(0,4).join(", "))}${a.files.length>4?" …":""}</small><button title="Remove" id="attX">✕</button></span>`:"";
@@ -1366,6 +1405,13 @@ async function loadRegistry(){
   const latest={};rows.forEach(r=>{if(r.status==="candidate")return;if(!latest[r.name]||r.status==="active"||(latest[r.name].status!=="active"&&r.version>latest[r.name].version))latest[r.name]=r});
   const items=Object.values(latest).sort((a,b)=>(b.kind==="workflow")-(a.kind==="workflow")||a.name.localeCompare(b.name));
   $("regCount").textContent=items.length?items.length+" built by the agent":"empty · nothing pre-installed";
+  {const act=rows.filter(r=>r.status==="active");const caps=act.filter(r=>r.kind==="capability"),wfs=act.filter(r=>r.kind==="workflow");
+   const use={};wfs.forEach(w=>(w.manifest.steps||[]).forEach(s=>use[s.uses]=(use[s.uses]||0)+1));
+   const shared=Object.values(use).filter(n=>n>1).length,hosts=new Set();act.forEach(r=>((r.manifest.permissions||{}).net||[]).forEach(x=>hosts.add(x)));
+   $("proof").innerHTML=`<span class="grow" title="Capabilities the agent wrote, tested and installed">🧩 <b>${caps.length}</b> tested skills</span>`+
+     `<span class="grow" title="Monsters stitched from those skills">🧟 <b>${wfs.length}</b> bots</span>`+
+     `<span class="grow" title="Skills reused by more than one bot, without rebuilding">♻ <b>${shared}</b> shared</span>`+
+     `<span class="lock" title="Network hosts any skill may reach, each approved by the operator: ${[...hosts].join(", ")||"none"}">🔒 authority: <b>${hosts.size}</b> host${hosts.size===1?"":"s"}, all approved</span>`}
   drawFlasks(rows.filter(r=>(r.manifest.lineage||{}).created_by==="distillation"&&r.status==="active"));
   const T=$("tiles");T.innerHTML=items.length?"":'<div class="empty">Nothing yet. Every capability here will be one the agent built and tested.</div>';
   items.forEach(r=>{const d=document.createElement("div");d.className="tl"+(r.kind==="workflow"?" wf":"")+(freshTiles.has(r.name)?" new":"")+(r.status==="revoked"?" revoked":"");

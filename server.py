@@ -9,7 +9,7 @@ import threading
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
@@ -381,6 +381,20 @@ def api_voice(text: str, bot: str = ""):
     if not audio:
         raise HTTPException(404)
     return Response(audio, media_type="audio/mpeg")
+
+
+@app.post("/api/stt")
+async def api_stt(request: Request):
+    """Voice in: the browser's recording → ElevenLabs Scribe → text. The text then goes the same way a typed message does."""
+    audio = await request.body()
+    if len(audio) < 2000:
+        raise HTTPException(400, "didn't catch that: the recording was empty")
+    try:
+        text = await asyncio.to_thread(voice.transcribe, audio, request.headers.get("content-type", "audio/webm"))
+    except Exception as e:
+        raise HTTPException(502, f"speech-to-text failed: {str(e)[:200]}")
+    emit("log", msg=f"🎙 heard: {text[:160]}")
+    return {"text": text}
 
 
 if __name__ == "__main__":
