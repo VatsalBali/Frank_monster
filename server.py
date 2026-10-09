@@ -103,6 +103,29 @@ def api_revoke(name: str):
     return {"revoked": a["version"]}
 
 
+@app.post("/api/bots/{name}/kill")
+def api_bot_kill(name: str):
+    """Kill a monster: the bot (workflow) is retired, every skill it was stitched from stays installed for reuse."""
+    a = registry.get(name)
+    if not a or a["kind"] != "workflow":
+        raise HTTPException(404, "no such bot")
+    if not _busy.acquire(blocking=False):
+        raise HTTPException(409, "the scientist is busy")
+    try:
+        for v in registry.versions(name):
+            if v["status"] in ("active", "archived", "candidate"):
+                registry.set_status(name, v["version"], "revoked")
+        skills = sorted({s["uses"] for s in a["manifest"].get("steps", [])})
+        others = {s["uses"] for w in registry.list_artifacts("workflow") for s in w["manifest"].get("steps", [])}
+        spare = [s for s in skills if s not in others]
+        emit("killed", bot=name, skills=skills, spare=spare,
+             msg=f"killed {name}; kept its {len(skills)} skill(s) for future monsters: {', '.join(skills)}")
+        emit("say", text="Rest in pieces. I'll keep the parts.")
+        return {"killed": name, "kept_skills": skills, "now_spare": spare}
+    finally:
+        _busy.release()
+
+
 class Task(BaseModel):
     task: str
 

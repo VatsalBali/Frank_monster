@@ -401,6 +401,14 @@ table.audit td.n{text-align:right;color:var(--mute)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:1180px){main{grid-template-columns:minmax(240px,300px) minmax(0,1fr);grid-template-rows:minmax(0,1fr) 210px}#side{grid-column:1 / -1}#modelTxt{display:none}}
 @media(max-width:760px){body{height:auto}main{grid-template-columns:1fr;grid-template-rows:none;padding:10px}#side{height:320px}#scene{height:420px}#chat{height:80vh}header{padding:10px 12px}#botSel{max-width:70vw}}
+/* ===== monster killer ===== */
+#killBtn{border-radius:6px;font-size:11.5px;padding:4px 10px;background:transparent;color:var(--fail);border-color:oklch(45% .06 32)}
+#killBtn:hover{background:oklch(30% .04 32)}
+#lab.dying #monsterWrap{animation:collapse 1.4s ease-in forwards}
+@keyframes collapse{0%{transform:none;opacity:1}20%{transform:translateX(-3px) rotate(-1deg)}40%{transform:translateX(3px) rotate(1deg)}
+  100%{transform:translateY(40px) scaleY(.15);opacity:0}}
+#lab.dying #glow{opacity:0}
+.banner.killed{background:oklch(27% .03 32);border:1px solid oklch(45% .06 32);color:var(--fail)}
 /* ===== Lovable design layer ===== */
 body{font-size:13px;background:var(--bg)}
 header{height:56px;padding:0 20px;gap:14px;background:var(--bg);border-bottom:1px solid var(--line);backdrop-filter:none}
@@ -700,6 +708,7 @@ main{gap:0;padding:0;grid-template-columns:284px minmax(0,1fr) 300px}
       </div>
       <div id="headInfo"></div>
       <span class="motto" id="motto">Build once. Bring it to life.</span>
+      <button id="killBtn" hidden title="Kill this monster. Its skills stay in the lab for future monsters.">☠ Kill</button>
       <button id="igorBtn" hidden title="Igor sends this bot messy but legitimate input. If a part breaks, the scientist repairs just that part.">🪓 Let Igor break it</button>
     </div>
     <div id="msgs" aria-live="polite"><div id="intro"></div></div>
@@ -781,7 +790,7 @@ function log(text,cls="",ts){
     if(/^[■✓◆⚗]/.test(text)&&cls==="pass"&&!lastLe.classList.contains("bad")){lastLe.classList.remove("run");lastLe.classList.add("ok")}
     while(sub.children.length>14)sub.firstChild.remove();lastLe.querySelector(".st").textContent=t}
   logN++;$("logCount").textContent=logN+" entries";$("logWait").hidden=busy?false:true;if(stick)P.scrollTop=P.scrollHeight}
-function say(text,live){if(text&&$("labCap"))$("labCap").textContent=text;if(!live)return;$("bubble").textContent=text;$("bubble").classList.add("on");clearTimeout(say.t);say.t=setTimeout(()=>$("bubble").classList.remove("on"),6500);
+function say(text,live){if(!live)return;if(text&&$("labCap"))$("labCap").textContent=text;$("bubble").textContent=text;$("bubble").classList.add("on");clearTimeout(say.t);say.t=setTimeout(()=>$("bubble").classList.remove("on"),6500);
   if(voiceOn){const a=new Audio("/api/voice?text="+encodeURIComponent(text));a.play().catch(()=>{})}}
 function lights(on){clearTimeout(lights.t);const L=$("lab");
   if(on){if(!L.classList.contains("lit")){L.classList.add("lit");if(voiceOn)say("Lights!",true)}L.classList.add("working")}
@@ -976,7 +985,7 @@ function threadOf(name){return bots.find(b=>b.name===name)?name:name}
 
 function handle(ev){
   const live=ev.ts>LOADED-LIVE_EPS;const k=ev.kind;
-  if(k==="task"){finish(active,ev.ts);userMsg("lab",ev.text,false,live);active=aiMsg("lab","sci","Scientist",live);active.kind=ev.mode==="bot"?"build":"task";active.t0=ev.ts;
+  if(k==="task"){finish(active,ev.ts);if(live)clearLab(true);userMsg("lab",ev.text,false,live);active=aiMsg("lab","sci","Scientist",live);active.kind=ev.mode==="bot"?"build":"task";active.t0=ev.ts;
     active.sub.textContent=ev.mode==="bot"?" · building your monster":" · working";buildTok=0;
     monster=[];setAlive(false);drawMonster();$("wfname").textContent="";log("▶ "+ev.text,"stage",ev.ts);if(live){setBusy(true);if(thread!=="lab")setThread("lab")}}
   else if(k==="ask"){const th=ev.bot;if(!(active&&active.kind!=="ask"))finish(active,ev.ts);
@@ -1035,12 +1044,18 @@ function handle(ev){
         :ev.phase==="survived"?`<div class="banner survived">💪 Survived all of Igor's tries <span>the code already handled his mess</span></div>`
         :`<div class="banner won">🪓 Igor won this round <span>${esc(ev.msg)}</span></div>`;
       delete igorMsg[th];if(live){igorOff.t=setTimeout(igorOff,5000);if(treeOpen)openTree()}}}
+  else if(k==="killed"){const th=ev.bot;log("☠ "+ev.msg,"fail",ev.ts);
+    [...$("msgs").querySelectorAll(".msg")].forEach(e=>{if(e.dataset.th===th)e.remove()});delete pending[th];unread.delete(th);
+    if(live){const L=$("lab");if(thread===th){L.classList.add("dying");setTimeout(()=>{L.classList.remove("dying");monster=[];setAlive(false);drawMonster();$("wfname").textContent=""},1500)}
+      toast(`Killed ${title(th)} · kept ${ev.skills.length} skill${ev.skills.length===1?"":"s"} for future monsters`);
+      const d=addMsg("lab","sys",live);d.className="msg keep";d.innerHTML=`<div class="banner killed">☠ ${esc(title(th))} is gone <span>its skills stay in the lab: ${esc(ev.skills.join(", "))}${ev.spare.length?` · ${ev.spare.length} now spare, ready for the next monster`:""}</span></div>`;
+      if(thread===th)setTimeout(()=>setThread("lab"),1400);loadBots();loadRegistry();if(treeOpen)openTree()}}
   else if(k==="knock"){log("⌂ "+ev.msg,"gate",ev.ts);if(live){knock();say(ev.say||"Someone's at the door.",true);toast("External agent: "+ev.msg)}}
   else if(k==="flask"){log("⚗ "+ev.msg,"pass",ev.ts);if(active)step(active,ev.msg,"inst");if(live){freshTiles.add(ev.name);loadRegistry();toast("Distilled "+ev.name+" into code")}}
   else if(k==="error"){log("✗ "+ev.msg,"fail",ev.ts);setScene(false);monster.forEach(p=>{if(p.state==="building")p.state="failed"});drawMonster();
     if(active){step(active,ev.msg.slice(0,300),"fail");if(active.kind==="ask")active.content.innerHTML=`<div class="empty" style="color:var(--fail)">Something broke: ${esc(ev.msg.slice(0,240))}</div>`}
     if(live)toast(ev.msg.slice(0,140),"bad")}
-  else if(k==="idle"){if(lastLe&&lastLe.classList.contains("run")){lastLe.classList.remove("run");lastLe.classList.add("ok")}finish(active,ev.ts);Object.keys(pending).forEach(b=>{finish(pending[b],ev.ts);delete pending[b]});active=null;
+  else if(k==="idle"){if(lastLe&&lastLe.classList.contains("run")){lastLe.classList.remove("run");lastLe.classList.add("ok")}finish(active,ev.ts);if(!live)clearLab(false);Object.keys(pending).forEach(b=>{finish(pending[b],ev.ts);delete pending[b]});active=null;
     if(live){setBusy(false);setScene(false);lights(false);$("stage").textContent="idle";loadLedger();loadBots()}}
   else if(k==="reset"){[...$("msgs").querySelectorAll(".msg")].forEach(e=>e.remove());active=null;Object.keys(pending).forEach(b=>delete pending[b]);unread.clear();
     monster=[];setAlive(false);drawMonster();$("log").innerHTML="";logN=0;lastLe=null;lastCode=null;$("code").innerHTML='<span class="cm"># the code the agent writes appears here, attempt by attempt</span>';
@@ -1067,7 +1082,11 @@ function closeSel(){$("botMenu").classList.remove("open");$("botSel").setAttribu
 $("botSel").onclick=e=>{e.stopPropagation();const o=!$("botMenu").classList.contains("open");$("botMenu").classList.toggle("open",o);$("botSel").setAttribute("aria-expanded",o)};
 document.addEventListener("click",e=>{if(!e.target.closest(".sel"))closeSel();if(!e.target.closest(".menu"))$("menu").classList.remove("open")});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeSel();$("menu").classList.remove("open")}});
-function setThread(t){
+function clearLab(all){
+  // The New monster view has no history: it shows the welcome screen, or only the build that is happening now.
+  [...$("msgs").querySelectorAll(".msg")].forEach(e=>{if(e.dataset.th==="lab"&&(all||!(e.classList.contains("keep")||(active&&active.el===e&&!active.done))))e.remove()});
+  if(thread==="lab")renderIntro()}
+function setThread(t){if(t==="lab"&&!(active&&active.th==="lab"&&!active.done))clearLab(false);
   thread=t;unread.delete(t);try{localStorage.setItem("lab.thread",t)}catch(e){}
   for(const m of $("msgs").querySelectorAll(".msg"))m.hidden=m.dataset.th!==t;
   renderSel();renderIntro();updateComposer();toBottom(true);
@@ -1096,7 +1115,7 @@ function exampleOf(b){try{return typeof b.example_input==="string"?JSON.parse(b.
 function flat(v){return Array.isArray(v)?v.slice(0,3).map(flat).join(", "):(v&&typeof v==="object"?Object.values(v).filter(x=>typeof x!=="object").join(" "):String(v))}
 function updateComposer(){
   const b=curBot();
-  $("formBtn").hidden=!b;$("igorBtn").hidden=!b;if(!b)toggleForm(false);else buildForm(schemaOf(b),exampleOf(b));
+  $("formBtn").hidden=!b;$("igorBtn").hidden=!b;$("killBtn").hidden=!b;if(!b)toggleForm(false);else buildForm(schemaOf(b),exampleOf(b));
   $("input").placeholder=b?`Ask ${title(b.name)}…  e.g. ${Object.values(exampleOf(b)).map(flat).filter(Boolean).join(" · ").slice(0,34)}…`:"What should the scientist make?  e.g. a bot that checks suppliers before we pay them";
   $("modeTxt").textContent=b?`Ask ${title(b.name)}`:"New experiment";$("motto").textContent=b?(b.llm?"Built once. Answers with judgment.":"Built once. Answers for free."):"Build once. Bring it to life.";
   $("expNo").textContent=`Experiment no. ${String((bots.length||0)+1).padStart(3,"0")}`;
@@ -1136,12 +1155,16 @@ async function send(){
   if(ok){$("input").value="";grow()}else if(!busy)lights(false)
 }
 $("sendBtn").onclick=send;
+$("killBtn").onclick=async()=>{const b=curBot();if(!b||busy)return;
+  const n=(b.steps||[]).length;
+  if(!confirm(`Kill ${title(b.name)}?\n\nThe bot and its chat go away. Its ${n} skill${n===1?"":"s"} (${(b.steps||[]).join(", ")}) stay in the lab, so future monsters can reuse them.`))return;
+  const r=await fetch(`/api/bots/${b.name}/kill`,{method:"POST"});if(!r.ok){let d="";try{d=(await r.json()).detail}catch(e){}toast(d||"could not kill it","bad")}};
 $("igorBtn").onclick=async()=>{const b=curBot();if(!b||busy)return;lights(true);if(!await post(`/api/bots/${b.name}/sabotage`,{})&&!busy)lights(false)};
 function grow(){const i=$("input");i.style.height="36px";i.style.height=Math.min(180,i.scrollHeight)+"px"}
 $("input").addEventListener("input",()=>{grow();renderChips()});
 $("input").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
 $("formRun").onclick=()=>{let inp;try{inp=readForm()}catch(e){toast("A JSON field is not valid JSON","bad");return}ask({input_json:JSON.stringify(inp)})};
-function setBusy(b){busy=b;if($("chips"))setTimeout(renderChips,0);if(b)lights(true);$("igorBtn").disabled=b;$("status").classList.toggle("busy",b);$("statusTxt").textContent=b?"working":"idle";$("sendBtn").disabled=b;$("formRun").disabled=b;$("optBtn").disabled=b;$("resetBtn").disabled=b;
+function setBusy(b){busy=b;if($("killBtn"))$("killBtn").disabled=b;if($("chips"))setTimeout(renderChips,0);if(b)lights(true);$("igorBtn").disabled=b;$("status").classList.toggle("busy",b);$("statusTxt").textContent=b?"working":"idle";$("sendBtn").disabled=b;$("formRun").disabled=b;$("optBtn").disabled=b;$("resetBtn").disabled=b;
   $("sendBtn").title=b?"The scientist is busy":"Send (Enter)"}
 async function loadBots(){
   try{bots=await (await fetch("/api/bots")).json()}catch(e){return}
@@ -1158,12 +1181,14 @@ async function openTree(){
   const allv={};rows.forEach(r=>{(allv[r.name]=allv[r.name]||[]).push(r)});
   const order=[],users={};
   wfs.forEach(w=>(w.manifest.steps||[]).forEach(s=>{if(!order.includes(s.uses))order.push(s.uses);(users[s.uses]=users[s.uses]||new Set()).add(w.name)}));
+  Object.keys(caps).sort().forEach(c=>{if(!order.includes(c)){order.push(c);users[c]=new Set()}});
+  const spare=order.filter(c=>users[c].size===0);
   const shared=order.filter(c=>users[c].size>1);
   const reuses=order.reduce((n,c)=>n+users[c].size-1,0);
   let M=$("treeModal");if(!M){M=document.createElement("div");M.id="treeModal";M.onclick=e=>{if(e.target===M)closeTree()};document.body.appendChild(M)}
   treeOpen=true;
-  const head=`<div id="treeHead"><h2>🧬 Family tree</h2><div id="treeStats"><span class="tag">${wfs.length} monster${wfs.length===1?"":"s"}</span><span class="tag">${order.length} part${order.length===1?"":"s"}</span><span class="tag ${shared.length?"warm":""}">${shared.length} shared</span><span class="tag ${reuses?"zero":""}">${reuses} part${reuses===1?"":"s"} reused instead of rebuilt</span></div><span class="spacer"></span><button class="ghost" id="treeX">✕</button></div>`;
-  if(!wfs.length){M.innerHTML=`<div id="treeBox">${head}<div id="treeEmpty">No monsters yet. Build one, then build a second for a related job and watch it borrow parts.</div></div>`;$("treeX").onclick=closeTree;return}
+  const head=`<div id="treeHead"><h2>🧬 Family tree</h2><div id="treeStats"><span class="tag">${wfs.length} monster${wfs.length===1?"":"s"}</span><span class="tag">${order.length} part${order.length===1?"":"s"}</span><span class="tag ${shared.length?"warm":""}">${shared.length} shared</span><span class="tag ${reuses?"zero":""}">${reuses} part${reuses===1?"":"s"} reused instead of rebuilt</span>${spare.length?`<span class="tag">${spare.length} spare, ready to reuse</span>`:""}</div><span class="spacer"></span><button class="ghost" id="treeX">✕</button></div>`;
+  if(!wfs.length&&!order.length){M.innerHTML=`<div id="treeBox">${head}<div id="treeEmpty">No monsters yet. Build one, then build a second for a related job and watch it borrow parts.</div></div>`;$("treeX").onclick=closeTree;return}
   const colW=170, W=Math.max(wfs.length,order.length)*colW+40, H=380;
   const mx=i=>20+colW/2+i*(W-40-colW)/Math.max(1,wfs.length-1)*(wfs.length>1?1:0)+(wfs.length===1?(W-40-colW)/2:0);
   const px=i=>20+colW/2+i*(W-40-colW)/Math.max(1,order.length-1)*(order.length>1?1:0)+(order.length===1?(W-40-colW)/2:0);
@@ -1178,16 +1203,17 @@ async function openTree(){
       <text x="70" y="96" text-anchor="middle" font-size="10" fill="${llm?"#D9B87A":"#A9CF8F"}" font-family="Inter">${llm?`~${tok.toLocaleString()} tok/answer`:"0 tok · plain code"}</text></g>`});
   order.forEach((c,j)=>{const x=px(j),r=caps[c]||{manifest:{},version:"?"},m=r.manifest,kind=(m.lineage||{}).created_by==="distillation"?"distilled":m.impl==="llm"?"llm":"code";
     const col={code:"#86A872",llm:"#9C8FC4",distilled:"#D9B87A"}[kind],icon={code:"⚙",llm:"🧠",distilled:"⚗"}[kind];
-    const vs=(allv[c]||[]).length,healed=(allv[c]||[]).some(v=>v.version>1);const sh=users[c].size;const nm=c.length>22?c.slice(0,21)+"…":c;
-    svg+=`<g class="node part" data-c="${esc(c)}" transform="translate(${x-76},262)"><title>${esc(c)} · ${esc(m.description||"")}</title><rect class="card" width="152" height="96" rx="12" fill="#26262A" stroke="${sh>1?"#D9B87A":col}" stroke-width="${sh>1?2.5:1.5}"/>
+    const vs=(allv[c]||[]).length,healed=(allv[c]||[]).some(v=>v.version>1);const sh=users[c].size,sp=sh===0;const nm=c.length>22?c.slice(0,21)+"…":c;
+    svg+=`<g class="node part" data-c="${esc(c)}" transform="translate(${x-76},262)"><title>${esc(c)} · ${esc(m.description||"")}</title><rect class="card" width="152" height="96" rx="12" fill="#26262A" stroke="${sh>1?"#D9B87A":col}" stroke-width="${sh>1?2.5:1.5}"${sp?' stroke-dasharray="5 4" opacity=".85"':""}/>
       <rect x="0" y="0" width="152" height="6" rx="3" fill="${col}"/>
       <text x="12" y="30" font-size="15">${icon}</text><text x="34" y="29" font-size="10.5" fill="#ECEAE5" font-family="'JetBrains Mono',monospace">${esc(nm)}</text>
       <text x="12" y="50" font-size="10" fill="#8E8B85" font-family="Inter">${kind==="code"?"Python, tested in sandbox":kind==="llm"?"LLM prompt":"distilled from LLM to code"}</text>
       <text x="12" y="66" font-size="10" fill="#8E8B85" font-family="Inter">v${r.version}${healed?" · 🩹 repaired":""} · ${r.runs||0} runs</text>
       ${(m.permissions||{}).net&&m.permissions.net.length?`<text x="12" y="82" font-size="9.5" fill="#6E6C67" font-family="'JetBrains Mono',monospace">${esc(m.permissions.net.join(", ").slice(0,24))}</text>`:""}
+      ${sp?`<g transform="translate(70,72)"><rect width="76" height="17" rx="8.5" fill="none" stroke="#8E8B85"/><text x="38" y="12" text-anchor="middle" font-size="9.5" fill="#C6C3BD" font-family="Inter">spare · reusable</text></g>`:""}
       ${sh>1?`<g transform="translate(96,72)"><rect width="50" height="17" rx="8.5" fill="#D9B87A"/><text x="25" y="12" text-anchor="middle" font-size="9.5" font-weight="600" fill="#1A1A1C" font-family="Inter">shared ×${sh}</text></g>`:""}</g>`});
   svg+=`</svg>`;
-  M.innerHTML=`<div id="treeBox">${head}<div id="treeBody">${svg}<div id="treeLegend"><span><i style="background:#86A872"></i>Python part, tested in the sandbox · 0 tokens</span><span><i style="background:#9C8FC4"></i>LLM part · tokens per use</span><span><i style="background:#D9B87A"></i>shared: built once, reused by several monsters</span><span>Click a monster to talk to it</span></div></div></div>`;
+  M.innerHTML=`<div id="treeBox">${head}<div id="treeBody">${svg}<div id="treeLegend"><span><i style="background:#86A872"></i>Python part, tested in the sandbox · 0 tokens</span><span><i style="background:#9C8FC4"></i>LLM part · tokens per use</span><span><i style="background:#D9B87A"></i>shared: built once, reused by several monsters</span><span><i style="background:none;border:1px dashed #8E8B85"></i>spare: its monster was killed, the skill stays</span><span>Click a monster to talk to it</span></div></div></div>`;
   $("treeX").onclick=closeTree;
   const S=$("treeSvg");
   const focus=(w,c)=>{S.classList.add("focus");S.querySelectorAll(".edge").forEach(e=>e.classList.toggle("on",(w&&e.dataset.w===w)||(c&&e.dataset.c===c)));
